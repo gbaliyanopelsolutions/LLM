@@ -43,7 +43,7 @@ app.get(['/', '/index.html'], (req, res) => {
 	res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.use('/assets', express.static(path.join(__dirname, 'public', 'assets')));
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 const anthropic = new Anthropic({
 	apiKey: process.env.ANTHROPIC_API_KEY,
