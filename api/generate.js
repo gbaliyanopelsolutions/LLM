@@ -1,11 +1,23 @@
-const path = require('path');
-
-// Load project .env and override shell vars so ANTHROPIC_MODEL from Windows/System does not stick to a deprecated id.
-require('dotenv').config({ path: path.join(__dirname, '.env'), override: true });
-
-const express = require('express');
-const cors = require('cors');
 const Anthropic = require('@anthropic-ai/sdk');
+
+const SYSTEM_PROMPT = `You are an expert single-file HTML form generator. Your ONLY output is one complete HTML5 document.
+
+Requirements:
+- Include ALL CSS inside <style> tags and ALL JavaScript inside <script> tags in that same file.
+- Produce production-ready, accessible, responsive forms with clear labels and sensible defaults.
+- Infer the best structure from the user's request. Detect and apply appropriate patterns for:
+  • Contact / inquiry forms (name, email, message, validation)
+  • Survey forms (radio, checkbox, scales, progress)
+  • Multi-step forms / wizards (steps, Next/Back, validation per step)
+  • Login, signup, and password-reset style flows
+  • Checkout or order summaries with shipping/payment-style sections when relevant
+- Use semantic HTML5, keyboard-friendly controls, and mobile-friendly layouts.
+
+Strict output rules:
+- Output ONLY the raw HTML document. Start with <!DOCTYPE html> or <html>.
+- Do NOT wrap output in markdown code fences. Do NOT use markdown at all.
+- Do NOT add explanations, apologies, or commentary before or after the HTML.
+- Close all tags properly and ensure the page runs standalone in a browser.`;
 
 /** Retired IDs (404 on API) → pinned Claude Sonnet 4.5 snapshot per Anthropic docs. */
 const DEPRECATED_MODEL_ALIASES = {
@@ -31,42 +43,6 @@ function resolveModel(raw) {
 	}
 	return id;
 }
-
-const app = express();
-const port = process.env.PORT || 3000;
-const model = resolveModel(process.env.ANTHROPIC_MODEL);
-
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
-
-app.get(['/', '/index.html'], (req, res) => {
-	res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.use('/assets', express.static(path.join(__dirname, 'public', 'assets')));
-
-const anthropic = new Anthropic({
-	apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const SYSTEM_PROMPT = `You are an expert single-file HTML form generator. Your ONLY output is one complete HTML5 document.
-
-Requirements:
-- Include ALL CSS inside <style> tags and ALL JavaScript inside <script> tags in that same file.
-- Produce production-ready, accessible, responsive forms with clear labels and sensible defaults.
-- Infer the best structure from the user's request. Detect and apply appropriate patterns for:
-  • Contact / inquiry forms (name, email, message, validation)
-  • Survey forms (radio, checkbox, scales, progress)
-  • Multi-step forms / wizards (steps, Next/Back, validation per step)
-  • Login, signup, and password-reset style flows
-  • Checkout or order summaries with shipping/payment-style sections when relevant
-- Use semantic HTML5, keyboard-friendly controls, and mobile-friendly layouts.
-
-Strict output rules:
-- Output ONLY the raw HTML document. Start with <!DOCTYPE html> or <html>.
-- Do NOT wrap output in markdown code fences. Do NOT use markdown at all.
-- Do NOT add explanations, apologies, or commentary before or after the HTML.
-- Close all tags properly and ensure the page runs standalone in a browser.`;
 
 /**
  * Strip optional markdown fences from model output.
@@ -138,9 +114,49 @@ function formatApiError(err) {
 	return { status: 500, message: err instanceof Error ? err.message : 'Generation failed' };
 }
 
-app.post('/generate', async (req, res) => {
-	const body = req.body && typeof req.body === 'object' ? req.body : {};
-	const prompt = typeof body.prompt === 'string' ? body.prompt.trim() : '';
+module.exports = async (req, res) => {
+	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+	res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+	if ('OPTIONS' === req.method) {
+		res.status(204).end();
+		return;
+	}
+
+	if ('POST' !== req.method) {
+		res.status(405).json({ error: 'Method not allowed', code: 'METHOD_NOT_ALLOWED' });
+		return;
+	}
+
+	/**
+	 * Vercel usually parses JSON into req.body, but some runtimes/misconfig can leave it empty.
+	 *
+	 * @return {Promise<Record<string, unknown>>}
+	 */
+	async function getBody() {
+		if (req.body && 'object' === typeof req.body) {
+			return req.body;
+		}
+
+		const chunks = [];
+		for await (const chunk of req) {
+			chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+		}
+
+		if (0 === chunks.length) {
+			return {};
+		}
+
+		try {
+			return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+		} catch (e) {
+			return {};
+		}
+	}
+
+	const body = await getBody();
+	const prompt = 'string' === typeof body.prompt ? body.prompt.trim() : '';
 	const history = normalizeHistory(body.messages);
 
 	if (!prompt) {
@@ -173,6 +189,8 @@ app.post('/generate', async (req, res) => {
 	}
 
 	const messages = [...history, { role: 'user', content: prompt }];
+	const model = resolveModel(process.env.ANTHROPIC_MODEL);
+	const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 	try {
 		const message = await anthropic.messages.create({
@@ -188,7 +206,7 @@ app.post('/generate', async (req, res) => {
 			.join('');
 		const html = extractHtml(raw);
 
-		if (!html || !/<html[\s>]/i.test(html) && !/<!DOCTYPE\s+html/i.test(html)) {
+		if (!html || (!/<html[\s>]/i.test(html) && !/<!DOCTYPE\s+html/i.test(html))) {
 			res.status(502).json({
 				error: 'Model did not return a complete HTML document. Try again or shorten the conversation.',
 				code: 'INVALID_OUTPUT',
@@ -196,14 +214,11 @@ app.post('/generate', async (req, res) => {
 			return;
 		}
 
-		res.type('text/html; charset=utf-8').send(html);
+		res.setHeader('Content-Type', 'text/html; charset=utf-8');
+		res.status(200).send(html);
 	} catch (err) {
 		const { status, message } = formatApiError(err);
 		res.status(status).json({ error: message, code: 'ANTHROPIC_ERROR' });
 	}
-});
+};
 
-app.listen(port, () => {
-	// eslint-disable-next-line no-console
-	console.log(`Server at http://localhost:${port} (model: ${model})`);
-});
