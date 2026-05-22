@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Root URL shows the login page first. Dev hub: /overview */
+/** Root URL opens the survey demo form. */
 export default function HomePage() {
-	redirect('/login');
+	redirect('/survey-demo/');
 }
