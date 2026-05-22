@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Optional: override API origin. Leave empty when the page is served by the same app as /api (e.g. :3000). For Apache/XAMPP, public/supabase.js infers http://127.0.0.1:3000, or set e.g. http://127.0.0.1:3000 here / localStorage appApiBase. -->
   <meta name="app-api-base" content="">
-  <title>Form Builder — FormAI</title>
+  <title>Form Builder — Survey Form Builder</title>
   <link rel="stylesheet" href="/dash-shell.css">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
   <style>
     /* ═══════════════════════════════════════════════
-       FormAI — Form Builder — Modern AI-style 720px
+       Survey Form Builder — Form Builder — Modern AI-style 720px
        ═══════════════════════════════════════════════ */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
@@ -751,7 +751,7 @@
         </svg>
       </div>
       <div>
-        <span class="dash-brand__name">FormAI</span>
+        <span class="dash-brand__name">Survey Form Builder</span>
         <span class="dash-brand__sub">Survey Builder</span>
       </div>
     </a>
@@ -802,7 +802,7 @@
     <div class="dash-sidebar-footer">
       <div class="dash-user-pill">
         <div class="dash-user-avatar">AI</div>
-        <span class="dash-user-name">FormAI Platform</span>
+        <span class="dash-user-name">Survey Form Builder</span>
       </div>
     </div>
 
@@ -905,19 +905,19 @@
               <button
                 type="button"
                 role="tab"
-                class="builder-tab is-active"
+                class="builder-tab"
                 id="builder-tab-edit"
                 data-builder-tab="edit"
-                aria-selected="true"
+                aria-selected="false"
                 aria-controls="builder-pane-edit"
               >Edit Form</button>
               <button
                 type="button"
                 role="tab"
-                class="builder-tab"
+                class="builder-tab is-active"
                 id="builder-tab-preview"
                 data-builder-tab="preview"
-                aria-selected="false"
+                aria-selected="true"
                 aria-controls="builder-pane-preview"
               >Preview Form</button>
             </div>
@@ -927,6 +927,7 @@
               class="builder-pane builder-pane--edit"
               role="tabpanel"
               aria-labelledby="builder-tab-edit"
+              hidden
             >
               <div class="editor-header">
                 <div>
@@ -960,7 +961,6 @@
               class="builder-pane builder-pane--preview"
               role="tabpanel"
               aria-labelledby="builder-tab-preview"
-              hidden
             >
               <iframe id="preview" title="Live form preview" sandbox="allow-scripts allow-same-origin"></iframe>
             </div>

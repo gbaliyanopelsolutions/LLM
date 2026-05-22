@@ -222,7 +222,7 @@ builderTabs.forEach((btn) => {
 		switchBuilderTab(btn.getAttribute('data-builder-tab') || 'edit');
 	});
 });
-switchBuilderTab('edit');
+switchBuilderTab('preview');
 
 /**
  * Open the edit modal seeded from a question (or blank for new).

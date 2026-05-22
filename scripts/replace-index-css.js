@@ -7,7 +7,7 @@ let html = fs.readFileSync(filePath, 'utf8');
 
 const newStyle = `  <style>
     /* ═══════════════════════════════════════════════
-       FormAI — Form Builder — Modern AI-style 720px
+       Survey Form Builder — Form Builder — Modern AI-style 720px
        ═══════════════════════════════════════════════ */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
