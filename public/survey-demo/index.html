@@ -11,7 +11,18 @@
 <div class="page">
   <div class="container">
 
-    <!-- Step indicator (hidden on intro page) -->
+    <!-- Progress bar (hidden on intro) -->
+    <div class="progress-wrap" id="progressWrap" hidden>
+      <div class="progress-meta">
+        <span class="progress-label">Progress</span>
+        <span class="progress-count" id="progressCount">1 of 7</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Step indicator (sr-only) -->
     <p class="step-label" id="stepLabel" aria-live="polite" hidden>Step 1 of 7</p>
 
     <!-- Card wraps all steps -->
@@ -48,7 +59,10 @@
 
       <!-- ── STEP 1 · State ── -->
       <div class="step" id="step-1" hidden>
-        <p class="q-label">Q1. What is your state?</p>
+        <div class="q-header">
+          <span class="q-number">Question 1 of 7</span>
+          <p class="q-label">What is your state?</p>
+        </div>
         <div class="opt-list" role="group" aria-labelledby="q1-lbl">
           <label class="opt-row"><input type="radio" name="q1" value="Arkansas"><span>Arkansas</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
           <label class="opt-row"><input type="radio" name="q1" value="Colorado"><span>Colorado</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
@@ -62,7 +76,10 @@
 
       <!-- ── STEP 2 · How heard ── -->
       <div class="step" id="step-2" hidden>
-        <p class="q-label">Q2. How did you first hear about Farm Bureau® Insurance?</p>
+        <div class="q-header">
+          <span class="q-number">Question 2 of 7</span>
+          <p class="q-label">How did you first hear about Farm Bureau® Insurance?</p>
+        </div>
         <div class="opt-list" role="group">
           <label class="opt-row"><input type="radio" name="q2" value="Online Ad"><span>Online Ad</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
           <label class="opt-row"><input type="radio" name="q2" value="Email"><span>Email</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
@@ -78,7 +95,10 @@
 
       <!-- ── STEP 3 · Primary reason ── -->
       <div class="step" id="step-3" hidden>
-        <p class="q-label">Q3. What was your primary reason for trying Farm Bureau®?</p>
+        <div class="q-header">
+          <span class="q-number">Question 3 of 7</span>
+          <p class="q-label">What was your primary reason for trying Farm Bureau®?</p>
+        </div>
         <div class="opt-list" role="group">
           <label class="opt-row"><input type="radio" name="q3" value="Price comparison"><span>Price comparison</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
           <label class="opt-row"><input type="radio" name="q3" value="Good trust"><span>Good trust</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
@@ -91,7 +111,10 @@
 
       <!-- ── STEP 4 · Duration ── -->
       <div class="step" id="step-4" hidden>
-        <p class="q-label">Q4. How long have you been a Farm Bureau® Insurance customer?</p>
+        <div class="q-header">
+          <span class="q-number">Question 4 of 7</span>
+          <p class="q-label">How long have you been a Farm Bureau® Insurance customer?</p>
+        </div>
         <div class="opt-list" role="group">
           <label class="opt-row"><input type="radio" name="q4" value="Less than 1 year"><span>Less than 1 year</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
           <label class="opt-row"><input type="radio" name="q4" value="1-2 years"><span>1–2 years</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
@@ -104,7 +127,10 @@
 
       <!-- ── STEP 5 · Quote method ── -->
       <div class="step" id="step-5" hidden>
-        <p class="q-label">Q5. How did you obtain your quote?</p>
+        <div class="q-header">
+          <span class="q-number">Question 5 of 7</span>
+          <p class="q-label">How did you obtain your quote?</p>
+        </div>
         <div class="opt-list" role="group">
           <label class="opt-row"><input type="radio" name="q5" value="Online"><span>Online</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
           <label class="opt-row"><input type="radio" name="q5" value="In-Person"><span>In-Person</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
@@ -115,8 +141,12 @@
 
       <!-- ── STEP 6 · Ratings ── -->
       <div class="step" id="step-6" hidden>
+        <div class="q-header">
+          <span class="q-number">Question 6 of 7</span>
+          <p class="q-label">Rate your experience with Farm Bureau® Insurance</p>
+        </div>
         <div class="rating-block">
-          <p class="q-label">Q6. In thinking about all the ways you interacted with Farm Bureau® Insurance in regard to obtaining an insurance quote — how satisfied were you with the service(s) provided?</p>
+          <p class="q-label" style="font-size:0.9rem;font-weight:500;color:var(--muted);">In thinking about all the ways you interacted with Farm Bureau® Insurance — how satisfied were you with the service provided?</p>
           <p class="scale-hint">0 = Not at All &nbsp;·&nbsp; 10 = Extremely</p>
           <div class="scale-row" data-q="q6">
             <input type="hidden" name="q6" id="val-q6">
@@ -182,8 +212,12 @@
 
       <!-- ── STEP 7 · Open feedback + Comparison ── -->
       <div class="step" id="step-7" hidden>
+        <div class="q-header">
+          <span class="q-number">Question 7 of 7</span>
+          <p class="q-label">Final feedback</p>
+        </div>
         <div class="rating-block">
-          <p class="q-label">Q9. Please tell us if there are any reasons why you are NOT likely to buy insurance through Farm Bureau® Insurance.</p>
+          <p class="q-label" style="font-size:0.9rem;font-weight:500;color:var(--muted);">Please tell us if there are any reasons why you are NOT likely to buy insurance through Farm Bureau® Insurance.</p>
           <textarea name="q9" class="survey-ta" rows="5" placeholder="Share your thoughts here…"></textarea>
         </div>
 

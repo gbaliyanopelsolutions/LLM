@@ -4,11 +4,17 @@
 const TOTAL_STEPS = 7;
 let currentStep = 0; // 0 = intro page
 
-const stepLabel  = document.getElementById('stepLabel');
-const btnNext    = document.getElementById('btnNext');
-const btnBack    = document.getElementById('btnBack');
-const btnStart   = document.getElementById('btnStart');
-const success    = document.getElementById('successScreen');
+const stepLabel    = document.getElementById('stepLabel');
+const btnNext      = document.getElementById('btnNext');
+const btnBack      = document.getElementById('btnBack');
+const btnStart     = document.getElementById('btnStart');
+const success      = document.getElementById('successScreen');
+const progressWrap = document.getElementById('progressWrap');
+const progressFill = document.getElementById('progressFill');
+const progressCount = document.getElementById('progressCount');
+
+// Arrow SVG for Next button
+const ARROW_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
 
 // ── Show / hide step ──────────────────
 function showStep(n) {
@@ -22,18 +28,30 @@ function showStep(n) {
     if (el) el.hidden = (i !== n);
   }
 
-  // Step label: hidden on intro page, visible on question steps
-  stepLabel.hidden = (n === 0);
-  if (n > 0) {
-    stepLabel.textContent = 'Step ' + n + ' of ' + TOTAL_STEPS;
+  // Progress bar
+  if (progressWrap) progressWrap.hidden = (n === 0);
+  if (n > 0 && progressFill) {
+    progressFill.style.width = Math.round((n / TOTAL_STEPS) * 100) + '%';
   }
+  if (n > 0 && progressCount) {
+    progressCount.textContent = n + ' of ' + TOTAL_STEPS;
+  }
+
+  // Step label (sr-only)
+  stepLabel.hidden = (n === 0);
+  if (n > 0) stepLabel.textContent = 'Step ' + n + ' of ' + TOTAL_STEPS;
 
   // Nav row: hidden on intro page
   const navRow = document.querySelector('.nav-row');
   if (navRow) navRow.hidden = (n === 0);
 
   btnBack.hidden = (n <= 1);
-  btnNext.textContent = (n === TOTAL_STEPS) ? 'Submit' : 'Next';
+
+  if (n === TOTAL_STEPS) {
+    btnNext.innerHTML = 'Submit ' + ARROW_SVG;
+  } else {
+    btnNext.innerHTML = 'Next ' + ARROW_SVG;
+  }
 
   // Scroll card back to top on step change
   const card = document.getElementById('surveyCard');
@@ -170,3 +188,5 @@ document.querySelectorAll('.opt-list input[type="radio"]').forEach(inp => {
 
 // ── Init ─────────────────────────────
 showStep(0); // start on intro page
+// Set initial next button label
+btnNext.innerHTML = 'Next ' + ARROW_SVG;
