@@ -16,13 +16,14 @@ const {
 const authRoutes = require('./routes/auth.js');
 const { loadAuthUser, requireAuthPage } = require('./middleware/authMiddleware.js');
 
-/** Retired IDs (404 on API) → pinned Claude Sonnet 4.5 snapshot per Anthropic docs. */
+/** Map retired/malformed IDs to their current replacements. */
 const DEPRECATED_MODEL_ALIASES = {
-	'claude-sonnet-4-20250514': 'claude-sonnet-4-5-20250929',
-	'claude-4-sonnet-20250514': 'claude-sonnet-4-5-20250929',
+	'claude-sonnet-4-20250514':    'claude-sonnet-4-5',
+	'claude-4-sonnet-20250514':    'claude-sonnet-4-5',
+	'claude-sonnet-4-5-20250929':  'claude-sonnet-4-5',
 };
 
-const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_MODEL = 'claude-sonnet-4-5';
 
 /**
  * Supabase JS expects the project origin only (no /rest/v1 path).

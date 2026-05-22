@@ -3,11 +3,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import { builderCors, jsonWithCors, surveyBuilderService } from '../_shared.js';
 
 const DEPRECATED_MODEL_ALIASES = {
-	'claude-sonnet-4-20250514': 'claude-sonnet-4-5-20250929',
-	'claude-4-sonnet-20250514': 'claude-sonnet-4-5-20250929',
+	'claude-sonnet-4-20250514':    'claude-sonnet-4-5',
+	'claude-4-sonnet-20250514':    'claude-sonnet-4-5',
+	'claude-sonnet-4-5-20250929':  'claude-sonnet-4-5',
 };
 
-const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929';
+const DEFAULT_MODEL = 'claude-sonnet-4-5';
 
 /**
  * @param {string|undefined} raw
