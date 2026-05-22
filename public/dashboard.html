@@ -319,25 +319,30 @@
       <div class="content-grid">
         <!-- Bar chart — submissions per survey -->
         <div class="chart-card">
-          <div class="section-header" style="margin-bottom:1rem;">
+          <div class="section-header" style="margin-bottom:1.1rem;">
             <div>
               <h2 class="section-header__title">Submissions per Survey</h2>
               <p class="section-header__sub">Top 8 surveys by response count</p>
             </div>
           </div>
-          <canvas id="barChart" height="220"></canvas>
+          <!-- wrapper must have explicit height for maintainAspectRatio:false -->
+          <div style="position:relative;height:260px;width:100%;">
+            <canvas id="barChart"></canvas>
+          </div>
           <p class="empty-state" id="barEmpty" hidden>No survey data yet. <a href="/index.html" style="color:var(--accent)">Create your first form →</a></p>
         </div>
 
         <!-- Donut chart — survey status -->
         <div class="chart-card">
-          <div class="section-header" style="margin-bottom:1rem;">
+          <div class="section-header" style="margin-bottom:1.1rem;">
             <div>
               <h2 class="section-header__title">Survey Status</h2>
               <p class="section-header__sub">Breakdown by state</p>
             </div>
           </div>
-          <canvas id="donutChart" height="200"></canvas>
+          <div style="position:relative;height:200px;width:100%;">
+            <canvas id="donutChart"></canvas>
+          </div>
           <div id="donutLegend" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.65rem;justify-content:center;font-size:0.78rem;"></div>
           <p class="empty-state" id="donutEmpty" hidden>No surveys yet.</p>
         </div>
@@ -510,86 +515,180 @@ function renderStats(surveys, companies) {
 
 /* ── Render charts ── */
 function renderCharts(surveys) {
-  // Bar chart — submissions per survey
+  // ── Bar chart — submissions per survey ──
   const top8 = [...surveys]
     .sort((a, b) => (Number(b.total_submissions) || 0) - (Number(a.total_submissions) || 0))
     .slice(0, 8);
 
-  const barEl = document.getElementById('barChart');
+  const barEl    = document.getElementById('barChart');
   const barEmpty = document.getElementById('barEmpty');
 
   if (top8.length === 0) {
-    barEl.hidden = true;
+    barEl.closest('div[style]').hidden = true;
     barEmpty.hidden = false;
   } else {
+    // Gradient fill: create after chart mounts via plugin
+    const barGradientPlugin = {
+      id: 'barGradient',
+      beforeDatasetsDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea) return;
+        const ds = chart.data.datasets[0];
+        const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        grad.addColorStop(0,   'rgba(91,140,255,0.90)');
+        grad.addColorStop(1,   'rgba(124,92,255,0.55)');
+        ds.backgroundColor = grad;
+        ds.hoverBackgroundColor = 'rgba(91,140,255,1)';
+      },
+    };
+
+    // Truncate labels: 18 chars max, wrap long ones
+    const truncate = (s, n) => s.length > n ? s.slice(0, n) + '…' : s;
+
     new Chart(barEl, {
       type: 'bar',
+      plugins: [barGradientPlugin],
       data: {
-        labels: top8.map(s => (s.title || s.name || 'Survey').slice(0, 28)),
+        labels: top8.map(s => truncate(s.title || s.name || 'Survey', 22)),
         datasets: [{
           label: 'Responses',
           data: top8.map(s => Number(s.total_submissions) || 0),
-          backgroundColor: 'rgba(91,140,255,0.75)',
-          borderColor: '#5b8cff',
-          borderWidth: 1.5,
-          borderRadius: 6,
+          backgroundColor: 'rgba(91,140,255,0.85)',
+          borderColor: 'transparent',
+          borderWidth: 0,
+          borderRadius: { topLeft: 6, topRight: 6 },
+          borderSkipped: 'bottom',
         }],
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        animation: { duration: 600, easing: 'easeOutQuart' },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              title: items => items[0].label,
+              label: ctx => `  ${ctx.parsed.y} response${ctx.parsed.y !== 1 ? 's' : ''}`,
+            },
+          },
+        },
         scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8', maxRotation: 30 } },
-          y: { beginAtZero: true, ticks: { font: { size: 11 }, color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(226,232,240,0.6)' } },
+          x: {
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              font: { size: 11, family: "'Segoe UI', system-ui, sans-serif" },
+              color: '#94a3b8',
+              maxRotation: 35,
+              minRotation: 0,
+            },
+          },
+          y: {
+            beginAtZero: true,
+            border: { display: false, dash: [4, 4] },
+            grid: { color: 'rgba(226,232,240,0.55)', lineWidth: 1 },
+            ticks: {
+              font: { size: 11, family: "'Segoe UI', system-ui, sans-serif" },
+              color: '#94a3b8',
+              stepSize: 1,
+              precision: 0,
+              padding: 6,
+            },
+          },
         },
       },
     });
-    barEl.style.height = '220px';
   }
 
-  // Donut chart — status breakdown
+  // ── Donut chart — status breakdown ──
   const statusCount = { published: 0, draft: 0, closed: 0 };
-  surveys.forEach(s => { if (s.status in statusCount) statusCount[s.status]++; });
+  surveys.forEach(s => {
+    const k = (s.status || '').toLowerCase();
+    if (k in statusCount) statusCount[k]++;
+  });
 
-  const donutEl = document.getElementById('donutChart');
-  const donutEmpty = document.getElementById('donutEmpty');
+  const donutEl     = document.getElementById('donutChart');
+  const donutEmpty  = document.getElementById('donutEmpty');
   const donutLegend = document.getElementById('donutLegend');
 
-  if (surveys.length === 0) {
-    donutEl.hidden = true;
+  const totalSurveys = surveys.length;
+
+  if (totalSurveys === 0) {
+    donutEl.closest('div[style]').hidden = true;
     donutEmpty.hidden = false;
     donutLegend.hidden = true;
   } else {
-    const colors = { published: '#10b981', draft: '#94a3b8', closed: '#ef4444' };
-    const labels = Object.keys(statusCount);
+    const COLORS = { published: '#10b981', draft: '#94a3b8', closed: '#ef4444' };
+    const labels  = Object.keys(statusCount);
+
+    // Centre label plugin
+    const centreTextPlugin = {
+      id: 'centreText',
+      afterDraw(chart) {
+        const { ctx, chartArea } = chart;
+        if (!chartArea) return;
+        const cx = (chartArea.left + chartArea.right)  / 2;
+        const cy = (chartArea.top  + chartArea.bottom) / 2;
+        ctx.save();
+        ctx.textAlign    = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle    = '#0f172a';
+        ctx.font         = `700 1.5rem 'Segoe UI', system-ui, sans-serif`;
+        ctx.fillText(String(totalSurveys), cx, cy - 6);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font      = `500 0.7rem 'Segoe UI', system-ui, sans-serif`;
+        ctx.fillText('surveys', cx, cy + 14);
+        ctx.restore();
+      },
+    };
+
     new Chart(donutEl, {
       type: 'doughnut',
+      plugins: [centreTextPlugin],
       data: {
         labels,
         datasets: [{
           data: labels.map(l => statusCount[l]),
-          backgroundColor: labels.map(l => colors[l]),
-          borderWidth: 0,
-          hoverOffset: 4,
+          backgroundColor: labels.map(l => COLORS[l]),
+          borderWidth: 3,
+          borderColor: '#ffffff',
+          hoverOffset: 6,
         }],
       },
       options: {
         responsive: true,
-        cutout: '68%',
+        maintainAspectRatio: false,
+        animation: { duration: 700, easing: 'easeOutQuart' },
+        cutout: '70%',
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+          tooltip: {
+            backgroundColor: '#0f172a',
+            titleColor: '#e2e8f0',
+            bodyColor: '#94a3b8',
+            padding: 10,
+            cornerRadius: 8,
+            callbacks: {
+              label: ctx => `  ${ctx.label}: ${ctx.parsed} (${Math.round(ctx.parsed / totalSurveys * 100)}%)`,
+            },
+          },
         },
       },
     });
-    donutEl.style.height = '200px';
-    donutLegend.innerHTML = labels.map(l =>
-      `<span style="display:flex;align-items:center;gap:5px;">
-        <span style="width:10px;height:10px;border-radius:50%;background:${colors[l]};flex-shrink:0;"></span>
-        <span style="color:var(--muted);">${l.charAt(0).toUpperCase()+l.slice(1)} (${statusCount[l]})</span>
-       </span>`
-    ).join('');
+
+    donutLegend.innerHTML = labels.map(l => {
+      const pct = totalSurveys > 0 ? Math.round(statusCount[l] / totalSurveys * 100) : 0;
+      return `<span style="display:flex;align-items:center;gap:5px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:${COLORS[l]};flex-shrink:0;"></span>
+        <span style="color:var(--muted);">${l.charAt(0).toUpperCase()+l.slice(1)}&nbsp;<strong style="color:var(--text);">${statusCount[l]}</strong>&nbsp;<span style="color:var(--muted-2);">(${pct}%)</span></span>
+      </span>`;
+    }).join('');
   }
 }
 
