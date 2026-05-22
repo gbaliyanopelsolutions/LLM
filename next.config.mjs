@@ -15,18 +15,23 @@ const nextConfig = {
 		return config;
 	},
 	async rewrites() {
-		return [
-			// API alias
-			{ source: '/generate',     destination: '/api/generate' },
-			// Clean URLs — map /page to /page.html (Next.js serves public/*.html)
-			{ source: '/dashboard',    destination: '/dashboard.html' },
-			{ source: '/index',        destination: '/index.html' },
-			{ source: '/survey',       destination: '/survey.html' },
-			{ source: '/add-company',  destination: '/add-company.html' },
-			{ source: '/login',        destination: '/login.html' },
-			{ source: '/register',     destination: '/register.html' },
-			{ source: '/form',         destination: '/form.html' },
-		];
+		return {
+			// beforeFiles runs BEFORE Next.js page routing — critical for /index
+			// which Next.js would otherwise normalise to "/" and redirect to /dashboard
+			beforeFiles: [
+				{ source: '/index',        destination: '/index.html' },
+				{ source: '/dashboard',    destination: '/dashboard.html' },
+				{ source: '/survey',       destination: '/survey.html' },
+				{ source: '/add-company',  destination: '/add-company.html' },
+				{ source: '/login',        destination: '/login.html' },
+				{ source: '/register',     destination: '/register.html' },
+				{ source: '/form',         destination: '/form.html' },
+			],
+			afterFiles: [
+				// API alias
+				{ source: '/generate', destination: '/api/generate' },
+			],
+		};
 	},
 	async redirects() {
 		return [
