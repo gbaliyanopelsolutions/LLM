@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-/** Root URL opens the survey demo form. */
+/** Root URL opens the LLM Survey Builder. */
 export default function HomePage() {
-	redirect('/survey-demo/');
+	redirect('/index.html');
 }

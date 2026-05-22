@@ -127,7 +127,7 @@ app.get('/api/public/supabase-config', (req, res) => {
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
-	res.redirect(302, '/survey-demo/');
+	res.redirect(302, '/index.html');
 });
 
 app.get('/login', (req, res) => {
