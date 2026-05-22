@@ -16,8 +16,27 @@ const nextConfig = {
 	},
 	async rewrites() {
 		return [
-			// Allow /generate as a short alias for /api/generate
-			{ source: '/generate', destination: '/api/generate' },
+			// API alias
+			{ source: '/generate',     destination: '/api/generate' },
+			// Clean URLs — map /page to /page.html (Next.js serves public/*.html)
+			{ source: '/dashboard',    destination: '/dashboard.html' },
+			{ source: '/index',        destination: '/index.html' },
+			{ source: '/survey',       destination: '/survey.html' },
+			{ source: '/add-company',  destination: '/add-company.html' },
+			{ source: '/login',        destination: '/login.html' },
+			{ source: '/register',     destination: '/register.html' },
+			{ source: '/form',         destination: '/form.html' },
+		];
+	},
+	async redirects() {
+		return [
+			// Legacy .html links → clean URL (permanent)
+			{ source: '/dashboard.html',    destination: '/dashboard',    permanent: true },
+			{ source: '/index.html',        destination: '/index',        permanent: true },
+			{ source: '/survey.html',       destination: '/survey',       permanent: true },
+			{ source: '/add-company.html',  destination: '/add-company',  permanent: true },
+			{ source: '/login.html',        destination: '/login',        permanent: true },
+			{ source: '/register.html',     destination: '/register',     permanent: true },
 		];
 	},
 	// Security headers applied to every route

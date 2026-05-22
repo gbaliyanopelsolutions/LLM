@@ -126,33 +126,30 @@ app.get('/api/public/supabase-config', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 
-app.get('/', (req, res) => {
-	res.redirect(302, '/dashboard.html');
-});
+/* ── Clean URL routes (no .html extension) ── */
+function servePublic(file) {
+	return (req, res) => res.sendFile(path.join(__dirname, 'public', file));
+}
 
-app.get('/login', (req, res) => {
-	res.redirect(302, '/login.html');
-});
+app.get('/', (req, res) => { res.redirect(302, '/dashboard'); });
 
-app.get('/register', (req, res) => {
-	res.redirect(302, '/register.html');
-});
+/* Legacy .html redirects → clean URL */
+app.get('/dashboard.html', (req, res) => { res.redirect(301, '/dashboard'); });
+app.get('/index.html',     (req, res) => { res.redirect(301, '/index'); });
+app.get('/survey.html',    (req, res) => { res.redirect(301, '/survey'); });
+app.get('/add-company.html',(req, res) => { res.redirect(301, '/add-company'); });
+app.get('/login.html',     (req, res) => { res.redirect(301, '/login'); });
+app.get('/register.html',  (req, res) => { res.redirect(301, '/register'); });
+app.get('/form.html',      (req, res) => { res.redirect(301, `/form?${new URLSearchParams(req.query).toString()}`); });
 
-app.get('/login.html', (req, res) => {
-	res.sendFile(path.join(__dirname, 'public', 'login.html'));
-});
-
-app.get('/register.html', (req, res) => {
-	res.sendFile(path.join(__dirname, 'public', 'register.html'));
-});
-
-app.get('/dashboard.html', loadAuthUser, requireAuthPage, (req, res) => {
-	res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
-});
-
-app.get('/index.html', (req, res) => {
-	res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+/* Clean URL routes */
+app.get('/dashboard',    loadAuthUser, requireAuthPage, servePublic('dashboard.html'));
+app.get('/index',        servePublic('index.html'));
+app.get('/survey',       servePublic('survey.html'));
+app.get('/add-company',  servePublic('add-company.html'));
+app.get('/login',        servePublic('login.html'));
+app.get('/register',     servePublic('register.html'));
+app.get('/form',         servePublic('form.html'));
 
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 

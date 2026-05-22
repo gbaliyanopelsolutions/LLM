@@ -1072,7 +1072,7 @@ if (saveFormBtn) {
 				throw new Error(data.error || 'Save failed');
 			}
 			const surveyId = data.surveyId;
-			const url = new URL('form.html', window.location.href);
+			const url = new URL('/form', window.location.href);
 			url.searchParams.set('survey', surveyId);
 			const publicUrl = url.href;
 			if (publicUrlInput) publicUrlInput.value = publicUrl;

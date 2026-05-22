@@ -21,9 +21,9 @@
 				<button type="submit" id="submit">Sign in</button>
 			</form>
 			<nav class="nav" aria-label="Related pages">
-				<a href="/register.html">Create an account</a>
+				<a href="/register">Create an account</a>
 				<span class="sep" aria-hidden="true">·</span>
-				<a href="/index.html">Form generator</a>
+				<a href="/index">Form generator</a>
 			</nav>
 		</div>
 	</main>
@@ -51,7 +51,7 @@
 					msg.textContent = data.error || 'Login failed';
 					return;
 				}
-				window.location.href = '/dashboard.html';
+				window.location.href = '/dashboard';
 			} catch (err) {
 				msg.textContent = 'Network error';
 			} finally {

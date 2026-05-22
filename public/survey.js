@@ -47,7 +47,7 @@ function showToast(text, variant = 'default') {
 }
 
 function buildFormUrl(surveyId) {
-	const url = new URL('form.html', window.location.href);
+	const url = new URL('/form', window.location.href);
 	url.searchParams.set('survey', surveyId);
 	return url.href;
 }
