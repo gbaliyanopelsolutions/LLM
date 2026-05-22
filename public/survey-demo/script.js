@@ -2,27 +2,50 @@
 
 // ── State ──────────────────────────────
 const TOTAL_STEPS = 7;
-let currentStep = 1;
+let currentStep = 0; // 0 = intro page
 
 const stepLabel  = document.getElementById('stepLabel');
 const btnNext    = document.getElementById('btnNext');
 const btnBack    = document.getElementById('btnBack');
+const btnStart   = document.getElementById('btnStart');
 const success    = document.getElementById('successScreen');
 
 // ── Show / hide step ──────────────────
 function showStep(n) {
+  // Show/hide intro (step 0)
+  const intro = document.getElementById('step-0');
+  if (intro) intro.hidden = (n !== 0);
+
+  // Show/hide question steps 1-7
   for (let i = 1; i <= TOTAL_STEPS; i++) {
     const el = document.getElementById('step-' + i);
     if (el) el.hidden = (i !== n);
   }
 
-  stepLabel.textContent = 'Step ' + n + ' of ' + TOTAL_STEPS;
-  btnBack.hidden = (n === 1);
+  // Step label: hidden on intro page, visible on question steps
+  stepLabel.hidden = (n === 0);
+  if (n > 0) {
+    stepLabel.textContent = 'Step ' + n + ' of ' + TOTAL_STEPS;
+  }
+
+  // Nav row: hidden on intro page
+  const navRow = document.querySelector('.nav-row');
+  if (navRow) navRow.hidden = (n === 0);
+
+  btnBack.hidden = (n <= 1);
   btnNext.textContent = (n === TOTAL_STEPS) ? 'Submit' : 'Next';
 
   // Scroll card back to top on step change
   const card = document.getElementById('surveyCard');
   if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Start Survey button (intro → step 1) ──
+if (btnStart) {
+  btnStart.addEventListener('click', () => {
+    currentStep = 1;
+    showStep(1);
+  });
 }
 
 // ── Validation per step ───────────────
@@ -100,6 +123,7 @@ btnBack.addEventListener('click', () => {
     currentStep--;
     showStep(currentStep);
   }
+  // No back on step 1 (Back is hidden there)
 });
 
 // ── Scale buttons (0–10) ─────────────
@@ -145,4 +169,4 @@ document.querySelectorAll('.opt-list input[type="radio"]').forEach(inp => {
 });
 
 // ── Init ─────────────────────────────
-showStep(1);
+showStep(0); // start on intro page

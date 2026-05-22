@@ -11,23 +11,44 @@
 <div class="page">
   <div class="container">
 
-    <!-- Step indicator -->
-    <p class="step-label" id="stepLabel" aria-live="polite">Step 1 of 7</p>
+    <!-- Step indicator (hidden on intro page) -->
+    <p class="step-label" id="stepLabel" aria-live="polite" hidden>Step 1 of 7</p>
 
     <!-- Card wraps all steps -->
     <div class="card" id="surveyCard">
 
-      <!-- ── STEP 1 · State ── -->
-      <div class="step" id="step-1">
-        <div class="intro-block">
-          <h1 class="survey-title">Farm Bureau® Insurance survey</h1>
-          <p class="survey-desc">Complete our survey on your Farm Bureau® insurance experience.
-            Share your opinions to help us improve. If you qualify, receive a
-            <strong>$10 Starbucks e-gift card</strong> for your time, limited to the first
-            200 participants.</p>
-        </div>
+      <!-- ── STEP 0 · Intro / Welcome ── -->
+      <div class="step" id="step-0">
+        <div class="intro-badge">Survey</div>
+        <h1 class="survey-title">Farm Bureau® Insurance survey</h1>
+        <p class="survey-desc">Complete our survey on your Farm Bureau® insurance experience.
+          Share your opinions to help us improve. If you qualify, receive a
+          <strong>$10 Starbucks e-gift card</strong> for your time, limited to the first
+          200 participants.</p>
+
         <hr class="divider">
-        <p class="q-label">What is your state?</p>
+
+        <ul class="intro-meta">
+          <li>
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/><path d="M8 4.5v3.75l2.25 2.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            Takes about 3 minutes
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M5 6h6M5 9h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            7 questions
+          </li>
+          <li>
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM3 13.5c0-2.485 2.239-4.5 5-4.5s5 2.015 5 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            Anonymous responses
+          </li>
+        </ul>
+
+        <button type="button" class="btn-start" id="btnStart">Start Survey</button>
+      </div>
+
+      <!-- ── STEP 1 · State ── -->
+      <div class="step" id="step-1" hidden>
+        <p class="q-label">Q1. What is your state?</p>
         <div class="opt-list" role="group" aria-labelledby="q1-lbl">
           <label class="opt-row"><input type="radio" name="q1" value="Arkansas"><span>Arkansas</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
           <label class="opt-row"><input type="radio" name="q1" value="Colorado"><span>Colorado</span><svg class="chk" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.5" stroke="currentColor"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></label>
@@ -183,8 +204,8 @@
 
     </div><!-- /card -->
 
-    <!-- Navigation row -->
-    <div class="nav-row">
+    <!-- Navigation row (hidden on intro page) -->
+    <div class="nav-row" hidden>
       <button type="button" class="btn-back" id="btnBack" hidden>Back</button>
       <button type="button" class="btn-next" id="btnNext">Next</button>
     </div>
