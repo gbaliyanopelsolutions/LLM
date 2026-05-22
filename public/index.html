@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Optional: override API origin. Leave empty when the page is served by the same app as /api (e.g. :3000). For Apache/XAMPP, public/supabase.js infers http://127.0.0.1:3000, or set e.g. http://127.0.0.1:3000 here / localStorage appApiBase. -->
+  <meta name="app-api-base" content="">
+  <title>LLM survey</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+  <style>
+    :root {
+      --bg: #fff;
+      --bg-elevated: #fff;
+      --bg-soft: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --accent: #5b8cff;
+      --accent-soft: rgba(91, 140, 255, 0.12);
+      --danger: #dc2626;
+      --radius: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 10px 40px rgba(91, 140, 255, 0.12), 0 2px 6px rgba(15, 23, 42, 0.05);
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+      --transition: 0.22s ease;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 12% 0%, rgba(124, 92, 255, 0.18) 0%, transparent 45%),
+        radial-gradient(circle at 88% 8%, rgba(91, 140, 255, 0.22) 0%, transparent 50%),
+        radial-gradient(circle at 50% 110%, rgba(236, 72, 153, 0.12) 0%, transparent 55%),
+        linear-gradient(180deg, #f5f7ff 0%, #eef2ff 45%, #f8fafc 100%);
+      background-attachment: fixed;
+    }
+
+    html {
+      background: linear-gradient(180deg, #f5f7ff 0%, #f8fafc 100%);
+    }
+
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 1rem 2rem;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--muted);
+      max-width: 42ch;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    /* Prompt full width on top; preview + source stacked below (single column). */
+    .layout {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    .panel {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      animation: fadeUp 0.55s ease 0.06s both;
+    }
+
+    .panel__head {
+      padding: 0.75rem 1rem;
+      font-size: 0.72rem;
+      font-weight: 650;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel__subhead {
+      padding: 0.5rem 1rem 0;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .field {
+      padding: 0 1rem;
+    }
+
+    label.field-label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      padding: 0.75rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 0.9rem;
+      resize: vertical;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: rgba(91, 140, 255, 0.55);
+      box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
+    }
+
+    .input-control {
+      width: 100%;
+      padding: 0.75rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+
+    .input-control:focus {
+      outline: none;
+      border-color: rgba(91, 140, 255, 0.55);
+      box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
+    }
+
+    .input-control::placeholder {
+      color: var(--muted);
+      opacity: 0.85;
+    }
+
+    .survey-details {
+      animation: fadeUp 0.48s ease 0.04s both;
+    }
+
+    .survey-details__body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .preview-footer select {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-family: inherit;
+    }
+
+    .survey-details__hint {
+      margin-top: 0.35rem !important;
+    }
+
+    .survey-details .field-label span {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .survey-details .field {
+      padding: 0 0 0.65rem;
+    }
+
+    .doc-upload-field {
+      padding-bottom: 0.5rem;
+    }
+
+    .doc-upload-zone {
+      margin: 0 0 0.75rem;
+      padding: 1.1rem 1rem;
+      border: 2px dashed rgba(91, 140, 255, 0.35);
+      border-radius: var(--radius-sm);
+      background: rgba(91, 140, 255, 0.06);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    }
+
+    .doc-upload-zone:hover,
+    .doc-upload-zone:focus-visible {
+      border-color: rgba(91, 140, 255, 0.65);
+      background: rgba(91, 140, 255, 0.1);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.15);
+    }
+
+    .doc-upload-zone.is-dragover {
+      border-color: var(--accent);
+      background: rgba(91, 140, 255, 0.16);
+    }
+
+    .doc-upload-zone__title {
+      margin: 0 0 0.35rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .doc-upload-zone__hint {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .doc-upload-zone__types {
+      display: block;
+      margin-top: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+
+    .doc-upload-file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .doc-upload-status {
+      margin: 0 0 0.5rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      min-height: 1.1rem;
+    }
+
+    .doc-upload-status--error {
+      color: var(--danger);
+    }
+
+    .doc-upload-status--success {
+      color: #15803d;
+    }
+
+    .doc-upload-chip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin: 0 0 0.75rem;
+      padding: 0.5rem 0.65rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(91, 140, 255, 0.35);
+      background: rgba(91, 140, 255, 0.1);
+      font-size: 0.8rem;
+    }
+
+    .doc-upload-chip[hidden] {
+      display: none !important;
+    }
+
+    .doc-upload-chip__name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+
+    .doc-upload-chip__meta {
+      flex-shrink: 0;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .doc-upload-chip__remove {
+      flex-shrink: 0;
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    .doc-upload-chip__remove:hover {
+      color: var(--danger);
+      background: rgba(248, 113, 113, 0.12);
+    }
+
+    .prompt-or-divider {
+      margin: 0;
+      padding: 0 1rem 0.65rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ===== Builder tabs ===== */
+    .builder-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-soft);
+    }
+
+    .builder-tab {
+      appearance: none;
+      flex: 1;
+      padding: 0.85rem 1rem;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      position: relative;
+      transition: color var(--transition), background var(--transition);
+    }
+
+    .builder-tab:hover { color: var(--text); }
+
+    .builder-tab.is-active {
+      color: var(--accent);
+      background: #fff;
+    }
+
+    .builder-tab.is-active::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: linear-gradient(135deg, #5b8cff, #7c5cff);
+    }
+
+    .builder-pane[hidden] { display: none !important; }
+
+    .builder-pane--edit {
+      padding: 1rem 1rem 0.5rem;
+      background: #fff;
+    }
+
+    .builder-pane--preview {
+      background: #fff;
+    }
+
+    /* ===== Editor header / cards ===== */
+    .editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    .editor-header__title {
+      margin: 0;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .editor-header__hint {
+      margin: 0.15rem 0 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .editor-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .editor-empty {
+      padding: 1.5rem 1rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      background: var(--bg-soft);
+    }
+
+    .editor-empty__title {
+      margin: 0 0 0.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .editor-empty__hint {
+      margin: 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .editor-card {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 0.65rem;
+      align-items: start;
+      padding: 0.65rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: #fff;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, 0.02);
+      transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+    }
+
+    .editor-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    }
+
+    .editor-card.is-dragging {
+      opacity: 0.5;
+      transform: scale(0.99);
+    }
+
+    .editor-card.is-drop-target {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
+    }
+
+    .editor-card__handle {
+      cursor: grab;
+      color: #94a3b8;
+      font-weight: 700;
+      letter-spacing: -0.05em;
+      padding-top: 2px;
+      user-select: none;
+    }
+
+    .editor-card__body { min-width: 0; }
+
+    .editor-card__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .editor-card__title {
+      display: flex;
+      gap: 0.4rem;
+      align-items: baseline;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .editor-card__num {
+      font-weight: 700;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .editor-card__text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .editor-card__badges {
+      display: flex;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .editor-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 0.18rem 0.45rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .editor-badge--type {
+      background: rgba(91, 140, 255, 0.12);
+      color: #4f7be0;
+    }
+
+    .editor-badge--required {
+      background: rgba(220, 38, 38, 0.1);
+      color: #b91c1c;
+    }
+
+    .editor-card__options {
+      margin: 0.5rem 0 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .editor-card__options li {
+      font-size: 0.72rem;
+      padding: 0.18rem 0.45rem;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      color: #475569;
+    }
+
+    .editor-card__options-more {
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .editor-card__actions {
+      display: flex;
+      gap: 0.2rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .editor-icon-btn {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: var(--bg-soft);
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.78rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .editor-icon-btn:hover:not(:disabled) {
+      background: #e2e8f0;
+      color: var(--text);
+    }
+
+    .editor-icon-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .editor-icon-btn--danger:hover:not(:disabled) {
+      background: rgba(220, 38, 38, 0.1);
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.25);
+    }
+
+    /* ===== Edit-with-AI ===== */
+    .editor-ai {
+      margin-top: 1.25rem;
+      padding: 0.85rem 0.9rem 1rem;
+      border-top: 1px dashed var(--border);
+    }
+
+    .editor-ai__title {
+      margin: 0 0 0.25rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .editor-ai__hint {
+      margin: 0 0 0.55rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .editor-ai__hint em {
+      font-style: normal;
+      color: #4f7be0;
+    }
+
+    .editor-ai__textarea {
+      width: 100%;
+      min-height: 78px;
+      padding: 0.55rem 0.7rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.85rem;
+      resize: vertical;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ===== Edit modal ===== */
+    .editor-modal-card {
+      width: min(100%, 580px);
+      max-height: min(90vh, 720px);
+      overflow-y: auto;
+    }
+
+    .editor-modal-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .editor-modal-field > label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .editor-modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .editor-modal-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .editor-modal-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .editor-modal-options__row {
+      display: flex;
+      gap: 0.35rem;
+    }
+
+    .editor-modal-options__row input {
+      flex: 1;
+    }
+
+    .editor-modal-options__add {
+      align-self: flex-start;
+    }
+
+    .editor-modal-section-title {
+      margin: 0.5rem 0 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .editor-modal-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+      margin-top: 0.85rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 540px) {
+      .editor-modal-grid { grid-template-columns: 1fr; }
+      .editor-card { grid-template-columns: 22px 1fr; }
+      .editor-card__actions { grid-column: 1 / -1; justify-content: flex-start; }
+    }
+
+    /* Preview on top, source below — full width (no side-by-side columns). */
+    .split {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      min-height: auto;
+      flex: none;
+    }
+
+    .subpanel {
+      display: flex;
+      flex-direction: column;
+      min-height: auto;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .subpanel:last-child {
+      border-bottom: none;
+    }
+
+    .subpanel--preview {
+      flex: none;
+      min-height: auto;
+      display: block;
+      overflow: visible;
+    }
+
+    .subpanel--preview #preview {
+      display: block;
+      width: 100%;
+      min-height: 120px;
+      height: auto;
+      max-height: none;
+      overflow: visible;
+    }
+
+    .subpanel--source {
+      flex: 1 1 auto;
+      min-height: 0;
+      transition: flex-basis 0.28s ease;
+    }
+
+    .panel__head--split {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .panel__head-title {
+      font-size: inherit;
+      font-weight: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      color: inherit;
+    }
+
+    .btn-source-toggle {
+      flex-shrink: 0;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .btn-source-toggle:hover {
+      color: var(--text);
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .btn-source-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .source-panel__body {
+      display: grid;
+      grid-template-rows: 1fr;
+      transition: grid-template-rows 0.32s ease;
+    }
+
+    .subpanel--source.is-collapsed .source-panel__body {
+      grid-template-rows: 0fr;
+    }
+
+    .subpanel--source.is-collapsed {
+      flex: 0 0 auto;
+      min-height: 0;
+    }
+
+    .source-panel__inner {
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .code-wrap {
+      margin: 0;
+      flex: 1;
+      overflow: auto;
+      padding: 0.75rem;
+      background: #0a0d12;
+    }
+
+    .code-wrap code {
+      font-family: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+      font-size: 0.72rem;
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.65rem 0.75rem;
+      border-top: 1px solid var(--border);
+      background: var(--bg-soft);
+    }
+
+    .toolbar .btn--primary {
+      box-shadow: none;
+      background: rgba(91, 140, 255, 0.15);
+      color: var(--text);
+      border: 1px solid rgba(91, 140, 255, 0.35);
+    }
+
+    .toolbar .btn--primary:hover:not(:disabled) {
+      background: rgba(91, 140, 255, 0.3);
+    }
+
+    #preview {
+      display: block;
+      width: 100%;
+      min-height: 120px;
+      height: auto;
+      max-height: none;
+      border: none;
+      background: #fff;
+      overflow: visible;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem 1rem;
+    }
+
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow var(--transition), background var(--transition);
+      font-family: inherit;
+    }
+
+    .btn:active:not(:disabled) { transform: scale(0.98); }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .btn--primary {
+      background: linear-gradient(135deg, #5b8cff, #7c5cff);
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(91, 140, 255, 0.35);
+    }
+
+    .btn--primary:hover:not(:disabled) {
+      box-shadow: 0 10px 28px rgba(91, 140, 255, 0.45);
+    }
+
+    .btn--ghost {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn--ghost:hover:not(:disabled) {
+      background: var(--bg-soft);
+    }
+
+    .btn--small {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.78rem;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding: 0.5rem 1rem 1rem;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .chip {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.6rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--muted);
+      cursor: pointer;
+      max-width: 100%;
+      transition: background var(--transition), color var(--transition);
+      font-family: inherit;
+    }
+
+    .chip:hover {
+      color: var(--text);
+      background: #f1f5f9;
+    }
+
+    .muted.small {
+      margin: 0;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .alert {
+      margin: 0 0 1rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+    }
+
+    .alert--error {
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      background: rgba(248, 113, 113, 0.12);
+      color: #b91c1c;
+      animation: shake 0.35s ease;
+    }
+
+    .alert--success {
+      border: 1px solid rgba(52, 211, 153, 0.45);
+      background: rgba(52, 211, 153, 0.12);
+      color: #15803d;
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .loader {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      background: rgba(6, 8, 12, 0.72);
+      backdrop-filter: blur(6px);
+      transition: opacity var(--transition);
+    }
+
+    .loader[hidden] {
+      display: none;
+    }
+
+    .loader__card {
+      padding: 1.5rem 2rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      box-shadow: var(--shadow);
+      text-align: center;
+      max-width: 280px;
+    }
+
+    .spinner {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 1rem;
+      border-radius: 50%;
+      border: 3px solid #e2e8f0;
+      border-top-color: var(--accent);
+      animation: spin 0.85s linear infinite;
+    }
+
+    .loader__text {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    body.is-loading .panel {
+      pointer-events: none;
+      opacity: 0.92;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      z-index: 99;
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      animation: toastIn 0.35s ease;
+    }
+
+    .toast--error {
+      border-color: rgba(248, 113, 113, 0.45);
+      color: #b91c1c;
+    }
+
+    .toast--success {
+      border-color: rgba(52, 211, 153, 0.45);
+      color: #15803d;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>LLM survey</h1>
+        <p>Describe any form — contact, survey, multi-step, login, checkout. Claude returns one complete HTML file.</p>
+      </div>
+      <div class="header-actions">
+        <a class="link-inline" href="/survey.html">Surveys</a>
+        <a class="link-inline" href="/add-company.html">Add company</a>
+      </div>
+    </header>
+
+    <div id="err" class="alert alert--error" hidden role="alert"></div>
+
+    <main class="layout">
+      <section class="panel" aria-label="Prompt">
+        <div class="panel__head">Prompt</div>
+
+        <div class="field doc-upload-field">
+          <span class="field-label" id="doc-upload-label">Upload requirements (optional)</span>
+          <div
+            id="doc-upload-zone"
+            class="doc-upload-zone"
+            role="button"
+            tabindex="0"
+            aria-labelledby="doc-upload-label"
+            aria-describedby="doc-upload-hint"
+          >
+            <p class="doc-upload-zone__title">Drag &amp; drop a file here</p>
+            <p class="doc-upload-zone__hint" id="doc-upload-hint">or click to browse</p>
+            <span class="doc-upload-zone__types">.txt, .docx, .pdf — max 10 MB</span>
+          </div>
+          <input
+            type="file"
+            id="doc-upload-input"
+            class="doc-upload-file-input"
+            accept=".txt,.docx,.pdf,text/plain,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            aria-hidden="true"
+          />
+          <p id="doc-upload-status" class="doc-upload-status" aria-live="polite"></p>
+          <div id="doc-upload-chip" class="doc-upload-chip" hidden>
+            <span class="doc-upload-chip__name" id="doc-upload-chip-name"></span>
+            <span class="doc-upload-chip__meta" id="doc-upload-chip-meta"></span>
+            <button type="button" class="doc-upload-chip__remove" id="doc-upload-remove" aria-label="Remove uploaded file">&times;</button>
+          </div>
+        </div>
+
+        <p class="prompt-or-divider">or type your prompt</p>
+
+        <div class="field">
+          <label class="field-label" for="prompt-input">Form requirement or follow-up</label>
+          <textarea id="prompt-input" placeholder="e.g. Multi-step survey with progress bar and validation"></textarea>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn--primary" id="generate-btn">Generate</button>
+          <button type="button" class="btn btn--ghost" id="clear-history-btn">Clear history</button>
+        </div>
+
+        <div class="panel__subhead">Saved prompts</div>
+        <div id="prompt-history" class="chips"></div>
+      </section>
+
+      <section class="panel" aria-label="Survey preview and source code">
+        <div class="split">
+          <div class="subpanel subpanel--preview">
+            <div class="builder-tabs" role="tablist" aria-label="Form builder">
+              <button
+                type="button"
+                role="tab"
+                class="builder-tab is-active"
+                id="builder-tab-edit"
+                data-builder-tab="edit"
+                aria-selected="true"
+                aria-controls="builder-pane-edit"
+              >Edit Form</button>
+              <button
+                type="button"
+                role="tab"
+                class="builder-tab"
+                id="builder-tab-preview"
+                data-builder-tab="preview"
+                aria-selected="false"
+                aria-controls="builder-pane-preview"
+              >Preview Form</button>
+            </div>
+
+            <div
+              id="builder-pane-edit"
+              class="builder-pane builder-pane--edit"
+              role="tabpanel"
+              aria-labelledby="builder-tab-edit"
+            >
+              <div class="editor-header">
+                <div>
+                  <p class="editor-header__title">Questions</p>
+                  <p class="editor-header__hint">Edit, reorder, add, or remove. Changes update the preview instantly.</p>
+                </div>
+                <button type="button" class="btn btn--primary btn--small" id="editor-add-question-btn">+ Add Question</button>
+              </div>
+              <div id="editor-cards" class="editor-cards"></div>
+
+              <div class="editor-ai">
+                <p class="editor-ai__title">Edit with AI</p>
+                <p class="editor-ai__hint">
+                  Describe a change in plain English. Examples:
+                  <em>"Add a customer satisfaction rating"</em>,
+                  <em>"Make this form shorter"</em>,
+                  <em>"Add an email field at the top"</em>.
+                </p>
+                <textarea
+                  id="editor-ai-input"
+                  class="editor-ai__textarea"
+                  rows="3"
+                  placeholder="What should change?"
+                ></textarea>
+                <button type="button" class="btn btn--primary btn--small" id="editor-ai-btn">Update Form with AI</button>
+              </div>
+            </div>
+
+            <div
+              id="builder-pane-preview"
+              class="builder-pane builder-pane--preview"
+              role="tabpanel"
+              aria-labelledby="builder-tab-preview"
+              hidden
+            >
+              <iframe id="preview" title="Live form preview" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+            <div class="preview-footer">
+              <div class="survey-details" id="survey-details-section" hidden aria-labelledby="survey-details-heading">
+                <div class="panel__subhead" id="survey-details-heading">Survey details</div>
+                <div class="survey-details__body">
+                  <div class="field">
+                    <label class="field-label" for="survey-title-input">Survey title <span aria-hidden="true">*</span></label>
+                    <input
+                      type="text"
+                      id="survey-title-input"
+                      class="input-control"
+                      maxlength="500"
+                      autocomplete="off"
+                      placeholder="e.g. Q4 customer satisfaction pulse"
+                      aria-required="true"
+                    />
+                  </div>
+                  <div class="field">
+                    <label class="field-label" for="survey-description-input">Survey description <span aria-hidden="true">*</span></label>
+                    <textarea
+                      id="survey-description-input"
+                      rows="3"
+                      maxlength="4000"
+                      placeholder="Briefly describe what respondents should know before they start."
+                      aria-required="true"
+                    ></textarea>
+                  </div>
+                  <div class="field" style="padding:0;margin:0;">
+                    <label class="field-label" for="company-select">Select company</label>
+                    <select id="company-select" aria-label="Select company for survey save"></select>
+                  </div>
+                  <div class="field" style="padding:0;margin:0;">
+                    <label class="field-label" for="max-submissions-input">Maximum responses</label>
+                    <input
+                      type="number"
+                      id="max-submissions-input"
+                      class="input-control"
+                      min="1"
+                      step="1"
+                      placeholder="Unlimited if empty"
+                      aria-label="Maximum total responses before survey closes"
+                    />
+                  </div>
+                  <div class="field" style="padding:0;margin:0;">
+                    <label class="field-label" for="survey-status-select">Survey status</label>
+                    <select id="survey-status-select" aria-label="Survey status">
+                      <option value="draft" selected>Draft (default)</option>
+                      <option value="published">Published (public link works)</option>
+                      <option value="closed">Closed</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn--primary btn-save-form" id="save-form-btn" disabled>Save Form</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="subpanel subpanel--source is-collapsed" id="source-subpanel">
+            <div class="panel__head panel__head--split">
+              <span class="panel__head-title">Source</span>
+              <button
+                type="button"
+                class="btn-source-toggle"
+                id="source-toggle"
+                aria-expanded="false"
+                aria-controls="source-panel-body"
+              >
+                Show source
+              </button>
+            </div>
+            <div class="source-panel__body" id="source-panel-body">
+              <div class="source-panel__inner">
+                <pre class="code-wrap"><code id="code-block" class="language-html"></code></pre>
+                <div class="toolbar">
+                  <button type="button" class="btn btn--primary" id="copy-btn" disabled>Copy code</button>
+                  <button type="button" class="btn btn--ghost" id="download-btn" disabled>Download HTML</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="loader" class="loader" hidden aria-busy="true">
+    <div class="loader__card">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="loader__text" id="loader-text">Generating your form…</p>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden role="status"></div>
+
+  <div id="editor-edit-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="editor-edit-modal-title">
+    <div class="modal-card editor-modal-card">
+      <h2 id="editor-edit-modal-title">Edit question</h2>
+      <form id="editor-edit-form" novalidate>
+        <input type="hidden" id="editor-edit-id" />
+
+        <div class="editor-modal-field">
+          <label for="editor-edit-text">Question text</label>
+          <input type="text" class="input-control" id="editor-edit-text" maxlength="500" required />
+        </div>
+
+        <div class="editor-modal-grid">
+          <div class="editor-modal-field">
+            <label for="editor-edit-type">Field type</label>
+            <select id="editor-edit-type" class="input-control" required>
+              <option value="text">Text</option>
+              <option value="email">Email</option>
+              <option value="number">Number</option>
+              <option value="textarea">Long text (textarea)</option>
+              <option value="select">Dropdown (select)</option>
+              <option value="radio">Single choice (radio)</option>
+              <option value="checkbox">Multiple choice (checkbox)</option>
+              <option value="date">Date</option>
+              <option value="file">File upload</option>
+            </select>
+          </div>
+
+          <div class="editor-modal-field">
+            <label for="editor-edit-placeholder">Placeholder</label>
+            <input type="text" class="input-control" id="editor-edit-placeholder" maxlength="200" placeholder="Optional hint text" />
+          </div>
+        </div>
+
+        <div class="editor-modal-field editor-modal-toggle">
+          <input type="checkbox" id="editor-edit-required" />
+          <label for="editor-edit-required" style="font-weight:600;color:var(--text);">Required field</label>
+        </div>
+
+        <div class="editor-modal-field" id="editor-edit-options-wrap" hidden>
+          <p class="editor-modal-section-title">Options</p>
+          <div id="editor-edit-options" class="editor-modal-options"></div>
+          <button type="button" class="btn btn--ghost btn--small editor-modal-options__add" id="editor-edit-add-option">+ Add option</button>
+        </div>
+
+        <p class="editor-modal-section-title">Validation</p>
+        <div class="editor-modal-grid" id="editor-edit-validation">
+          <div class="editor-modal-field" data-validation-row="minLength">
+            <label for="editor-edit-min-length">Min length</label>
+            <input type="number" class="input-control" id="editor-edit-min-length" min="0" />
+          </div>
+          <div class="editor-modal-field" data-validation-row="maxLength">
+            <label for="editor-edit-max-length">Max length</label>
+            <input type="number" class="input-control" id="editor-edit-max-length" min="1" />
+          </div>
+          <div class="editor-modal-field" data-validation-row="min">
+            <label for="editor-edit-min">Min value</label>
+            <input type="number" class="input-control" id="editor-edit-min" />
+          </div>
+          <div class="editor-modal-field" data-validation-row="max">
+            <label for="editor-edit-max">Max value</label>
+            <input type="number" class="input-control" id="editor-edit-max" />
+          </div>
+          <div class="editor-modal-field" data-validation-row="pattern" style="grid-column: 1 / -1;">
+            <label for="editor-edit-pattern">Pattern (regex)</label>
+            <input type="text" class="input-control" id="editor-edit-pattern" maxlength="200" placeholder="e.g. ^[A-Z]{2,3}$" />
+          </div>
+          <div class="editor-modal-field" data-validation-row="accept" style="grid-column: 1 / -1;">
+            <label for="editor-edit-accept">Accepted file types</label>
+            <input type="text" class="input-control" id="editor-edit-accept" maxlength="200" placeholder=".pdf,.docx,image/*" />
+          </div>
+        </div>
+
+        <div class="editor-modal-actions">
+          <button type="button" class="btn btn--ghost" id="editor-edit-cancel">Cancel</button>
+          <button type="submit" class="btn btn--primary">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="editor-delete-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="editor-delete-modal-title">
+    <div class="modal-card">
+      <h2 id="editor-delete-modal-title">Delete question?</h2>
+      <p class="muted small" id="editor-delete-modal-text" style="margin:0 0 0.75rem;">This question will be removed from the form.</p>
+      <div class="editor-modal-actions">
+        <button type="button" class="btn btn--ghost" id="editor-delete-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="editor-delete-confirm" style="background:linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 6px 18px rgba(220,38,38,0.3);">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="save-result-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="save-modal-title">
+    <div class="modal-card">
+      <h2 id="save-modal-title">Survey saved</h2>
+      <p class="muted small" style="margin:0 0 0.75rem;color:var(--muted);">Public form URL (share with respondents):</p>
+      <div class="url-box">
+        <input type="text" id="survey-public-url" readonly aria-label="Public form URL" />
+      </div>
+      <div class="actions" style="padding:0;margin-top:0.75rem;">
+        <button type="button" class="btn btn--primary" id="copy-public-url-btn">Copy URL</button>
+        <button type="button" class="btn btn--ghost" id="open-public-form-btn">Open form</button>
+        <button type="button" class="btn btn--ghost" id="close-save-modal-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-core.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+  <script>
+    Prism.plugins.autoloader.languages_path = 'https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.9.0/mammoth.browser.min.js"></script>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="app-api-base" content="">
+  <title>Add company</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="survey-light company-page">
+  <header class="company-page__header">
+    <a class="company-page__back" href="/index.html">← LLM builder</a>
+  </header>
+
+  <main class="company-page__main">
+    <div class="card company-card">
+      <h1 class="company-card__title">Add company</h1>
+      <p class="muted company-card__lead">Company name and tier are required. Industry and region are optional (type freely or pick a suggestion).</p>
+
+      <form id="company-form" class="company-form" novalidate>
+        <div class="form-grid">
+          <div class="field form-grid__full">
+            <label for="company-name">Company name <span class="req-label">*</span></label>
+            <input type="text" id="company-name" name="name" required autocomplete="organization" placeholder="e.g. Acme Corporation">
+          </div>
+
+          <div class="field">
+            <label for="company-industry">Industry</label>
+            <input type="text" id="company-industry" name="industry" list="industry-suggestions" placeholder="Type or pick a suggestion">
+            <datalist id="industry-suggestions">
+              <option value="Technology"></option>
+              <option value="Healthcare"></option>
+              <option value="Finance"></option>
+              <option value="Retail"></option>
+              <option value="Manufacturing"></option>
+              <option value="Education"></option>
+              <option value="Government"></option>
+              <option value="Professional services"></option>
+            </datalist>
+          </div>
+
+          <div class="field">
+            <label for="company-region">Region</label>
+            <input type="text" id="company-region" name="region" list="region-suggestions" placeholder="Type or pick a suggestion">
+            <datalist id="region-suggestions">
+              <option value="North America"></option>
+              <option value="Europe"></option>
+              <option value="Asia Pacific"></option>
+              <option value="Middle East & Africa"></option>
+              <option value="Latin America"></option>
+              <option value="India"></option>
+              <option value="Global"></option>
+            </datalist>
+          </div>
+
+          <div class="field form-grid__full">
+            <label for="company-tier">Tier <span class="req-label">*</span></label>
+            <select id="company-tier" name="tier" required>
+              <option value="" disabled selected>Select tier</option>
+              <option value="Tier 1">Tier 1</option>
+              <option value="Tier 2">Tier 2</option>
+              <option value="Tier 3">Tier 3</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="company-form__actions">
+          <button type="submit" class="btn btn-primary btn-lg" id="save-btn">Save company</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <div id="toast" class="toast" hidden role="status"></div>
+  <div id="loader" class="loader-overlay" hidden aria-busy="true">
+    <div class="spinner" aria-hidden="true"></div>
+  </div>
+  <script type="module" src="/company.js"></script>
+</body>
+</html>

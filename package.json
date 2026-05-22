@@ -1,20 +1,39 @@
 {
   "name": "only_llm",
   "version": "1.0.0",
+  "description": "AI-powered survey builder using Claude (Anthropic) and Supabase.",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "dev:express": "node server.js",
+    "server": "node server.js",
+    "verify:sql-split": "node scripts/verify-sql-split.js",
+    "db:init": "node scripts/run-db-init.js",
+    "db:migrate": "node scripts/run-db-migrate.js",
+    "db:sample": "node scripts/pg-sample-query.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["survey", "ai", "llm", "anthropic", "supabase", "nextjs"],
   "author": "",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.0",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.105.4",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "next": "^15.5.18",
+    "pg": "^8.20.0",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   }
 }

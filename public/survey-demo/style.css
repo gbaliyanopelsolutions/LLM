@@ -1,0 +1,433 @@
+/* ============================================
+   Farm Bureau® Insurance Survey
+   Matching Claude.ai warm-minimal aesthetic
+   ============================================ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Claude.ai's signature warm off-white */
+  --bg:            #EDECE8;
+  --card:          #FFFFFF;
+  --card-border:   #E0DED9;
+
+  /* Option rows */
+  --opt-border:    #D5D3CE;
+  --opt-hover-bg:  #F5F4F0;
+  --opt-hover-bdr: #B8B5AF;
+  --opt-sel-bg:    #EEF3FF;
+  --opt-sel-bdr:   #4A7FE0;
+  --opt-sel-chk:   #4A7FE0;
+
+  /* Text */
+  --text:          #1A1916;
+  --text-muted:    #6B6963;
+  --text-hint:     #9A9890;
+
+  /* Dividers */
+  --divider:       #E4E3DE;
+
+  /* Scale buttons */
+  --sc-border:     #D5D3CE;
+  --sc-hover-bg:   #F5F4F0;
+  --sc-sel-bg:     #2B2A26;
+  --sc-sel-text:   #FFFFFF;
+
+  /* Navigation */
+  --btn-next-bg:      #2B2A26;
+  --btn-next-hover:   #1A1916;
+  --btn-next-text:    #FFFFFF;
+  --btn-back-text:    #6B6963;
+  --btn-back-hover:   #1A1916;
+
+  /* Error */
+  --error: #CC2222;
+
+  /* Misc */
+  --radius-card:  10px;
+  --radius-opt:   7px;
+  --radius-btn:   7px;
+  --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --tx: 0.15s ease;
+}
+
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 48px 16px 80px;
+}
+
+/* ── Page layout ── */
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 540px;
+}
+
+/* ── Step label ── */
+.step-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  letter-spacing: 0.01em;
+}
+
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 2px 12px rgba(0,0,0,0.03);
+}
+
+/* ── Steps show/hide ── */
+.step { animation: fade-in 0.2s ease; }
+.step[hidden] { display: none !important; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Intro block (step 1 header) ── */
+.intro-block {
+  margin-bottom: 18px;
+}
+
+.survey-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.survey-desc {
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.survey-desc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* ── Dividers ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--divider);
+  margin: 18px 0;
+}
+
+.q-divider {
+  border: none;
+  border-top: 1px solid var(--divider);
+  margin: 20px 0;
+}
+
+/* ── Question label ── */
+.q-label {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+/* ── Option list ── */
+.opt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Option row ── */
+.opt-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 11px 14px;
+  border: 1px solid var(--opt-border);
+  border-radius: var(--radius-opt);
+  cursor: pointer;
+  background: var(--card);
+  transition: background var(--tx), border-color var(--tx);
+  user-select: none;
+  position: relative;
+}
+
+/* Hide native radio */
+.opt-row input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.opt-row span {
+  font-size: 0.875rem;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Check icon — hidden by default */
+.opt-row .chk {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--opt-sel-chk);
+  opacity: 0;
+  transition: opacity var(--tx);
+}
+
+/* Hover */
+.opt-row:hover {
+  background: var(--opt-hover-bg);
+  border-color: var(--opt-hover-bdr);
+}
+
+/* Selected */
+.opt-row:has(input:checked) {
+  background: var(--opt-sel-bg);
+  border-color: var(--opt-sel-bdr);
+}
+
+.opt-row:has(input:checked) span {
+  color: var(--opt-sel-bdr);
+  font-weight: 500;
+}
+
+.opt-row:has(input:checked) .chk {
+  opacity: 1;
+}
+
+/* ── Rating block ── */
+.rating-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.rating-block:first-child { padding-top: 0; }
+
+/* ── Scale hint ── */
+.scale-hint {
+  font-size: 0.76rem;
+  color: var(--text-hint);
+  margin-bottom: 12px;
+  margin-top: -8px;
+  line-height: 1.4;
+}
+
+/* ── Scale row (0-10) ── */
+.scale-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+.sc {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  border: 1px solid var(--sc-border);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all var(--tx);
+  padding: 0;
+}
+
+.sc:hover {
+  background: var(--sc-hover-bg);
+  border-color: var(--opt-hover-bdr);
+}
+
+.sc.on {
+  background: var(--sc-sel-bg);
+  border-color: var(--sc-sel-bg);
+  color: var(--sc-sel-text);
+}
+
+/* ── Textarea ── */
+.survey-ta {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--opt-border);
+  border-radius: var(--radius-opt);
+  font-family: var(--font);
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--card);
+  resize: vertical;
+  line-height: 1.55;
+  outline: none;
+  transition: border-color var(--tx);
+  margin-top: 6px;
+}
+
+.survey-ta::placeholder {
+  color: var(--text-hint);
+}
+
+.survey-ta:focus {
+  border-color: var(--opt-sel-bdr);
+  box-shadow: 0 0 0 3px rgba(74, 127, 224, 0.12);
+}
+
+/* ── Error message ── */
+.err-msg {
+  font-size: 0.76rem;
+  color: var(--error);
+  margin-top: 8px;
+  font-weight: 500;
+}
+.err-msg[hidden] { display: none !important; }
+
+/* ── Navigation row ── */
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Back button */
+.btn-back {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 0.84rem;
+  color: var(--btn-back-text);
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: var(--radius-btn);
+  transition: color var(--tx), background var(--tx);
+}
+
+.btn-back:hover {
+  color: var(--btn-back-hover);
+  background: rgba(0,0,0,0.04);
+}
+
+.btn-back[hidden] { display: none !important; }
+
+/* Next / Submit button */
+.btn-next {
+  appearance: none;
+  border: none;
+  background: var(--btn-next-bg);
+  color: var(--btn-next-text);
+  font-family: var(--font);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 9px 22px;
+  border-radius: var(--radius-btn);
+  cursor: pointer;
+  transition: background var(--tx), transform 0.1s ease;
+  letter-spacing: 0.01em;
+}
+
+.btn-next:hover {
+  background: var(--btn-next-hover);
+}
+
+.btn-next:active {
+  transform: scale(0.98);
+}
+
+/* ── Success screen ── */
+.success-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fade-in 0.3s ease;
+}
+
+.success-screen[hidden] { display: none !important; }
+
+.success-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: 40px 36px;
+  max-width: 460px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+
+.success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #E8F5E9;
+  color: #2E7D32;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+.success-card h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 10px;
+  letter-spacing: -0.01em;
+}
+
+.success-card p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.success-card p strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.success-sig {
+  font-size: 0.8rem;
+  color: var(--text-hint);
+  margin-top: 14px;
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  body { padding: 28px 12px 60px; }
+  .card { padding: 18px 16px; }
+  .scale-row { gap: 3px; }
+  .sc { height: 34px; font-size: 0.74rem; }
+  .success-card { padding: 28px 20px; }
+}

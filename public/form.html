@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="app-api-base" content="">
+  <title>Survey</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="public-survey-body">
+  <div class="public-survey-app-shell">
+    <section class="public-survey-panel" aria-label="Survey form">
+      <div class="public-survey-panel__head">Live preview</div>
+
+      <div class="public-survey-main-stack">
+        <div class="public-survey-preview-wrap">
+          <div id="state-loading" class="public-survey-state" role="status">Loading survey…</div>
+          <div id="state-error" class="public-survey-state public-survey-state--error" hidden role="alert"></div>
+
+          <div id="state-iframe" class="public-survey-iframe-wrap" hidden aria-hidden="true">
+            <iframe
+              id="public-survey-frame"
+              class="public-survey-frame"
+              title="Survey form"
+              sandbox="allow-scripts allow-same-origin allow-forms"
+            ></iframe>
+          </div>
+
+          <div id="state-fallback" class="public-survey-fallback" hidden aria-hidden="true">
+            <div class="public-survey-form-wrap">
+              <header class="public-survey-brand">
+                <h1 class="public-survey-brand__title" id="survey-title"></h1>
+                <p class="public-survey-brand__desc" id="survey-desc"></p>
+              </header>
+              <form id="public-survey-form" class="public-survey-form" novalidate></form>
+            </div>
+          </div>
+        </div>
+
+        <div id="survey-footer" class="preview-footer public-survey-footer-row" hidden>
+          <button type="button" class="btn btn--primary btn-save-form" id="submit-btn">
+            Submit responses
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" hidden role="status"></div>
+
+  <div id="loader" class="public-survey-loader" hidden aria-busy="true">
+    <div class="public-survey-loader__card">
+      <div class="spinner" aria-hidden="true"></div>
+      <p class="public-survey-loader__text">Please wait…</p>
+    </div>
+  </div>
+
+  <script type="module" src="/form.js"></script>
+</body>
+</html>

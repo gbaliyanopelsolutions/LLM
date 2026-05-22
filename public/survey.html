@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="app-api-base" content="">
+  <title>Survey management</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="survey-mgmt-body">
+  <div class="survey-mgmt-app">
+    <header class="survey-mgmt-header">
+      <div>
+        <h1>Survey management</h1>
+        <p class="survey-mgmt-lead">View, search, and manage all saved surveys.</p>
+      </div>
+      <nav class="survey-mgmt-nav" aria-label="App navigation">
+        <a class="link-inline" href="/index.html">LLM builder</a>
+        <a class="link-inline" href="/add-company.html">Add company</a>
+      </nav>
+    </header>
+
+    <section class="survey-mgmt-panel" aria-label="Surveys">
+      <div class="survey-mgmt-toolbar">
+        <div class="survey-mgmt-search-wrap">
+          <label class="sr-only" for="survey-search">Search surveys</label>
+          <input
+            type="search"
+            id="survey-search"
+            class="survey-mgmt-search"
+            placeholder="Search by survey or company name…"
+            autocomplete="off"
+          />
+        </div>
+        <p class="survey-mgmt-meta muted" id="survey-count" aria-live="polite"></p>
+      </div>
+
+      <div id="survey-loading" class="survey-mgmt-state" hidden>
+        <div class="survey-mgmt-spinner" aria-hidden="true"></div>
+        <p>Loading surveys…</p>
+      </div>
+
+      <div id="survey-empty" class="survey-mgmt-state survey-mgmt-state--empty" hidden>
+        <p class="survey-mgmt-state__title">No surveys yet</p>
+        <p class="muted">Create a survey in the <a href="/index.html">LLM builder</a> and save it to see it here.</p>
+      </div>
+
+      <div id="survey-error" class="survey-mgmt-alert survey-mgmt-alert--error" hidden role="alert"></div>
+
+      <div class="survey-mgmt-table-wrap" id="survey-table-wrap" hidden>
+        <table class="survey-mgmt-table" id="survey-table">
+          <thead>
+            <tr>
+              <th scope="col">Survey name</th>
+              <th scope="col">Company</th>
+              <th scope="col">Created</th>
+              <th scope="col">Form URL</th>
+              <th scope="col">Submit</th>
+              <th scope="col">Status</th>
+              <th scope="col">Edit</th>
+              <th scope="col">Delete</th>
+              <th scope="col">View detail</th>
+            </tr>
+          </thead>
+          <tbody id="survey-tbody"></tbody>
+        </table>
+      </div>
+
+      <nav class="survey-mgmt-pagination" id="survey-pagination" aria-label="Survey list pagination" hidden>
+        <button type="button" class="btn btn--ghost btn--small" id="page-prev" disabled>Previous</button>
+        <span class="survey-mgmt-pagination__info" id="page-info"></span>
+        <button type="button" class="btn btn--ghost btn--small" id="page-next" disabled>Next</button>
+      </nav>
+    </section>
+  </div>
+
+  <div id="detail-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+    <div class="modal-card modal-card--wide">
+      <h2 id="detail-modal-title">Survey detail</h2>
+      <div id="detail-modal-body" class="survey-detail-body"></div>
+      <div class="survey-mgmt-modal-actions">
+        <button type="button" class="btn btn--ghost" id="detail-modal-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="edit-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="edit-modal-title">
+    <div class="modal-card">
+      <h2 id="edit-modal-title">Edit survey</h2>
+      <form id="edit-form" class="survey-edit-form" novalidate>
+        <input type="hidden" id="edit-survey-id" />
+        <div class="field">
+          <label for="edit-name">Survey name</label>
+          <input type="text" id="edit-name" required maxlength="500" />
+        </div>
+        <div class="field">
+          <label for="edit-description">Description</label>
+          <textarea id="edit-description" rows="3" maxlength="4000"></textarea>
+        </div>
+        <div class="field">
+          <label for="edit-max-submissions">Maximum responses</label>
+          <input
+            type="number"
+            id="edit-max-submissions"
+            class="input-control"
+            min="1"
+            step="1"
+            placeholder="Unlimited if empty"
+            aria-label="Maximum total responses before survey closes"
+          />
+        </div>
+        <div class="field">
+          <label for="edit-status">Status</label>
+          <select id="edit-status" required>
+            <option value="draft">Draft</option>
+            <option value="published">Published</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
+        <p id="edit-form-error" class="survey-mgmt-alert survey-mgmt-alert--error" hidden role="alert"></p>
+        <div class="survey-mgmt-modal-actions">
+          <button type="submit" class="btn btn--primary">Save changes</button>
+          <button type="button" class="btn btn--ghost" id="edit-modal-cancel">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden role="status"></div>
+
+  <script type="module" src="/survey.js"></script>
+</body>
+</html>
+

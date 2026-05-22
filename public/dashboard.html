@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<meta name="color-scheme" content="dark" />
+	<title>Dashboard — only_LLm</title>
+	<link rel="stylesheet" href="/auth.css" />
+</head>
+<body class="auth-page">
+	<main class="wrap wrap--wide">
+		<div class="dash-head">
+			<div>
+				<h1>Dashboard</h1>
+				<p class="sub" id="welcome">Loading…</p>
+			</div>
+			<button type="button" class="btn btn-secondary" id="logout">Log out</button>
+		</div>
+		<div class="card">
+			<p id="detail" class="muted" style="margin: 0 0 1rem"></p>
+			<p id="msg" class="err" role="alert"></p>
+			<nav class="nav" style="margin-top: 0" aria-label="Related pages">
+				<a href="/index.html">Form generator</a>
+				<span class="sep" aria-hidden="true">·</span>
+				<a href="/login.html">Login page</a>
+			</nav>
+		</div>
+	</main>
+	<script>
+	(function () {
+		var welcome = document.getElementById('welcome');
+		var detail = document.getElementById('detail');
+		var msg = document.getElementById('msg');
+		var logoutBtn = document.getElementById('logout');
+
+		async function loadMe() {
+			msg.textContent = '';
+			try {
+				var res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+				var data = await res.json().catch(function () { return {}; });
+				if (!res.ok) {
+					window.location.href = '/login.html';
+					return;
+				}
+				var u = data.user;
+				welcome.textContent = 'Signed in';
+				detail.textContent =
+					(u.full_name || '') + ' · ' + (u.email || '') + (u.role ? ' · role: ' + u.role : '');
+			} catch (e) {
+				msg.textContent = 'Could not load session';
+			}
+		}
+
+		logoutBtn.addEventListener('click', async function () {
+			msg.textContent = '';
+			try {
+				await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+			} catch (e) {}
+			window.location.href = '/login.html';
+		});
+
+		loadMe();
+	})();
+	</script>
+</body>
+</html>
