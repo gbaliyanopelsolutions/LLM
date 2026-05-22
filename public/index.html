@@ -51,11 +51,11 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* .app sits inside dash-page — center content at 720px */
+    /* .app fills dash-page for the split-screen layout */
     .app {
-      max-width: 720px !important;
-      margin: 0 auto !important;
-      padding: 0 0 2.5rem !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 1.25rem 1.5rem 2rem !important;
       width: 100% !important;
     }
 
@@ -65,12 +65,31 @@
     [hidden] { display: none !important; }
 
     /* ══════════════════════════════════
-       LAYOUT — single column
+       LAYOUT — split screen (left prompt | right output)
     ══════════════════════════════════ */
     .layout {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 380px 1fr;
       gap: 1.25rem;
+      align-items: start;
+    }
+
+    /* Left panel — sticky so it stays in view while right side scrolls */
+    .layout > section:first-child {
+      position: sticky;
+      top: 1.25rem;
+      max-height: calc(100vh - 110px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .layout > section:first-child::-webkit-scrollbar { width: 4px; }
+    .layout > section:first-child::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* Right panel — min-height so it always feels full */
+    .layout > section:last-child {
+      min-height: calc(100vh - 130px);
     }
 
     /* ══════════════════════════════════
@@ -438,7 +457,7 @@
     #preview {
       width: 100%;
       border: none;
-      min-height: 500px;
+      min-height: 640px;
       border-radius: 0 0 var(--radius) var(--radius);
     }
 
@@ -680,14 +699,34 @@
     /* ══════════════════════════════════
        RESPONSIVE
     ══════════════════════════════════ */
-    @media (max-width: 760px) {
-      .app { padding: 0 0 2rem !important; }
-      .panel__head, .panel__subhead, .field, .actions, .chips,
-      .builder-tabs, .builder-pane, .source-panel__inner { padding-left: 1rem; padding-right: 1rem; }
-      .editor-modal-grid { grid-template-columns: 1fr; }
+
+    /* Tablet: narrow left column */
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 320px 1fr; }
     }
 
-    @media (max-width: 480px) {
+    /* Stack vertically below 860px */
+    @media (max-width: 860px) {
+      .app { padding: 1rem 1rem 2rem !important; }
+      .layout {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      .layout > section:first-child {
+        position: static;
+        max-height: none;
+        overflow: visible;
+      }
+      .layout > section:last-child {
+        min-height: 500px;
+      }
+    }
+
+    @media (max-width: 540px) {
+      .app { padding: 0.75rem 0.75rem 2rem !important; }
+      .panel__head, .panel__subhead, .field, .actions, .chips,
+      .builder-tabs, .builder-pane, .source-panel__inner { padding-left: 0.9rem; padding-right: 0.9rem; }
+      .editor-modal-grid { grid-template-columns: 1fr; }
       .editor-card__actions { gap: 0.2rem; }
       .builder-tab { padding: 0.7rem 0.75rem; font-size: 0.82rem; }
     }
