@@ -1,66 +1,684 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-	<meta name="color-scheme" content="dark" />
-	<title>Dashboard — only_LLm</title>
-	<link rel="stylesheet" href="/auth.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="app-api-base" content="">
+  <title>Dashboard — FormAI</title>
+  <link rel="stylesheet" href="/dash-shell.css">
+  <style>
+    /* ── Chart containers ── */
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: 1.25rem 1.35rem;
+      animation: dsiFadeUp 0.5s ease both;
+    }
+
+    .chart-card canvas { display: block; width: 100% !important; }
+
+    /* ── Quick actions grid ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.85rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .quick-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.2rem;
+      display: flex; flex-direction: column; gap: 0.55rem;
+      text-decoration: none; color: var(--text);
+      transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+      box-shadow: var(--shadow-xs);
+      animation: dsiFadeUp 0.5s ease both;
+    }
+
+    .quick-card:hover {
+      box-shadow: var(--shadow);
+      transform: translateY(-2px);
+      border-color: var(--accent);
+    }
+
+    .quick-card__icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .quick-card__icon svg { width: 20px; height: 20px; }
+
+    .quick-card__title {
+      font-size: 0.875rem; font-weight: 700; color: var(--text);
+    }
+
+    .quick-card__sub {
+      font-size: 0.76rem; color: var(--muted);
+    }
+
+    /* ── Recent surveys ── */
+    .recent-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1.5rem;
+      animation: dsiFadeUp 0.5s ease both;
+      overflow: hidden;
+    }
+
+    .recent-head {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* ── Activity feed ── */
+    .activity-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      animation: dsiFadeUp 0.5s ease both;
+      overflow: hidden;
+    }
+
+    .activity-head {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .activity-list {
+      list-style: none;
+      margin: 0; padding: 0;
+    }
+
+    .activity-item {
+      display: flex; align-items: flex-start; gap: 0.75rem;
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border-soft);
+      transition: background var(--transition);
+    }
+
+    .activity-item:last-child { border-bottom: none; }
+    .activity-item:hover { background: rgba(91,140,255,0.03); }
+
+    .activity-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .activity-dot--blue   { background: var(--accent); }
+    .activity-dot--green  { background: var(--success); }
+    .activity-dot--orange { background: var(--warning); }
+    .activity-dot--purple { background: var(--purple); }
+
+    .activity-text {
+      font-size: 0.82rem; color: var(--text-2); line-height: 1.45;
+      flex: 1;
+    }
+
+    .activity-time {
+      font-size: 0.72rem; color: var(--muted-2);
+      flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      text-align: center; padding: 2.5rem 1.5rem;
+      color: var(--muted);
+    }
+
+    .empty-state p { margin: 0.35rem 0 0; font-size: 0.82rem; }
+
+    /* ── Loading skeleton ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-soft) 25%, #e8ecf2 50%, var(--bg-soft) 75%);
+      background-size: 200% 100%;
+      animation: skeletonPulse 1.5s ease infinite;
+      border-radius: 6px;
+    }
+
+    @keyframes skeletonPulse {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .stat-skeleton {
+      height: 110px;
+      border-radius: var(--radius);
+    }
+  </style>
 </head>
-<body class="auth-page">
-	<main class="wrap wrap--wide">
-		<div class="dash-head">
-			<div>
-				<h1>Dashboard</h1>
-				<p class="sub" id="welcome">Loading…</p>
-			</div>
-			<button type="button" class="btn btn-secondary" id="logout">Log out</button>
-		</div>
-		<div class="card">
-			<p id="detail" class="muted" style="margin: 0 0 1rem"></p>
-			<p id="msg" class="err" role="alert"></p>
-			<nav class="nav" style="margin-top: 0" aria-label="Related pages">
-				<a href="/index.html">Form generator</a>
-				<span class="sep" aria-hidden="true">·</span>
-				<a href="/login.html">Login page</a>
-			</nav>
-		</div>
-	</main>
-	<script>
-	(function () {
-		var welcome = document.getElementById('welcome');
-		var detail = document.getElementById('detail');
-		var msg = document.getElementById('msg');
-		var logoutBtn = document.getElementById('logout');
+<body>
 
-		async function loadMe() {
-			msg.textContent = '';
-			try {
-				var res = await fetch('/api/auth/me', { credentials: 'same-origin' });
-				var data = await res.json().catch(function () { return {}; });
-				if (!res.ok) {
-					window.location.href = '/login.html';
-					return;
-				}
-				var u = data.user;
-				welcome.textContent = 'Signed in';
-				detail.textContent =
-					(u.full_name || '') + ' · ' + (u.email || '') + (u.role ? ' · role: ' + u.role : '');
-			} catch (e) {
-				msg.textContent = 'Could not load session';
-			}
-		}
+<!-- Overlay -->
+<div class="dash-overlay" id="sidebarOverlay"></div>
 
-		logoutBtn.addEventListener('click', async function () {
-			msg.textContent = '';
-			try {
-				await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-			} catch (e) {}
-			window.location.href = '/login.html';
-		});
+<div class="dash-shell">
 
-		loadMe();
-	})();
-	</script>
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="dash-sidebar" id="dashSidebar" aria-label="Main navigation">
+    <a class="dash-brand" href="/dashboard.html">
+      <div class="dash-brand__icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <span class="dash-brand__name">FormAI</span>
+        <span class="dash-brand__sub">Survey Builder</span>
+      </div>
+    </a>
+
+    <div class="dash-nav-section">
+      <span class="dash-nav-label">Overview</span>
+      <nav class="dash-nav">
+        <a class="dash-nav-item is-active" href="/dashboard.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+          </svg>
+          Dashboard
+        </a>
+      </nav>
+    </div>
+
+    <div class="dash-nav-section">
+      <span class="dash-nav-label">Build</span>
+      <nav class="dash-nav">
+        <a class="dash-nav-item" href="/index.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+          Form Builder
+          <span class="dash-nav-badge">AI</span>
+        </a>
+        <a class="dash-nav-item" href="/survey-demo/" target="_blank">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          Demo Form
+        </a>
+      </nav>
+    </div>
+
+    <div class="dash-nav-section">
+      <span class="dash-nav-label">Manage</span>
+      <nav class="dash-nav">
+        <a class="dash-nav-item" href="/survey.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          My Surveys
+        </a>
+        <a class="dash-nav-item" href="/add-company.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Companies
+        </a>
+      </nav>
+    </div>
+
+    <div class="dash-sidebar-footer">
+      <div class="dash-user-pill">
+        <div class="dash-user-avatar">AI</div>
+        <span class="dash-user-name">FormAI Platform</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════ MAIN CONTENT ════════════════ -->
+  <div class="dash-content">
+
+    <!-- Top bar -->
+    <div class="dash-topbar">
+      <div class="dash-topbar__left">
+        <button class="dash-hamburger" id="hamburgerBtn" aria-label="Toggle sidebar" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div>
+          <p class="dash-topbar__title">Dashboard</p>
+          <p class="dash-topbar__sub">Welcome back — here's your overview</p>
+        </div>
+      </div>
+      <div class="dash-topbar__right">
+        <a class="dash-topbar-btn dash-topbar-btn--primary" href="/index.html">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Form
+        </a>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="dash-page">
+
+      <!-- Page header -->
+      <div class="dash-page-header">
+        <div>
+          <h1>Overview</h1>
+          <p>Track your surveys, responses, and activity at a glance.</p>
+        </div>
+      </div>
+
+      <!-- ── Stat cards ── -->
+      <div class="stat-grid" id="statGrid">
+        <div class="skeleton stat-skeleton"></div>
+        <div class="skeleton stat-skeleton"></div>
+        <div class="skeleton stat-skeleton"></div>
+        <div class="skeleton stat-skeleton"></div>
+      </div>
+
+      <!-- ── Quick actions ── -->
+      <div class="section-header">
+        <div>
+          <h2 class="section-header__title">Quick Actions</h2>
+        </div>
+      </div>
+      <div class="quick-grid">
+        <a class="quick-card" href="/index.html">
+          <div class="quick-card__icon" style="background: var(--accent-soft);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+          </div>
+          <span class="quick-card__title">Create Survey</span>
+          <span class="quick-card__sub">Generate AI-powered forms instantly</span>
+        </a>
+        <a class="quick-card" href="/survey.html">
+          <div class="quick-card__icon" style="background: var(--success-soft);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <span class="quick-card__title">View Surveys</span>
+          <span class="quick-card__sub">Manage and monitor all surveys</span>
+        </a>
+        <a class="quick-card" href="/add-company.html">
+          <div class="quick-card__icon" style="background: var(--warning-soft);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </div>
+          <span class="quick-card__title">Add Company</span>
+          <span class="quick-card__sub">Organise surveys by company</span>
+        </a>
+        <a class="quick-card" href="/survey-demo/" target="_blank">
+          <div class="quick-card__icon" style="background: var(--purple-soft);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+          </div>
+          <span class="quick-card__title">Demo Form</span>
+          <span class="quick-card__sub">See example multi-step survey</span>
+        </a>
+      </div>
+
+      <!-- ── Charts + Activity grid ── -->
+      <div class="content-grid">
+        <!-- Bar chart — submissions per survey -->
+        <div class="chart-card">
+          <div class="section-header" style="margin-bottom:1rem;">
+            <div>
+              <h2 class="section-header__title">Submissions per Survey</h2>
+              <p class="section-header__sub">Top 8 surveys by response count</p>
+            </div>
+          </div>
+          <canvas id="barChart" height="220"></canvas>
+          <p class="empty-state" id="barEmpty" hidden>No survey data yet. <a href="/index.html" style="color:var(--accent)">Create your first form →</a></p>
+        </div>
+
+        <!-- Donut chart — survey status -->
+        <div class="chart-card">
+          <div class="section-header" style="margin-bottom:1rem;">
+            <div>
+              <h2 class="section-header__title">Survey Status</h2>
+              <p class="section-header__sub">Breakdown by state</p>
+            </div>
+          </div>
+          <canvas id="donutChart" height="200"></canvas>
+          <div id="donutLegend" style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:0.65rem;justify-content:center;font-size:0.78rem;"></div>
+          <p class="empty-state" id="donutEmpty" hidden>No surveys yet.</p>
+        </div>
+      </div>
+
+      <!-- ── Recent surveys ── -->
+      <div class="section-header">
+        <div>
+          <h2 class="section-header__title">Recent Surveys</h2>
+          <p class="section-header__sub">Last 10 surveys created</p>
+        </div>
+        <a class="section-link" href="/survey.html">View all →</a>
+      </div>
+
+      <div class="recent-wrap">
+        <div id="recentLoading" style="text-align:center;padding:2rem;color:var(--muted);">
+          <div class="dsi-spinner" style="margin:0 auto 0.75rem;"></div>
+          <p style="margin:0;font-size:0.82rem;">Loading surveys…</p>
+        </div>
+        <div id="recentTable" hidden>
+          <div class="dsi-table-wrap">
+            <table class="dsi-table">
+              <thead>
+                <tr>
+                  <th>Survey Name</th>
+                  <th>Company</th>
+                  <th>Status</th>
+                  <th>Responses</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="recentTbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="recentEmpty" class="empty-state" hidden>
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted-2)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin:0 auto 0.75rem;display:block;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <strong style="font-size:0.88rem;color:var(--text);">No surveys yet</strong>
+          <p>Generate your first AI-powered form in the <a href="/index.html" style="color:var(--accent);">Form Builder</a>.</p>
+        </div>
+        <div id="recentError" class="empty-state" hidden style="color:var(--danger);"></div>
+      </div>
+
+    </div><!-- /.dash-page -->
+  </div><!-- /.dash-content -->
+</div><!-- /.dash-shell -->
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<script>
+'use strict';
+
+/* ── Sidebar toggle ── */
+(function () {
+  const sidebar   = document.getElementById('dashSidebar');
+  const overlay   = document.getElementById('sidebarOverlay');
+  const hamburger = document.getElementById('hamburgerBtn');
+
+  function open()  {
+    sidebar.classList.add('is-open');
+    overlay.classList.add('is-visible');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function close() {
+    sidebar.classList.remove('is-open');
+    overlay.classList.remove('is-visible');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  hamburger.addEventListener('click', () => sidebar.classList.contains('is-open') ? close() : open());
+  overlay.addEventListener('click', close);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+})();
+
+/* ── API base (same-origin unless meta tag overrides) ── */
+function getApiBase() {
+  const meta = document.querySelector('meta[name="app-api-base"]');
+  if (meta && meta.content && meta.content.trim()) return meta.content.trim().replace(/\/+$/, '');
+  return '';
+}
+
+/* ── Date helpers ── */
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try {
+    return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(iso));
+  } catch { return iso.slice(0,10); }
+}
+
+function timeAgo(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)   return 'just now';
+  if (m < 60)  return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  if (d < 30)  return `${d}d ago`;
+  return fmtDate(iso);
+}
+
+/* ── Render stat cards ── */
+function renderStats(surveys, companies) {
+  const total      = surveys.length;
+  const published  = surveys.filter(s => s.status === 'published').length;
+  const draft      = surveys.filter(s => s.status === 'draft').length;
+  const totalSubs  = surveys.reduce((acc, s) => acc + (Number(s.total_submissions) || 0), 0);
+  const totalCos   = Array.isArray(companies) ? companies.length : 0;
+
+  const statGrid = document.getElementById('statGrid');
+  statGrid.innerHTML = `
+    <div class="stat-card stat-card--blue">
+      <div class="stat-card__header">
+        <span class="stat-card__label">Total Surveys</span>
+        <div class="stat-card__icon" style="background:var(--accent-soft);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card__value">${total}</div>
+      <div class="stat-card__footer">${draft} draft${draft !== 1 ? 's' : ''} · ${published} live</div>
+    </div>
+
+    <div class="stat-card stat-card--green">
+      <div class="stat-card__header">
+        <span class="stat-card__label">Total Responses</span>
+        <div class="stat-card__icon" style="background:var(--success-soft);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card__value">${totalSubs}</div>
+      <div class="stat-card__footer">across all surveys</div>
+    </div>
+
+    <div class="stat-card stat-card--orange">
+      <div class="stat-card__header">
+        <span class="stat-card__label">Active / Published</span>
+        <div class="stat-card__icon" style="background:var(--warning-soft);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card__value">${published}</div>
+      <div class="stat-card__footer">${total > 0 ? Math.round(published/total*100) : 0}% of total surveys</div>
+    </div>
+
+    <div class="stat-card stat-card--purple">
+      <div class="stat-card__header">
+        <span class="stat-card__label">Companies</span>
+        <div class="stat-card__icon" style="background:var(--purple-soft);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+      </div>
+      <div class="stat-card__value">${totalCos}</div>
+      <div class="stat-card__footer">registered organisations</div>
+    </div>
+  `;
+}
+
+/* ── Render charts ── */
+function renderCharts(surveys) {
+  // Bar chart — submissions per survey
+  const top8 = [...surveys]
+    .sort((a, b) => (Number(b.total_submissions) || 0) - (Number(a.total_submissions) || 0))
+    .slice(0, 8);
+
+  const barEl = document.getElementById('barChart');
+  const barEmpty = document.getElementById('barEmpty');
+
+  if (top8.length === 0) {
+    barEl.hidden = true;
+    barEmpty.hidden = false;
+  } else {
+    new Chart(barEl, {
+      type: 'bar',
+      data: {
+        labels: top8.map(s => (s.title || s.name || 'Survey').slice(0, 28)),
+        datasets: [{
+          label: 'Responses',
+          data: top8.map(s => Number(s.total_submissions) || 0),
+          backgroundColor: 'rgba(91,140,255,0.75)',
+          borderColor: '#5b8cff',
+          borderWidth: 1.5,
+          borderRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 11 }, color: '#94a3b8', maxRotation: 30 } },
+          y: { beginAtZero: true, ticks: { font: { size: 11 }, color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(226,232,240,0.6)' } },
+        },
+      },
+    });
+    barEl.style.height = '220px';
+  }
+
+  // Donut chart — status breakdown
+  const statusCount = { published: 0, draft: 0, closed: 0 };
+  surveys.forEach(s => { if (s.status in statusCount) statusCount[s.status]++; });
+
+  const donutEl = document.getElementById('donutChart');
+  const donutEmpty = document.getElementById('donutEmpty');
+  const donutLegend = document.getElementById('donutLegend');
+
+  if (surveys.length === 0) {
+    donutEl.hidden = true;
+    donutEmpty.hidden = false;
+    donutLegend.hidden = true;
+  } else {
+    const colors = { published: '#10b981', draft: '#94a3b8', closed: '#ef4444' };
+    const labels = Object.keys(statusCount);
+    new Chart(donutEl, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: labels.map(l => statusCount[l]),
+          backgroundColor: labels.map(l => colors[l]),
+          borderWidth: 0,
+          hoverOffset: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}` } },
+        },
+      },
+    });
+    donutEl.style.height = '200px';
+    donutLegend.innerHTML = labels.map(l =>
+      `<span style="display:flex;align-items:center;gap:5px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:${colors[l]};flex-shrink:0;"></span>
+        <span style="color:var(--muted);">${l.charAt(0).toUpperCase()+l.slice(1)} (${statusCount[l]})</span>
+       </span>`
+    ).join('');
+  }
+}
+
+/* ── Render recent surveys table ── */
+function renderRecentTable(surveys) {
+  const tbody = document.getElementById('recentTbody');
+  const recent = surveys.slice(0, 10);
+
+  if (recent.length === 0) {
+    document.getElementById('recentEmpty').hidden = false;
+    return;
+  }
+
+  tbody.innerHTML = recent.map(s => {
+    const status = (s.status || 'draft').toLowerCase();
+    const badgeClass = status === 'published' ? 'dsi-badge--published'
+                     : status === 'closed'    ? 'dsi-badge--closed'
+                     :                          'dsi-badge--draft';
+    const subs = Number(s.total_submissions) || 0;
+    const company = s.company_name || s.company || '—';
+    const formUrl = `${getApiBase()}/form.html?survey=${s.survey_id || s.id}`;
+    return `<tr>
+      <td style="font-weight:600;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${escHtml(s.title || s.name || 'Untitled')}
+      </td>
+      <td style="color:var(--muted);">${escHtml(company)}</td>
+      <td><span class="dsi-badge ${badgeClass}">${status}</span></td>
+      <td style="font-variant-numeric:tabular-nums;">${subs}</td>
+      <td style="color:var(--muted);font-size:0.8rem;">${fmtDate(s.created_at)}</td>
+      <td>
+        <div style="display:flex;gap:0.35rem;">
+          <a class="dsi-btn dsi-btn--ghost dsi-btn--sm" href="${escHtml(formUrl)}" target="_blank">View</a>
+          <a class="dsi-btn dsi-btn--ghost dsi-btn--sm" href="/survey.html">Manage</a>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('recentTable').hidden = false;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── Main load ── */
+async function loadDashboard() {
+  const base = getApiBase();
+
+  try {
+    const [surveyRes, companyRes] = await Promise.allSettled([
+      fetch(`${base}/api/builder/surveys?page=1&pageSize=100`, { credentials: 'same-origin' }),
+      fetch(`${base}/api/builder/companies`,                    { credentials: 'same-origin' }),
+    ]);
+
+    let surveys  = [];
+    let companies = [];
+
+    if (surveyRes.status === 'fulfilled' && surveyRes.value.ok) {
+      const data = await surveyRes.value.json().catch(() => ({}));
+      surveys = Array.isArray(data.surveys) ? data.surveys
+              : Array.isArray(data.items)   ? data.items
+              : Array.isArray(data)         ? data
+              : [];
+    }
+
+    if (companyRes.status === 'fulfilled' && companyRes.value.ok) {
+      const data = await companyRes.value.json().catch(() => ([]));
+      companies = Array.isArray(data.companies) ? data.companies
+                : Array.isArray(data)           ? data
+                : [];
+    }
+
+    renderStats(surveys, companies);
+    renderCharts(surveys);
+
+    document.getElementById('recentLoading').hidden = true;
+    renderRecentTable(surveys);
+
+  } catch (err) {
+    document.getElementById('recentLoading').hidden = true;
+    document.getElementById('recentError').hidden = false;
+    document.getElementById('recentError').textContent = 'Could not load data. Make sure the server is running.';
+    // Still render empty stats
+    renderStats([], []);
+  }
+}
+
+loadDashboard();
+</script>
 </body>
 </html>

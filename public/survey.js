@@ -38,14 +38,12 @@ let surveysCache = [];
 function showToast(text, variant = 'default') {
 	if (!toastEl) return;
 	toastEl.textContent = text;
-	toastEl.classList.remove('toast--error', 'toast--success');
-	if (variant === 'error') toastEl.classList.add('toast--error');
-	if (variant === 'success') toastEl.classList.add('toast--success');
+	toastEl.classList.remove('dsi-toast--error', 'dsi-toast--success');
+	if (variant === 'error') toastEl.classList.add('dsi-toast--error');
+	if (variant === 'success') toastEl.classList.add('dsi-toast--success');
 	toastEl.hidden = false;
 	clearTimeout(showToast._t);
-	showToast._t = setTimeout(() => {
-		toastEl.hidden = true;
-	}, 3800);
+	showToast._t = setTimeout(() => { toastEl.hidden = true; }, 3800);
 }
 
 function buildFormUrl(surveyId) {
@@ -78,9 +76,9 @@ function statusLabel(uiStatus) {
  */
 function statusBadgeClass(uiStatus) {
 	const key = String(uiStatus || '').toLowerCase();
-	if (key === 'published' || key === 'active') return 'survey-status-badge survey-status-badge--published';
-	if (key === 'closed' || key === 'archived') return 'survey-status-badge survey-status-badge--closed';
-	return 'survey-status-badge survey-status-badge--draft';
+	if (key === 'published' || key === 'active') return 'dsi-badge dsi-badge--published';
+	if (key === 'closed' || key === 'archived') return 'dsi-badge dsi-badge--closed';
+	return 'dsi-badge dsi-badge--draft';
 }
 
 /**
@@ -203,37 +201,35 @@ function renderTable(surveys) {
 
 		tr.innerHTML = `
 			<td data-label="Survey name">
-				<strong class="survey-mgmt-name">${escapeHtml(row.name || '')}</strong>
+				<strong style="font-weight:600;">${escapeHtml(row.name || '')}</strong>
 			</td>
-			<td data-label="Company">${escapeHtml(row.company_name || '—')}</td>
-			<td data-label="Created">${escapeHtml(formatDate(row.created_at))}</td>
-			<td data-label="Form URL">
-				<div class="survey-mgmt-url">
-					<input type="text" class="survey-mgmt-url__input" readonly value="${escapeAttr(formUrl)}" aria-label="Form URL for ${escapeAttr(row.name || 'survey')}" />
-					<div class="survey-mgmt-url__actions">
-						<button type="button" class="btn btn--ghost btn--small" data-action="copy" data-id="${escapeAttr(surveyId)}">Copy</button>
-						<button type="button" class="btn btn--ghost btn--small" data-action="open" data-id="${escapeAttr(surveyId)}">Open</button>
-					</div>
+			<td data-label="Company" style="color:var(--muted);">${escapeHtml(row.company_name || '—')}</td>
+			<td data-label="Created" style="font-size:0.82rem;color:var(--muted);">${escapeHtml(formatDate(row.created_at))}</td>
+			<td data-label="Form URL" class="survey-url-cell">
+				<input type="text" class="survey-url-input" readonly value="${escapeAttr(formUrl)}" aria-label="Form URL for ${escapeAttr(row.name || 'survey')}" />
+				<div class="survey-url-actions">
+					<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" data-action="copy" data-id="${escapeAttr(surveyId)}">Copy</button>
+					<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" data-action="open" data-id="${escapeAttr(surveyId)}">Open</button>
 				</div>
 			</td>
-			<td data-label="Submit">
-				<span class="survey-mgmt-submit-count" title="Form submissions">${escapeHtml(formatSubmitCount(row.total_submissions ?? row.submit_count))}</span>
+			<td data-label="Responses" style="font-variant-numeric:tabular-nums;">
+				${escapeHtml(formatSubmitCount(row.total_submissions ?? row.submit_count))}
 			</td>
 			<td data-label="Status">
-				<select class="survey-mgmt-status-select" data-id="${escapeAttr(surveyId)}" aria-label="Survey status for ${escapeAttr(row.name || 'survey')}">
+				<select class="survey-status-select" data-id="${escapeAttr(surveyId)}" aria-label="Survey status for ${escapeAttr(row.name || 'survey')}">
 					<option value="draft"${uiStatus === 'draft' ? ' selected' : ''}>Draft</option>
 					<option value="published"${uiStatus === 'published' ? ' selected' : ''}>Published</option>
 					<option value="closed"${uiStatus === 'closed' || uiStatus === 'archived' ? ' selected' : ''}>Closed</option>
 				</select>
 			</td>
 			<td data-label="Edit">
-				<button type="button" class="btn btn--ghost btn--small" data-action="edit" data-id="${escapeAttr(surveyId)}">Edit</button>
+				<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" data-action="edit" data-id="${escapeAttr(surveyId)}">Edit</button>
 			</td>
 			<td data-label="Delete">
-				<button type="button" class="btn btn--ghost btn--small survey-mgmt-btn-danger" data-action="delete" data-id="${escapeAttr(surveyId)}">Delete</button>
+				<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" style="color:var(--danger);border-color:rgba(239,68,68,0.35);" data-action="delete" data-id="${escapeAttr(surveyId)}">Delete</button>
 			</td>
 			<td data-label="View detail">
-				<button type="button" class="btn btn--ghost btn--small" data-action="detail" data-id="${escapeAttr(surveyId)}">View</button>
+				<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" data-action="detail" data-id="${escapeAttr(surveyId)}">View</button>
 			</td>
 		`;
 		tbody.appendChild(tr);
@@ -279,33 +275,31 @@ async function openDetail(surveyId) {
 		const remaining = s.remaining_submissions;
 
 		detailModalBody.innerHTML = `
-			<div class="survey-detail-header">
+			<div style="margin-bottom:1rem;">
 				<span class="${escapeAttr(statusBadgeClass(uiStatus))}">${escapeHtml(statusLabel(uiStatus))}</span>
 			</div>
-			<dl class="survey-detail-dl">
-				<dt>Survey name</dt><dd>${escapeHtml(s.name)}</dd>
-				<dt>Company</dt><dd>${escapeHtml(s.company_name || '—')}${s.company_tier ? ` (${escapeHtml(s.company_tier)})` : ''}</dd>
-				<dt>Description</dt><dd>${escapeHtml(s.description || '—')}</dd>
-				<dt>Status</dt><dd><span class="${escapeAttr(statusBadgeClass(uiStatus))}">${escapeHtml(statusLabel(uiStatus))}</span></dd>
-				<dt>Current submissions</dt><dd>${escapeHtml(formatSubmitCount(total))}</dd>
-				<dt>Maximum submissions</dt><dd>${escapeHtml(formatMaxSubmissions(max))}</dd>
-				<dt>Remaining submissions</dt><dd>${escapeHtml(formatRemaining(remaining))}</dd>
-				<dt>Created</dt><dd>${escapeHtml(formatDate(s.created_at))}</dd>
-				<dt>Updated</dt><dd>${escapeHtml(formatDate(s.updated_at))}</dd>
-				<dt>Survey ID</dt><dd><code>${escapeHtml(s.survey_id)}</code></dd>
-				<dt>Form URL</dt>
-				<dd>
-					<div class="survey-mgmt-url">
-						<input type="text" class="survey-mgmt-url__input" readonly value="${escapeAttr(formUrl)}" />
-						<div class="survey-mgmt-url__actions">
-							<button type="button" class="btn btn--ghost btn--small" id="detail-copy-url">Copy URL</button>
-							<button type="button" class="btn btn--ghost btn--small" id="detail-open-form">Open form</button>
-						</div>
+			<dl style="display:grid;grid-template-columns:140px 1fr;gap:0.5rem 1rem;font-size:0.82rem;margin:0 0 1rem;">
+				<dt style="color:var(--muted);font-weight:600;">Survey name</dt><dd style="margin:0;">${escapeHtml(s.name)}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Company</dt><dd style="margin:0;">${escapeHtml(s.company_name || '—')}${s.company_tier ? ` (${escapeHtml(s.company_tier)})` : ''}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Description</dt><dd style="margin:0;">${escapeHtml(s.description || '—')}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Submissions</dt><dd style="margin:0;">${escapeHtml(formatSubmitCount(total))} / ${escapeHtml(formatMaxSubmissions(max))}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Remaining</dt><dd style="margin:0;">${escapeHtml(formatRemaining(remaining))}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Created</dt><dd style="margin:0;">${escapeHtml(formatDate(s.created_at))}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Updated</dt><dd style="margin:0;">${escapeHtml(formatDate(s.updated_at))}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Survey ID</dt><dd style="margin:0;font-family:monospace;font-size:0.75rem;">${escapeHtml(s.survey_id)}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Form URL</dt>
+				<dd style="margin:0;">
+					<input type="text" class="dsi-input" readonly value="${escapeAttr(formUrl)}" style="font-size:0.73rem;font-family:monospace;margin-bottom:0.4rem;" />
+					<div style="display:flex;gap:0.35rem;">
+						<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" id="detail-copy-url">Copy URL</button>
+						<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" id="detail-open-form">Open form</button>
 					</div>
 				</dd>
-				<dt>Questions</dt><dd>${questions.length}</dd>
+				<dt style="color:var(--muted);font-weight:600;">Questions</dt><dd style="margin:0;">${questions.length}</dd>
 			</dl>
-			${questions.length ? `<ol class="survey-detail-questions">${questions.map((q, i) => `<li><strong>Q${i + 1}.</strong> ${escapeHtml(q.question_text)} <span class="muted">(${escapeHtml(q.type)})</span></li>`).join('')}</ol>` : '<p class="muted">No questions.</p>'}
+			${questions.length
+				? `<ol style="margin:0;padding-left:1.25rem;font-size:0.82rem;display:flex;flex-direction:column;gap:0.35rem;">${questions.map((q, i) => `<li><strong>Q${i + 1}.</strong> ${escapeHtml(q.question_text)} <span style="color:var(--muted);">(${escapeHtml(q.type)})</span></li>`).join('')}</ol>`
+				: '<p style="color:var(--muted);font-size:0.82rem;margin:0;">No questions.</p>'}
 		`;
 
 		document.getElementById('detail-copy-url')?.addEventListener('click', async () => {
@@ -422,7 +416,7 @@ tbody.addEventListener('click', async (ev) => {
 });
 
 tbody.addEventListener('change', async (ev) => {
-	const sel = ev.target.closest('.survey-mgmt-status-select');
+	const sel = ev.target.closest('.survey-status-select');
 	if (!sel) return;
 	const id = sel.getAttribute('data-id');
 	const status = sel.value;

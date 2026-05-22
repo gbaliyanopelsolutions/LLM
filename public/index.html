@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Optional: override API origin. Leave empty when the page is served by the same app as /api (e.g. :3000). For Apache/XAMPP, public/supabase.js infers http://127.0.0.1:3000, or set e.g. http://127.0.0.1:3000 here / localStorage appApiBase. -->
   <meta name="app-api-base" content="">
-  <title>LLM survey</title>
+  <title>Form Builder — FormAI</title>
+  <link rel="stylesheet" href="/dash-shell.css">
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
   <style>
@@ -1078,21 +1079,6 @@
       75% { transform: translateX(4px); }
     }
 
-    /* ═══════════════════════════════════════
-       DASHBOARD SHELL — sidebar + content
-       ═══════════════════════════════════════ */
-    :root {
-      --sidebar-w: 240px;
-      --sidebar-bg: rgba(255,255,255,0.72);
-      --sidebar-border: rgba(226,232,240,0.9);
-      --sidebar-text: #334155;
-      --sidebar-muted: #94a3b8;
-      --sidebar-active-bg: rgba(91,140,255,0.10);
-      --sidebar-active-text: #3b72e8;
-      --sidebar-hover-bg: rgba(91,140,255,0.06);
-      --topbar-h: 56px;
-    }
-
     /* Reset .app width so it sits inside the shell */
     .app {
       max-width: none !important;
@@ -1100,341 +1086,6 @@
       padding: 0 !important;
     }
 
-    /* ── Shell ── */
-    .dash-shell {
-      display: flex;
-      min-height: 100vh;
-    }
-
-    /* ── Sidebar ── */
-    .dash-sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-w);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--sidebar-border);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      z-index: 90;
-      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
-    /* ── Sidebar brand ── */
-    .dash-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 1.1rem 1.1rem 0.9rem;
-      border-bottom: 1px solid var(--sidebar-border);
-      text-decoration: none;
-    }
-
-    .dash-brand__icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      background: linear-gradient(135deg, #5b8cff, #7c5cff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 4px 12px rgba(91,140,255,0.3);
-    }
-
-    .dash-brand__icon svg { color: #fff; }
-
-    .dash-brand__name {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-    }
-
-    .dash-brand__sub {
-      display: block;
-      font-size: 0.68rem;
-      font-weight: 500;
-      color: var(--muted);
-      letter-spacing: 0.01em;
-    }
-
-    /* ── Nav section label ── */
-    .dash-nav-label {
-      padding: 1rem 1.1rem 0.35rem;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      color: var(--sidebar-muted);
-    }
-
-    /* ── Nav items ── */
-    .dash-nav {
-      padding: 0.35rem 0.6rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      flex: 1;
-    }
-
-    .dash-nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      padding: 0.6rem 0.75rem;
-      border-radius: 9px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--sidebar-text);
-      text-decoration: none;
-      transition: background 0.15s ease, color 0.15s ease;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      width: 100%;
-      text-align: left;
-    }
-
-    .dash-nav-item:hover {
-      background: var(--sidebar-hover-bg);
-      color: var(--text);
-    }
-
-    .dash-nav-item.is-active {
-      background: var(--sidebar-active-bg);
-      color: var(--sidebar-active-text);
-      font-weight: 600;
-    }
-
-    .dash-nav-item.is-active .dash-nav-icon {
-      color: var(--sidebar-active-text);
-    }
-
-    .dash-nav-icon {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-      color: var(--sidebar-muted);
-      transition: color 0.15s ease;
-    }
-
-    .dash-nav-item:hover .dash-nav-icon { color: var(--accent); }
-
-    .dash-nav-badge {
-      margin-left: auto;
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 0.15rem 0.45rem;
-      border-radius: 999px;
-      background: rgba(91,140,255,0.14);
-      color: #3b72e8;
-    }
-
-    /* ── Sidebar footer (user pill) ── */
-    .dash-sidebar-footer {
-      padding: 0.75rem 0.6rem;
-      border-top: 1px solid var(--sidebar-border);
-    }
-
-    .dash-user-pill {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.55rem 0.7rem;
-      border-radius: 9px;
-      background: var(--bg-soft);
-      border: 1px solid var(--border);
-    }
-
-    .dash-user-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #5b8cff, #7c5cff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: #fff;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
-
-    .dash-user-name {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text);
-      flex: 1;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* ── Main content area ── */
-    .dash-content {
-      margin-left: var(--sidebar-w);
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-
-    /* ── Top bar ── */
-    .dash-topbar {
-      position: sticky;
-      top: 0;
-      z-index: 80;
-      height: var(--topbar-h);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding: 0 1.25rem;
-      background: rgba(245,247,255,0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .dash-topbar__left {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .dash-topbar__title {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-
-    .dash-topbar__sub {
-      margin: 0;
-      font-size: 0.78rem;
-      color: var(--muted);
-    }
-
-    .dash-topbar__right {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-    }
-
-    .dash-topbar-btn {
-      appearance: none;
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: var(--radius-sm);
-      padding: 0.4rem 0.85rem;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text);
-      font-family: inherit;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.15s ease, border-color 0.15s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .dash-topbar-btn:hover { background: var(--bg-soft); border-color: #cbd5e1; }
-
-    /* ── Hamburger (mobile only) ── */
-    .dash-hamburger {
-      display: none;
-      appearance: none;
-      border: 1px solid var(--border);
-      background: #fff;
-      border-radius: 8px;
-      padding: 0.4rem 0.5rem;
-      cursor: pointer;
-      color: var(--text);
-    }
-
-    /* ── Page inner wrapper ── */
-    .dash-page {
-      padding: 1.25rem 1.25rem 2.5rem;
-      flex: 1;
-    }
-
-    /* ── Page header inside content ── */
-    .dash-page-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      justify-content: space-between;
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-      animation: fadeUp 0.5s ease both;
-    }
-
-    .dash-page-header h1 {
-      margin: 0;
-      font-size: clamp(1.15rem, 2.5vw, 1.35rem);
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .dash-page-header p {
-      margin: 0.2rem 0 0;
-      font-size: 0.82rem;
-      color: var(--muted);
-      max-width: 52ch;
-    }
-
-    /* ── Sidebar overlay (mobile) ── */
-    .dash-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 89;
-      background: rgba(6,8,12,0.45);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      animation: fadeIn 0.2s ease;
-    }
-
-    .dash-overlay.is-visible { display: block; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 900px) {
-      .dash-sidebar {
-        transform: translateX(calc(-1 * var(--sidebar-w)));
-      }
-      .dash-sidebar.is-open {
-        transform: translateX(0);
-        box-shadow: 4px 0 32px rgba(15,23,42,0.15);
-      }
-      .dash-content {
-        margin-left: 0;
-      }
-      .dash-hamburger {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    }
-
-    @media (max-width: 600px) {
-      .dash-page { padding: 1rem 0.85rem 2rem; }
-      .dash-topbar { padding: 0 0.85rem; }
-    }
   </style>
 </head>
 <body>
@@ -1449,10 +1100,9 @@
        ══════════════════════════════════════ -->
   <aside class="dash-sidebar" id="dashSidebar" aria-label="Main navigation">
 
-    <!-- Brand -->
-    <a class="dash-brand" href="/index.html">
+    <a class="dash-brand" href="/dashboard.html">
       <div class="dash-brand__icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
         </svg>
       </div>
@@ -1462,56 +1112,59 @@
       </div>
     </a>
 
-    <!-- Navigation -->
-    <nav class="dash-nav" role="navigation">
+    <div class="dash-nav-section">
+      <span class="dash-nav-label">Overview</span>
+      <nav class="dash-nav">
+        <a class="dash-nav-item" href="/dashboard.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+          </svg>
+          Dashboard
+        </a>
+      </nav>
+    </div>
 
+    <div class="dash-nav-section">
       <span class="dash-nav-label">Build</span>
+      <nav class="dash-nav">
+        <a class="dash-nav-item is-active" href="/index.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+          Form Builder
+          <span class="dash-nav-badge">AI</span>
+        </a>
+        <a class="dash-nav-item" href="/survey-demo/" target="_blank">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+          </svg>
+          Demo Form
+        </a>
+      </nav>
+    </div>
 
-      <a class="dash-nav-item is-active" href="/index.html" title="Form Builder">
-        <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/>
-        </svg>
-        Form Builder
-        <span class="dash-nav-badge">AI</span>
-      </a>
-
-      <a class="dash-nav-item" href="/survey.html" title="My Surveys">
-        <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-        </svg>
-        My Surveys
-      </a>
-
-      <a class="dash-nav-item" href="/survey-demo/" title="Demo Form">
-        <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
-        </svg>
-        Demo Form
-      </a>
-
+    <div class="dash-nav-section">
       <span class="dash-nav-label">Manage</span>
+      <nav class="dash-nav">
+        <a class="dash-nav-item" href="/survey.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          My Surveys
+        </a>
+        <a class="dash-nav-item" href="/add-company.html">
+          <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          Companies
+        </a>
+      </nav>
+    </div>
 
-      <a class="dash-nav-item" href="/add-company.html" title="Companies">
-        <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-        Companies
-      </a>
-
-      <a class="dash-nav-item" href="/dashboard.html" title="Dashboard">
-        <svg class="dash-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-        </svg>
-        Dashboard
-      </a>
-
-    </nav>
-
-    <!-- Footer user pill -->
     <div class="dash-sidebar-footer">
       <div class="dash-user-pill">
         <div class="dash-user-avatar">AI</div>
-        <span class="dash-user-name">Survey Builder</span>
+        <span class="dash-user-name">FormAI Platform</span>
       </div>
     </div>
 

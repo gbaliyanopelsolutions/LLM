@@ -13,9 +13,9 @@ const ALLOWED_TIERS = new Set(['Tier 1', 'Tier 2', 'Tier 3']);
 
 function showToast(text, variant = 'default') {
 	toast.textContent = text;
-	toast.classList.remove('error', 'success');
-	if (variant === 'error') toast.classList.add('error');
-	if (variant === 'success') toast.classList.add('success');
+	toast.classList.remove('dsi-toast--error', 'dsi-toast--success');
+	if (variant === 'error') toast.classList.add('dsi-toast--error');
+	if (variant === 'success') toast.classList.add('dsi-toast--success');
 	toast.hidden = false;
 	clearTimeout(showToast._t);
 	showToast._t = setTimeout(() => {
