@@ -923,6 +923,16 @@ initDocumentUpload();
 generateBtn.addEventListener('click', async () => {
 	const manualPrompt = promptInput.value.trim();
 	const prompt = buildEffectivePrompt(manualPrompt, uploadedDocumentText, uploadedFileName);
+
+	/* ── Debug: confirm both inputs are merged ── */
+	console.log('──── Form Generation Debug ────');
+	console.log('DOCX / Document content:', uploadedDocumentText
+		? uploadedDocumentText.slice(0, 300) + (uploadedDocumentText.length > 300 ? '…' : '')
+		: '(none)');
+	console.log('User Prompt:', manualPrompt || '(none)');
+	console.log('Final AI Prompt sent to model:\n', prompt);
+	console.log('───────────────────────────────');
+
 	if (!prompt) {
 		setError('Enter a prompt or upload a .txt, .docx, or .pdf file.');
 		showToast('Add a prompt or upload a document', 'error');

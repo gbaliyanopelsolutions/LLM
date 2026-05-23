@@ -137,6 +137,12 @@ export async function extractTextFromFile(file) {
 /**
  * Merge manual prompt with extracted document text for the LLM.
  *
+ * Rules:
+ *  - doc only  → friendly extraction prompt
+ *  - manual only → pass through unchanged
+ *  - both       → structured prompt: doc questions first, then
+ *                 user instructions explicitly marked as MANDATORY
+ *
  * @param {string} userPrompt
  * @param {string} documentText
  * @param {string} [fileName]
@@ -144,29 +150,43 @@ export async function extractTextFromFile(file) {
  */
 export function buildEffectivePrompt(userPrompt, documentText, fileName = '') {
 	const manual = String(userPrompt || '').trim();
-	const doc = String(documentText || '').trim();
-	const label = fileName ? ` (${fileName})` : '';
+	const doc    = String(documentText || '').trim();
+	const label  = fileName ? ` "${fileName}"` : '';
 
+	/* ── No document uploaded ── */
 	if (!doc) {
 		return manual;
 	}
 
-	const docBlock = doc.length > 48000 ? `${doc.slice(0, 48000)}\n…(truncated)` : doc;
+	const docBlock = doc.length > 48_000 ? `${doc.slice(0, 48_000)}\n…(truncated)` : doc;
 
+	/* ── Document only, no extra prompt ── */
 	if (!manual) {
 		return [
-			'Create a complete, production-ready HTML survey form from the uploaded document below.',
-			'Extract all questions, sections, and requirements. Preserve intent and required fields.',
-			`--- Uploaded document${label} ---`,
+			`Create a complete, production-ready HTML survey form from the uploaded document${label} below.`,
+			'Extract ALL questions, sections, and requirements. Preserve field types, order, and required status.',
+			`====== DOCUMENT CONTENT${label} ======`,
 			docBlock,
+			'====== END OF DOCUMENT ======',
 		].join('\n\n');
 	}
 
+	/* ── Both document + extra prompt ── */
+	// User instructions are placed AFTER the document as the final directive.
+	// They are marked as MANDATORY so the model cannot skip them.
 	return [
-		manual,
-		`--- Uploaded document${label} ---`,
+		`Create a complete, production-ready HTML survey/form from the document${label} below,`,
+		'and apply ALL of the additional requirements listed at the bottom.',
+		'',
+		`====== DOCUMENT CONTENT${label} ======`,
 		docBlock,
-		'---',
-		'Use the document above together with my instructions to build the form.',
+		'====== END OF DOCUMENT ======',
+		'',
+		'====== ADDITIONAL REQUIREMENTS (YOU MUST FOLLOW EVERY ITEM BELOW) ======',
+		manual,
+		'====== END OF REQUIREMENTS ======',
+		'',
+		'IMPORTANT: Build the form using the questions from the document above AND apply every',
+		'requirement listed above. Do NOT ignore any instruction. Combine both into one output.',
 	].join('\n\n');
 }
