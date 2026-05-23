@@ -1013,6 +1013,7 @@ generateBtn.addEventListener('click', async () => {
 		updateSurveyDetailsVisibility();
 		updateSaveFormButtonState();
 		syncEditorAndPreview();
+		switchBuilderTab('preview');   // show the rendered form immediately
 		showToast('Survey generated — edit questions or save', 'success');
 
 		/* ── Save to submissions (non-blocking) ── */
@@ -1220,12 +1221,40 @@ if (conversation.length > 0) {
 		}
 	}
 	if (lastAssistant) {
-		lastHtml = lastAssistant;
-		highlightCode(lastHtml);
-		setPreviewSrcdoc(lastHtml);
-		copyBtn.disabled = false;
-		downloadBtn.disabled = false;
-		lastSurveySpec = null;
-		updateSaveFormButtonState();
+		/*
+		 * The assistant message is either:
+		 *  • New format: compact JSON survey spec (saved since JSON-first refactor)
+		 *  • Old format: full HTML string (saved before the refactor)
+		 *
+		 * Try JSON first; fall back to HTML for backward compatibility.
+		 */
+		let restoredFromSpec = false;
+		if (lastAssistant.trim().startsWith('{')) {
+			try {
+				const surveyData = JSON.parse(lastAssistant);
+				if (surveyData && typeof surveyData.title === 'string' && Array.isArray(surveyData.questions)) {
+					lastSurveySpec = normalizeSpec(surveyData);
+					lastHtml = specToPreviewDocument(lastSurveySpec);
+					highlightCode(lastHtml);
+					setPreviewSrcdoc(lastHtml);
+					copyBtn.disabled = false;
+					downloadBtn.disabled = false;
+					syncEditorAndPreview();
+					restoredFromSpec = true;
+				}
+			} catch {
+				/* Not valid JSON — fall through to HTML path */
+			}
+		}
+		if (!restoredFromSpec) {
+			/* Old format: treat the stored content as raw HTML */
+			lastHtml = lastAssistant;
+			highlightCode(lastHtml);
+			setPreviewSrcdoc(lastHtml);
+			copyBtn.disabled = false;
+			downloadBtn.disabled = false;
+			lastSurveySpec = null;
+			updateSaveFormButtonState();
+		}
 	}
 }
