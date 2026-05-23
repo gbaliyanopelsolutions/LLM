@@ -10,7 +10,7 @@ import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js';
 /**
  * UI-visible field type for the editor.
  *
- * @typedef {'text'|'email'|'number'|'textarea'|'select'|'radio'|'checkbox'|'date'|'file'|'rating'} EditorFieldType
+ * @typedef {'text'|'email'|'number'|'textarea'|'select'|'radio'|'checkbox'|'date'|'file'|'rating'|'matrix_rating'} EditorFieldType
  */
 
 const HTML_ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -37,16 +37,17 @@ function escapeAttr(v) {
  */
 export function fieldTypeLabel(t) {
 	const map = {
-		text:     'Text',
-		email:    'Email',
-		number:   'Number',
-		textarea: 'Long text',
-		select:   'Dropdown',
-		radio:    'Single choice',
-		checkbox: 'Multiple choice',
-		date:     'Date',
-		file:     'File upload',
-		rating:   'Rating scale',
+		text:          'Text',
+		email:         'Email',
+		number:        'Number',
+		textarea:      'Long text',
+		select:        'Dropdown',
+		radio:         'Single choice',
+		checkbox:      'Multiple choice',
+		date:          'Date',
+		file:          'File upload',
+		rating:        'Rating scale',
+		matrix_rating: 'Matrix rating',
 	};
 	return map[t] || 'Text';
 }
@@ -66,6 +67,7 @@ export function editorTypeToDbType(t) {
 			return 'multiple_choice';
 		case 'number':
 		case 'rating':
+		case 'matrix_rating':
 			return 'number';
 		case 'date':
 			return 'date';
@@ -262,6 +264,26 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   .survey-submit { width: 100%; }
   .rating-btn span { width: 36px; height: 36px; font-size: 0.8rem; border-radius: 9px; }
 }
+/* ── Matrix rating ── */
+.matrix-question { margin-bottom: 0.5rem; }
+.matrix-scale-info { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); padding: 0 2px 6px; }
+.matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.matrix-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 480px; }
+.matrix-tbl thead th {
+  padding: 0.45rem 0.35rem; text-align: center; font-weight: 700;
+  font-size: 0.74rem; color: var(--muted); background: var(--bg);
+  border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 1;
+}
+.matrix-tbl th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; }
+.matrix-tbl td { padding: 0.55rem 0.35rem; text-align: center; border-bottom: 1px solid #f1f5f9; }
+.matrix-tbl td.mtx-rl { text-align: left; padding-left: 0.85rem; font-weight: 500; color: #1e293b; min-width: 160px; line-height: 1.35; }
+.matrix-tbl tbody tr:last-child td { border-bottom: none; }
+.matrix-tbl tbody tr:hover td { background: #f5f8ff; }
+.matrix-tbl input[type="radio"] { width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary); margin: 0; }
+@media (max-width: 540px) {
+  .matrix-tbl { min-width: 440px; }
+  .matrix-tbl th.mtx-lh, .matrix-tbl td.mtx-rl { min-width: 120px; font-size: 0.76rem; }
+}
 `.trim();
 }
 
@@ -389,6 +411,37 @@ function renderQuestionMarkup(q, idx) {
       </div>`;
 		break;
 	}
+	case 'matrix_rating': {
+		const mMin = (validation.min !== undefined && validation.min !== '') ? Number(validation.min) : 0;
+		const mMax = (validation.max !== undefined && validation.max !== '') ? Number(validation.max) : 10;
+		const safeMMn = Number.isFinite(mMin) ? mMin : 0;
+		const safeMMax = Number.isFinite(mMax) && mMax > safeMMn ? mMax : 10;
+		const mSteps = Array.from({ length: safeMMax - safeMMn + 1 }, (_, i) => safeMMn + i);
+		const headerCols = mSteps.map((n) => `<th>${escapeHtml(String(n))}</th>`).join('');
+		/** @type {string[]} */
+		const matrixRows = Array.isArray(q.rows) ? /** @type {string[]} */(q.rows) : [];
+		const bodyRows = matrixRows.map((row, ri) => {
+			const rName = `${name}_r${ri}`;
+			const cols = mSteps
+				.map((n) => `<td><input type="radio" name="${escapeAttr(rName)}" value="${n}"${dataAttr} /></td>`)
+				.join('');
+			return `<tr><td class="mtx-rl">${escapeHtml(String(row))}</td>${cols}</tr>`;
+		}).join('');
+		control = `
+      <div class="matrix-question">
+        <div class="matrix-scale-info">
+          <span>${escapeHtml(safeMMn + ' = Not at all satisfied')}</span>
+          <span>${escapeHtml(safeMMax + ' = Extremely satisfied')}</span>
+        </div>
+        <div class="matrix-wrap">
+          <table class="matrix-tbl" role="group" aria-labelledby="${id}_lbl">
+            <thead><tr><th class="mtx-lh"></th>${headerCols}</tr></thead>
+            <tbody>${bodyRows}</tbody>
+          </table>
+        </div>
+      </div>`;
+		break;
+	}
 	case 'text':
 	default:
 		control = `<input class="survey-control" type="text" id="${id}" name="${name}"${dataAttr}${placeholder}${reqAttr}${minLen}${maxLen}${pattern} />`;
@@ -406,6 +459,7 @@ function renderQuestionMarkup(q, idx) {
  * @property {boolean} required
  * @property {string} [placeholder]
  * @property {string[]} [options]
+ * @property {string[]} [rows]  - row labels for matrix_rating type
  * @property {{ minLength?: number, maxLength?: number, min?: number, max?: number, pattern?: string, accept?: string }} [validation]
  */
 

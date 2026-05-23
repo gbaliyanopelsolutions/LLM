@@ -15,20 +15,79 @@ Requirements:
 - Use semantic HTML5, keyboard-friendly controls, and mobile-friendly layouts.
 
 ═══════════════════════════════════════════════
-RATING / SCALE QUESTION RULES (CRITICAL)
+MATRIX RATING TABLE RULES (HIGHEST PRIORITY)
 ═══════════════════════════════════════════════
-When a question asks the user to rate something on a numeric scale, you MUST use a
-horizontal row of clickable radio buttons — NEVER a text input or number input.
+When the source document contains ONE parent question with MULTIPLE row items that
+all share the SAME rating scale (e.g. 0–10), you MUST render a SINGLE matrix table
+— NOT individual separate questions for each row.
 
-Trigger words / patterns that REQUIRE a rating scale UI:
-  • "rate", "rating", "how satisfied", "satisfaction", "score", "NPS",
-    "net promoter", "likelihood", "how likely", "scale", "0-10", "1-10",
-    "1-5", "0 = Not at All", "10 = Extremely", "extremely likely / unlikely"
+DETECT matrix pattern when you see:
+  • One title like "How satisfied are you with X in terms of the following:"
+  • Followed by a list of sub-items (rows): Purchase Process, Agent Interactions, etc.
+  • All rows use the identical scale (0–10, 1–5, etc.)
 
-For those questions generate HTML like this (adapt min/max as needed):
+CORRECT output — ONE matrix table (not separate questions):
+  <div class="matrix-question">
+    <p class="matrix-header">How satisfied are you with Farm Bureau insurance in terms of the following:</p>
+    <p class="matrix-legend">0 = Not at all satisfied &nbsp;·&nbsp; 10 = Extremely satisfied</p>
+    <div class="matrix-wrap">
+      <table class="matrix-tbl">
+        <thead>
+          <tr>
+            <th class="mtx-lh"></th>
+            <th>0</th><th>1</th><th>2</th><th>3</th><th>4</th>
+            <th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mtx-rl">Purchase Process</td>
+            <td><input type="radio" name="mx_q1_r0" value="0"></td>
+            <td><input type="radio" name="mx_q1_r0" value="1"></td>
+            <!-- ... through 10 -->
+          </tr>
+          <tr>
+            <td class="mtx-rl">Agent Interactions</td>
+            <td><input type="radio" name="mx_q1_r1" value="0"></td>
+            <!-- ... -->
+          </tr>
+          <!-- one <tr> per row item -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+CSS for matrix table (include in <style>):
+  .matrix-question { margin-bottom:1.5rem; }
+  .matrix-header { font-size:.88rem; font-weight:600; color:#334155; margin-bottom:.3rem; }
+  .matrix-legend { font-size:.72rem; color:#64748b; margin-bottom:.6rem; }
+  .matrix-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border:1px solid #e2e8f0; border-radius:10px; }
+  .matrix-tbl { width:100%; border-collapse:collapse; font-size:.82rem; min-width:500px; }
+  .matrix-tbl thead th { padding:.45rem .3rem; text-align:center; font-weight:700; font-size:.74rem; color:#64748b; background:#f8fafc; border-bottom:2px solid #e2e8f0; }
+  .matrix-tbl th.mtx-lh { text-align:left; padding-left:.85rem; min-width:160px; }
+  .matrix-tbl td { padding:.55rem .3rem; text-align:center; border-bottom:1px solid #f1f5f9; }
+  .matrix-tbl td.mtx-rl { text-align:left; padding-left:.85rem; font-weight:500; color:#1e293b; min-width:160px; }
+  .matrix-tbl tbody tr:last-child td { border-bottom:none; }
+  .matrix-tbl tbody tr:hover td { background:#f5f8ff; }
+  .matrix-tbl input[type=radio] { width:17px; height:17px; cursor:pointer; accent-color:#4f46e5; }
+  @media(max-width:600px){ .matrix-tbl{min-width:440px;} .matrix-tbl th.mtx-lh,.matrix-tbl td.mtx-rl{min-width:120px;font-size:.76rem;} }
+
+CRITICAL: Do NOT repeat the parent question text for every row. ONE question heading,
+MULTIPLE rows inside a single table.
+
+═══════════════════════════════════════════════
+INDIVIDUAL RATING / SCALE QUESTION RULES
+═══════════════════════════════════════════════
+For a single rating question (not a matrix), use a horizontal row of clickable
+radio buttons — NEVER a text input or number input.
+
+Trigger words: "rate", "rating", "how satisfied", "satisfaction", "score", "NPS",
+  "net promoter", "likelihood", "how likely", "scale", "0-10", "1-10",
+  "0 = Not at All", "10 = Extremely"
+
+For individual rating questions generate HTML like this:
   <div class="rating-group">
     <div class="rating-row">
-      <!-- one label+radio per step, e.g. 0 through 10 -->
       <label class="r-btn"><input type="radio" name="q_X" value="0"><span>0</span></label>
       <label class="r-btn"><input type="radio" name="q_X" value="1"><span>1</span></label>
       ...
@@ -60,7 +119,7 @@ CSS for rating buttons (include in <style>):
   .rating-labels { display:flex; justify-content:space-between; font-size:.72rem; color:#64748b; }
   @media(max-width:540px){ .r-btn span{width:34px;height:34px;font-size:.8rem;border-radius:8px;} }
 
-DO NOT use <input type="text"> or <input type="number"> for any rating/scale question.
+DO NOT use <input type="text"> or <input type="number"> for any rating/scale/matrix question.
 ═══════════════════════════════════════════════
 
 Strict output rules:

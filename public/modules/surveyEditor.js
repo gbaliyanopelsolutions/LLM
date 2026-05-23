@@ -122,14 +122,17 @@ export function normalizeQuestion(raw) {
 		typeof obj.type === 'string' ? obj.type : 'text';
 	const isDbType = ['single_choice', 'multiple_choice'].includes(String(incomingType));
 	const resolvedType = isDbType ? dbTypeToEditorType(incomingType) : /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ (
-		['text', 'email', 'number', 'textarea', 'select', 'radio', 'checkbox', 'date', 'file', 'rating'].includes(String(incomingType))
+		['text', 'email', 'number', 'textarea', 'select', 'radio', 'checkbox', 'date', 'file', 'rating', 'matrix_rating'].includes(String(incomingType))
 			? incomingType
 			: 'text'
 	);
 	// Auto-upgrade text/number → rating when the question text signals a scale
-	const type = (resolvedType === 'text' || resolvedType === 'number') && isRatingQuestion(text)
-		? /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ ('rating')
-		: resolvedType;
+	// But do NOT downgrade an explicit matrix_rating
+	const type = resolvedType === 'matrix_rating'
+		? /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ ('matrix_rating')
+		: (resolvedType === 'text' || resolvedType === 'number') && isRatingQuestion(text)
+			? /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ ('rating')
+			: resolvedType;
 	const optsRaw = obj.options;
 	const optsJson = obj.options_json;
 	let options = [];
@@ -165,6 +168,10 @@ export function normalizeQuestion(raw) {
 		}
 	}
 
+	// Extract rows for matrix_rating type
+	const rowsRaw = obj.rows;
+	const rows = Array.isArray(rowsRaw) ? rowsRaw.map((r) => String(r)) : [];
+
 	return {
 		id: typeof obj.id === 'string' && obj.id ? obj.id : typeof obj.question_id === 'string' ? obj.question_id : nextLocalId(),
 		question: text || 'Untitled question',
@@ -172,6 +179,7 @@ export function normalizeQuestion(raw) {
 		required,
 		placeholder,
 		options,
+		rows,
 		validation: finalValidation,
 	};
 }
@@ -187,6 +195,7 @@ export function cloneSpec(spec) {
 		questions: (spec.questions || []).map((q) => ({
 			...q,
 			options: Array.isArray(q.options) ? [...q.options] : [],
+			rows: Array.isArray(q.rows) ? [...q.rows] : [],
 			validation: q.validation ? { ...q.validation } : {},
 		})),
 	};
