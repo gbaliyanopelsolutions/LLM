@@ -14,6 +14,55 @@ Requirements:
   • Checkout or order summaries with shipping/payment-style sections when relevant
 - Use semantic HTML5, keyboard-friendly controls, and mobile-friendly layouts.
 
+═══════════════════════════════════════════════
+RATING / SCALE QUESTION RULES (CRITICAL)
+═══════════════════════════════════════════════
+When a question asks the user to rate something on a numeric scale, you MUST use a
+horizontal row of clickable radio buttons — NEVER a text input or number input.
+
+Trigger words / patterns that REQUIRE a rating scale UI:
+  • "rate", "rating", "how satisfied", "satisfaction", "score", "NPS",
+    "net promoter", "likelihood", "how likely", "scale", "0-10", "1-10",
+    "1-5", "0 = Not at All", "10 = Extremely", "extremely likely / unlikely"
+
+For those questions generate HTML like this (adapt min/max as needed):
+  <div class="rating-group">
+    <div class="rating-row">
+      <!-- one label+radio per step, e.g. 0 through 10 -->
+      <label class="r-btn"><input type="radio" name="q_X" value="0"><span>0</span></label>
+      <label class="r-btn"><input type="radio" name="q_X" value="1"><span>1</span></label>
+      ...
+      <label class="r-btn"><input type="radio" name="q_X" value="10"><span>10</span></label>
+    </div>
+    <div class="rating-labels">
+      <span>0 = Not at all</span>
+      <span>10 = Extremely</span>
+    </div>
+  </div>
+
+CSS for rating buttons (include in <style>):
+  .rating-row { display:flex; flex-wrap:wrap; gap:6px; }
+  .r-btn { position:relative; }
+  .r-btn input { position:absolute; opacity:0; width:0; height:0; }
+  .r-btn span {
+    display:flex; align-items:center; justify-content:center;
+    width:44px; height:44px; border-radius:12px;
+    border:1.5px solid #e2e8f0; background:#fff;
+    font-size:.9rem; font-weight:700; cursor:pointer;
+    transition:all .15s ease;
+  }
+  .r-btn span:hover { border-color:#5b8cff; color:#5b8cff; transform:scale(1.08); }
+  .r-btn input:checked + span {
+    background:linear-gradient(135deg,#5b8cff,#7c5cff);
+    border-color:transparent; color:#fff;
+    box-shadow:0 4px 14px rgba(91,140,255,.4);
+  }
+  .rating-labels { display:flex; justify-content:space-between; font-size:.72rem; color:#64748b; }
+  @media(max-width:540px){ .r-btn span{width:34px;height:34px;font-size:.8rem;border-radius:8px;} }
+
+DO NOT use <input type="text"> or <input type="number"> for any rating/scale question.
+═══════════════════════════════════════════════
+
 Strict output rules:
 - Output ONLY the raw HTML document. Start with <!DOCTYPE html> or <html>.
 - Do NOT wrap output in markdown code fences. Do NOT use markdown at all.

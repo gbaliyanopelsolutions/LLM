@@ -41,6 +41,57 @@ export function normalizeSpec(raw) {
 }
 
 /**
+ * Rating question detection patterns.
+ * Returns true when a question text clearly asks for a numeric scale rating.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+function isRatingQuestion(text) {
+	const t = String(text || '').toLowerCase();
+	return [
+		/\brate\b/,
+		/\brating\b/,
+		/\bsatisf/,
+		/\bnps\b/,
+		/\bnet promoter\b/,
+		/\bscore\b/,
+		/\bscale\b/,
+		/\b0\s*[-–to]+\s*10\b/,
+		/\b1\s*[-–to]+\s*10\b/,
+		/\b1\s*[-–to]+\s*5\b/,
+		/\b0\s*=.{0,30}10\s*=/,
+		/\b1\s*=.{0,30}10\s*=/,
+		/\bnot at all\b/,
+		/\bextremely\b.*\blikely\b/,
+		/\bhow (?:satisfied|likely|happy|pleased)\b/,
+		/\blikelihood\b/,
+		/\b(?:very|not)\s+(?:satisfied|likely|happy)\b/,
+		/\brecommend.{0,30}(?:scale|score|\d)/,
+	].some((re) => re.test(t));
+}
+
+/**
+ * Extract min/max from a question text (e.g. "0-10", "1 to 5").
+ * Returns null if not found.
+ *
+ * @param {string} text
+ * @returns {{ min: number, max: number } | null}
+ */
+function extractRatingRange(text) {
+	const t = String(text || '');
+	const m = t.match(/\b(\d)\s*[-–to]+\s*(10|5)\b/i);
+	if (m) {
+		const lo = parseInt(m[1], 10);
+		const hi = parseInt(m[2], 10);
+		if (Number.isFinite(lo) && Number.isFinite(hi) && hi > lo) {
+			return { min: lo, max: hi };
+		}
+	}
+	return null;
+}
+
+/**
  * @param {unknown} raw
  * @returns {EditorQuestion|null}
  */
@@ -58,11 +109,15 @@ export function normalizeQuestion(raw) {
 	const incomingType =
 		typeof obj.type === 'string' ? obj.type : 'text';
 	const isDbType = ['single_choice', 'multiple_choice'].includes(String(incomingType));
-	const type = isDbType ? dbTypeToEditorType(incomingType) : /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ (
-		['text', 'email', 'number', 'textarea', 'select', 'radio', 'checkbox', 'date', 'file'].includes(String(incomingType))
+	const resolvedType = isDbType ? dbTypeToEditorType(incomingType) : /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ (
+		['text', 'email', 'number', 'textarea', 'select', 'radio', 'checkbox', 'date', 'file', 'rating'].includes(String(incomingType))
 			? incomingType
 			: 'text'
 	);
+	// Auto-upgrade text/number → rating when the question text signals a scale
+	const type = (resolvedType === 'text' || resolvedType === 'number') && isRatingQuestion(text)
+		? /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ ('rating')
+		: resolvedType;
 	const optsRaw = obj.options;
 	const optsJson = obj.options_json;
 	let options = [];
@@ -85,6 +140,19 @@ export function normalizeQuestion(raw) {
 				? /** @type {Record<string, unknown>} */ (obj.validation_rules)
 				: {};
 
+	// For rating questions, inject range into validation if not already set
+	const finalValidation = /** @type {EditorQuestion['validation']} */ ({ ...validation });
+	if (type === 'rating') {
+		const range = extractRatingRange(text);
+		if (range) {
+			if (finalValidation.min === undefined || finalValidation.min === '') finalValidation.min = range.min;
+			if (finalValidation.max === undefined || finalValidation.max === '') finalValidation.max = range.max;
+		} else {
+			if (finalValidation.min === undefined || finalValidation.min === '') finalValidation.min = 1;
+			if (finalValidation.max === undefined || finalValidation.max === '') finalValidation.max = 10;
+		}
+	}
+
 	return {
 		id: typeof obj.id === 'string' && obj.id ? obj.id : typeof obj.question_id === 'string' ? obj.question_id : nextLocalId(),
 		question: text || 'Untitled question',
@@ -92,7 +160,7 @@ export function normalizeQuestion(raw) {
 		required,
 		placeholder,
 		options,
-		validation: /** @type {EditorQuestion['validation']} */ (validation),
+		validation: finalValidation,
 	};
 }
 

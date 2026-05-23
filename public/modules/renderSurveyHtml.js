@@ -10,7 +10,7 @@ import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js';
 /**
  * UI-visible field type for the editor.
  *
- * @typedef {'text'|'email'|'number'|'textarea'|'select'|'radio'|'checkbox'|'date'|'file'} EditorFieldType
+ * @typedef {'text'|'email'|'number'|'textarea'|'select'|'radio'|'checkbox'|'date'|'file'|'rating'} EditorFieldType
  */
 
 const HTML_ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -37,15 +37,16 @@ function escapeAttr(v) {
  */
 export function fieldTypeLabel(t) {
 	const map = {
-		text: 'Text',
-		email: 'Email',
-		number: 'Number',
+		text:     'Text',
+		email:    'Email',
+		number:   'Number',
 		textarea: 'Long text',
-		select: 'Dropdown',
-		radio: 'Single choice',
+		select:   'Dropdown',
+		radio:    'Single choice',
 		checkbox: 'Multiple choice',
-		date: 'Date',
-		file: 'File upload',
+		date:     'Date',
+		file:     'File upload',
+		rating:   'Rating scale',
 	};
 	return map[t] || 'Text';
 }
@@ -64,6 +65,7 @@ export function editorTypeToDbType(t) {
 		case 'checkbox':
 			return 'multiple_choice';
 		case 'number':
+		case 'rating':
 			return 'number';
 		case 'date':
 			return 'date';
@@ -207,9 +209,58 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 }
 .survey-submit:hover { box-shadow: 0 10px 26px rgba(91, 140, 255, 0.45); }
 .survey-submit:active { transform: scale(0.98); }
+/* ── Rating scale ── */
+.rating-group { display: flex; flex-direction: column; gap: 0.6rem; }
+.rating-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rating-btn { position: relative; flex-shrink: 0; }
+.rating-btn input[type="radio"] {
+  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+}
+.rating-btn span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s ease, background 0.15s ease,
+              color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+.rating-btn span:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: scale(1.08);
+  box-shadow: 0 2px 8px rgba(91,140,255,0.18);
+}
+.rating-btn input:checked + span {
+  background: linear-gradient(135deg, var(--primary), #7c5cff);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(91,140,255,0.42);
+  transform: scale(1.06);
+}
+.rating-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--muted);
+  padding: 0 2px;
+}
 @media (max-width: 540px) {
   .survey-card { padding: 1.2rem 1rem 1.5rem; border-radius: 12px; }
   .survey-submit { width: 100%; }
+  .rating-btn span { width: 36px; height: 36px; font-size: 0.8rem; border-radius: 9px; }
 }
 `.trim();
 }
@@ -313,10 +364,35 @@ function renderQuestionMarkup(q, idx) {
 		case 'file':
 			control = `<input class="survey-control" type="file" id="${id}" name="${name}"${dataAttr}${reqAttr}${accept} />`;
 			break;
-		case 'text':
-		default:
-			control = `<input class="survey-control" type="text" id="${id}" name="${name}"${dataAttr}${placeholder}${reqAttr}${minLen}${maxLen}${pattern} />`;
-			break;
+	case 'rating': {
+		/* Detect scale range from validation or fall back to 1-10 */
+		const rMin = (validation.min !== undefined && validation.min !== '') ? Number(validation.min) : 1;
+		const rMax = (validation.max !== undefined && validation.max !== '') ? Number(validation.max) : 10;
+		const safeMin = Number.isFinite(rMin) ? rMin : 1;
+		const safeMax = Number.isFinite(rMax) && rMax > safeMin ? rMax : 10;
+		const steps = Array.from({ length: safeMax - safeMin + 1 }, (_, i) => safeMin + i);
+		const minLabel = safeMin === 0 ? 'Not at all' : 'Low';
+		const maxLabel = 'Extremely / High';
+		const btns = steps.map((n) => `
+        <label class="rating-btn">
+          <input type="radio" name="${name}" value="${n}"${dataAttr}${reqAttr} />
+          <span>${n}</span>
+        </label>`).join('');
+		control = `
+      <div class="rating-group" role="group" aria-labelledby="${id}_lbl">
+        <div class="rating-buttons">${btns}
+        </div>
+        <div class="rating-labels">
+          <span>${escapeHtml(safeMin + ' = ' + minLabel)}</span>
+          <span>${escapeHtml(safeMax + ' = ' + maxLabel)}</span>
+        </div>
+      </div>`;
+		break;
+	}
+	case 'text':
+	default:
+		control = `<input class="survey-control" type="text" id="${id}" name="${name}"${dataAttr}${placeholder}${reqAttr}${minLen}${maxLen}${pattern} />`;
+		break;
 	}
 
 	return `<div class="survey-field-block">${label}${control}</div>`;
