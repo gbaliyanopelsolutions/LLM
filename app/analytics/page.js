@@ -729,22 +729,7 @@ function AiChat() {
 								</motion.div>
 							) : (
 								<motion.div key={activeIdx} initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-									{/* SQL block */}
-									{activeMsg.result?.sql && (
-										<div className={s.sqlBlock}>
-											<div className={s.sqlBlockHeader}>
-												<span className={s.sqlLabel}>
-													<Database size={10} style={{ display:'inline', marginRight:4, verticalAlign:-1 }} />
-													Generated SQL
-												</span>
-												<button className={s.copyBtn} onClick={() => copySql(activeMsg.result.sql)}>
-													{copied ? <Check size={10} /> : <Copy size={10} />}
-													{copied ? 'Copied!' : 'Copy'}
-												</button>
-											</div>
-											<pre className={s.sqlPre}>{activeMsg.result.sql}</pre>
-										</div>
-									)}
+									{/* SQL block intentionally hidden from UI */}
 
 									{/* Explanation */}
 									{activeMsg.result?.explanation && (
