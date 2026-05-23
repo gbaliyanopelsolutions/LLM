@@ -2,8 +2,9 @@
    Analytics Dashboard — CSS Module
    ═══════════════════════════════════════════════════════════ */
 
-/* ── Tokens ── */
-:root {
+/* ── Shell — CSS vars scoped here so CSS Modules stays "pure" ── */
+.shell {
+  /* Design tokens */
   --an-accent:      #6366f1;
   --an-accent2:     #8b5cf6;
   --an-accent-soft: rgba(99,102,241,0.09);
@@ -20,10 +21,7 @@
   --an-shadow:      0 1px 3px rgba(0,0,0,0.05), 0 8px 24px rgba(99,102,241,0.08);
   --an-shadow-lg:   0 4px 6px rgba(0,0,0,0.04), 0 16px 48px rgba(99,102,241,0.12);
   --an-tx:          0.2s ease;
-}
 
-/* ── Shell ── */
-.shell {
   display: flex;
   min-height: 100vh;
   background: var(--an-bg);
