@@ -18,7 +18,14 @@
     "db:sample": "node scripts/pg-sample-query.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["survey", "ai", "llm", "anthropic", "supabase", "nextjs"],
+  "keywords": [
+    "survey",
+    "ai",
+    "llm",
+    "anthropic",
+    "supabase",
+    "nextjs"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -30,10 +37,13 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "framer-motion": "^12.40.0",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.16.0",
     "next": "^15.5.18",
     "pg": "^8.20.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "recharts": "^3.8.1"
   }
 }
