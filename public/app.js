@@ -5,6 +5,7 @@ import {
 	extractTextFromFile,
 	buildEffectivePrompt,
 } from './modules/extractDocumentText.js';
+import { postProcessRatingFields } from './modules/postProcessHtml.js';
 import {
 	normalizeSpec,
 	renderQuestionCards,
@@ -969,7 +970,10 @@ generateBtn.addEventListener('click', async () => {
 			throw new Error(parseErrorResponse(res, bodyText));
 		}
 
-		lastHtml = bodyText;
+		// Post-process: upgrade any text inputs that are rating questions → scale buttons
+		lastHtml = postProcessRatingFields(bodyText);
+		console.log('[postProcess] Rating upgrade applied. HTML length:', lastHtml.length);
+
 		conversation.push({ role: 'user', content: prompt });
 		conversation.push({ role: 'assistant', content: lastHtml });
 		saveConversation();
