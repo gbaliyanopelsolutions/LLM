@@ -41,34 +41,46 @@ export function normalizeSpec(raw) {
 }
 
 /**
- * Rating question detection patterns.
- * Returns true when a question text clearly asks for a numeric scale rating.
+ * Rating question detection.
+ * Uses simple string-includes checks — more reliable than regex
+ * for user-supplied question text.
  *
  * @param {string} text
  * @returns {boolean}
  */
 function isRatingQuestion(text) {
 	const t = String(text || '').toLowerCase();
-	return [
-		/\brate\b/,
-		/\brating\b/,
-		/\bsatisf/,
-		/\bnps\b/,
-		/\bnet promoter\b/,
-		/\bscore\b/,
-		/\bscale\b/,
-		/\b0\s*[-–to]+\s*10\b/,
-		/\b1\s*[-–to]+\s*10\b/,
-		/\b1\s*[-–to]+\s*5\b/,
-		/\b0\s*=.{0,30}10\s*=/,
-		/\b1\s*=.{0,30}10\s*=/,
-		/\bnot at all\b/,
-		/\bextremely\b.*\blikely\b/,
-		/\bhow (?:satisfied|likely|happy|pleased)\b/,
-		/\blikelihood\b/,
-		/\b(?:very|not)\s+(?:satisfied|likely|happy)\b/,
-		/\brecommend.{0,30}(?:scale|score|\d)/,
-	].some((re) => re.test(t));
+	const keywords = [
+		'satisfied',
+		'satisfaction',
+		'0 = not',
+		'10 = extremely',
+		'not at all',
+		'extremely satisfied',
+		'extremely likely',
+		'not at all likely',
+		'how likely',
+		'how satisfied',
+		'how happy',
+		'how pleased',
+		'nps',
+		'net promoter',
+		'rate from',
+		'rate on',
+		'rate your',
+		'rating',
+		'on a scale',
+		'scale of',
+		'1 to 10',
+		'0 to 10',
+		'1-10',
+		'0-10',
+		'0 = ',
+		'10 = ',
+		'score',
+		'likelihood',
+	];
+	return keywords.some((kw) => t.includes(kw));
 }
 
 /**

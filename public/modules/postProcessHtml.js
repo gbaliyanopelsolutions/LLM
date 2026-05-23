@@ -1,85 +1,109 @@
 /**
- * Post-process Claude-generated HTML to upgrade rating/satisfaction text inputs
- * into beautiful horizontal 0-10 radio button scales.
+ * postProcessHtml.js
  *
- * This runs client-side in the browser via DOMParser so it works regardless
- * of what Claude actually generated.
+ * Post-process Claude-generated HTML to replace text/number inputs
+ * for rating/satisfaction questions with beautiful horizontal radio-button
+ * scale widgets.
+ *
+ * Strategy: zero external deps, pure string + DOM operations, multiple
+ * label-finding fallbacks, simple string-includes detection.
  */
 
+/* ─────────────────────────────────────────────────
+   CSS injected into the document once
+───────────────────────────────────────────────── */
 const RATING_CSS = `
-/* ── Injected rating scale styles ── */
-.r-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 4px}
-.r-btn{position:relative;flex-shrink:0}
-.r-btn input[type=radio]{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
-.r-btn span{
+.rating-scale{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0 4px;align-items:center}
+.rating-scale label{position:relative;cursor:pointer}
+.rating-scale input[type=radio]{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.rating-scale span{
   display:flex;align-items:center;justify-content:center;
-  width:44px;height:44px;border-radius:12px;
-  border:1.5px solid #e2e8f0;background:#fff;
-  font-size:.9rem;font-weight:700;color:#0f172a;cursor:pointer;
-  user-select:none;
-  transition:border-color .15s,background .15s,color .15s,transform .12s,box-shadow .15s;
+  width:44px;height:44px;border-radius:14px;
+  border:1.5px solid #dbe1ea;background:#fff;
+  font-size:.9rem;font-weight:700;color:#1e293b;
+  cursor:pointer;user-select:none;white-space:nowrap;
+  transition:transform .15s ease,border-color .15s ease,background .15s ease,
+             color .15s ease,box-shadow .15s ease;
 }
-.r-btn span:hover{
-  border-color:#5b8cff;color:#5b8cff;
-  transform:scale(1.1);box-shadow:0 2px 10px rgba(91,140,255,.2);
+.rating-scale span:hover{
+  transform:translateY(-3px);border-color:#4f46e5;color:#4f46e5;
+  box-shadow:0 4px 12px rgba(79,70,229,.18);
 }
-.r-btn input:checked + span{
-  background:linear-gradient(135deg,#5b8cff,#7c5cff);
+.rating-scale input:checked+span{
+  background:linear-gradient(135deg,#4f46e5,#7c3aed);
   border-color:transparent;color:#fff;
-  box-shadow:0 4px 16px rgba(91,140,255,.45);transform:scale(1.07);
+  box-shadow:0 8px 22px rgba(79,70,229,.38);transform:translateY(-2px) scale(1.06);
 }
-.r-end-labels{
-  display:flex;justify-content:space-between;
-  font-size:.7rem;color:#64748b;padding:0 3px;
-}
+.rating-end-labels{display:flex;justify-content:space-between;font-size:.7rem;color:#64748b;padding:2px 3px 0;max-width:520px}
 @media(max-width:540px){
-  .r-btn span{width:34px;height:34px;font-size:.78rem;border-radius:8px}
-}
-`.trim();
+  .rating-scale span{width:36px;height:36px;font-size:.78rem;border-radius:10px}
+}`.trim();
 
-/** Patterns that identify a label as a rating/scale question */
-const RATING_RE = [
-	/\brate\b/i,
-	/\brating\b/i,
-	/\bsatisf/i,
-	/\bnps\b/i,
-	/\bnet\s+promoter\b/i,
-	/\blikelihood\b/i,
-	/\bhow\s+(?:satisfied|likely|happy|pleased)\b/i,
-	/\bnot\s+at\s+all\b/i,
-	/\bextremely\b/i,
-	/\b0\s*=\s*not\b/i,
-	/\b(?:0|1)\s*[-–to]+\s*10\b/i,
-	/\b(?:0|1)\s*=.{0,40}10\s*=/i,
-	/\bscore\b/i,
-	/\bscale\b/i,
+/* ─────────────────────────────────────────────────
+   Rating trigger — simple string-includes (case insensitive)
+   More reliable than regex for this use-case.
+───────────────────────────────────────────────── */
+const RATING_KEYWORDS = [
+	'satisfied',
+	'satisfaction',
+	'0 = not',
+	'10 = extremely',
+	'0 = extremely',
+	'10 = not',
+	'not at all',
+	'extremely satisfied',
+	'extremely likely',
+	'not at all likely',
+	'how likely',
+	'how satisfied',
+	'how happy',
+	'nps',
+	'net promoter',
+	'rate from',
+	'rate on',
+	'rate your',
+	'rating',
+	'on a scale',
+	'scale of',
+	'1 to 10',
+	'0 to 10',
+	'1-10',
+	'0-10',
+	'1 = ',
+	'0 = ',
+	'10 = ',
+	'score',
+	'likelihood',
 ];
 
 /**
- * Returns true if the label text indicates a rating/scale question.
+ * Returns true if the text contains any rating keyword.
  * @param {string} text
  */
-function isRatingLabel(text) {
-	return RATING_RE.some((re) => re.test(text));
+function isRatingText(text) {
+	const lower = (text || '').toLowerCase();
+	return RATING_KEYWORDS.some((kw) => lower.includes(kw));
 }
 
 /**
- * Extract numeric range from label text, e.g. "0 = Not at All ... 10 = Extremely".
+ * Detect the numeric range from label text.
+ * e.g. "(0 = Not at All Satisfied, 10 = Extremely Satisfied)" → {min:0, max:10}
  * @param {string} text
  * @returns {{ min: number, max: number }}
  */
 function detectRange(text) {
-	// e.g. "0 = Not at All Satisfied, 10 = Extremely Satisfied"
-	const m = text.match(/\b(\d)\s*=.{0,40}?\b(10|5)\s*=/i);
+	const t = text || '';
+	// Pattern: "0 = ...  10 =" or "1 = ... 10 ="
+	const m = t.match(/\b(\d)\s*=.{0,60}?\b(10|5)\s*=/i);
 	if (m) {
 		const lo = parseInt(m[1], 10);
 		const hi = parseInt(m[2], 10);
-		if (Number.isFinite(lo) && Number.isFinite(hi) && hi > lo) {
+		if (Number.isFinite(lo) && Number.isFinite(hi) && hi > lo && hi <= 20) {
 			return { min: lo, max: hi };
 		}
 	}
-	// e.g. "1-10", "0 to 10"
-	const m2 = text.match(/\b(\d)\s*[-–to]+\s*(10|5)\b/i);
+	// Pattern: "0-10", "1-10", "0 to 10"
+	const m2 = t.match(/\b(\d)\s*(?:[-–]|to)\s*(10|5)\b/i);
 	if (m2) {
 		const lo = parseInt(m2[1], 10);
 		const hi = parseInt(m2[2], 10);
@@ -91,113 +115,149 @@ function detectRange(text) {
 }
 
 /**
- * Build the rating button HTML for a given name/range.
- * @param {string} name
+ * Build the rating widget HTML string.
+ * @param {string} name  - radio group name
  * @param {number} min
  * @param {number} max
  * @returns {string}
  */
-function makeRatingWidget(name, min, max) {
+function buildRatingWidget(name, min, max) {
+	const safeName = (name || 'rating').replace(/['"<>&]/g, '_');
 	const steps = Array.from({ length: max - min + 1 }, (_, i) => min + i);
 	const btns = steps
 		.map(
 			(n) =>
-				`<label class="r-btn"><input type="radio" name="${name}" value="${n}"><span>${n}</span></label>`
+				`<label><input type="radio" name="${safeName}" value="${n}"><span>${n}</span></label>`
 		)
 		.join('');
-	return `<div class="r-row">${btns}</div>`
-		+ `<div class="r-end-labels"><span>${min} = Not at all</span><span>${max} = Extremely</span></div>`;
+	return (
+		`<div class="rating-scale">${btns}</div>` +
+		`<div class="rating-end-labels">` +
+		`<span>${min} = Not at all</span>` +
+		`<span>${max} = Extremely</span>` +
+		`</div>`
+	);
 }
 
 /**
- * Find the label text that is associated with a given input element.
- * Checks: `<label for="id">`, wrapping `<label>`, and nearest preceding label.
+ * Find label text associated with an input element.
+ * Tries 5 different strategies from most to least specific.
  *
  * @param {HTMLInputElement} input
  * @param {Document} doc
  * @returns {string}
  */
-function findLabelText(input, doc) {
-	// 1. <label for="inputId">
+function getLabelText(input, doc) {
+	// 1. <label for="inputId"> — iterate all labels (avoids CSS.escape issues)
 	if (input.id) {
-		const lbl = doc.querySelector(`label[for="${CSS.escape(input.id)}"]`);
-		if (lbl) return lbl.textContent || '';
-	}
-	// 2. Input is inside a <label>
-	const wrapping = input.closest('label');
-	if (wrapping) return wrapping.textContent || '';
-
-	// 3. Nearest preceding label sibling within the same parent
-	const parent = input.parentElement;
-	if (parent) {
-		let el = input.previousElementSibling;
-		while (el) {
-			if (el.tagName === 'LABEL') return el.textContent || '';
-			el = el.previousElementSibling;
+		const allLabels = doc.querySelectorAll('label');
+		for (let i = 0; i < allLabels.length; i++) {
+			if (allLabels[i].getAttribute('for') === input.id) {
+				return allLabels[i].textContent || '';
+			}
 		}
-		// 4. Any label within parent container
-		const lbl = parent.querySelector('label');
-		if (lbl) return lbl.textContent || '';
 	}
+
+	// 2. Input is nested inside a <label>
+	const wrappingLabel = input.closest('label');
+	if (wrappingLabel) return wrappingLabel.textContent || '';
+
+	const parent = input.parentElement;
+	if (!parent) return '';
+
+	// 3. Nearest preceding <label> sibling
+	let prev = input.previousElementSibling;
+	while (prev) {
+		if (prev.tagName === 'LABEL' || prev.tagName === 'P' || prev.tagName === 'SPAN') {
+			return prev.textContent || '';
+		}
+		prev = prev.previousElementSibling;
+	}
+
+	// 4. Any <label> within the parent container
+	const labelInParent = parent.querySelector('label');
+	if (labelInParent) return labelInParent.textContent || '';
+
+	// 5. Full text of grandparent container (last resort)
+	const grandparent = parent.parentElement;
+	if (grandparent) return grandparent.textContent || '';
+
 	return '';
 }
 
 /**
- * Post-process a full HTML string from Claude:
- * - Detect text/number inputs whose label signals a rating question
- * - Replace them with horizontal radio-button rating scale widgets
- * - Inject the required CSS if not already present
- *
- * Safe: returns the original HTML unchanged if DOMParser is unavailable or throws.
+ * Main export — parse + patch the HTML string.
  *
  * @param {string} html
  * @returns {string}
  */
 export function postProcessRatingFields(html) {
-	if (typeof DOMParser === 'undefined' || !html) return html;
+	if (!html || typeof DOMParser === 'undefined') return html;
 
 	let doc;
 	try {
 		doc = new DOMParser().parseFromString(html, 'text/html');
-	} catch {
+	} catch (e) {
+		console.warn('[postProcess] DOMParser failed:', e);
 		return html;
 	}
 
-	let patched = false;
+	let patchCount = 0;
 
-	/** @type {NodeListOf<HTMLInputElement>} */
-	const inputs = doc.querySelectorAll(
-		'input[type="text"], input[type="number"], input:not([type])'
-	);
+	// Target: text, number, and untyped inputs
+	const selector = 'input[type="text"], input[type="number"], input:not([type])';
+	const inputs = Array.from(doc.querySelectorAll(selector));
 
 	inputs.forEach((input) => {
-		const labelText = findLabelText(input, doc);
-		if (!labelText || !isRatingLabel(labelText)) return;
+		const labelText = getLabelText(/** @type {HTMLInputElement} */ (input), doc);
+
+		console.log('[postProcess] Checking input:', {
+			id:        input.id,
+			name:      input.name,
+			labelText: labelText.slice(0, 80),
+			isRating:  isRatingText(labelText),
+		});
+
+		if (!labelText || !isRatingText(labelText)) return;
 
 		const { min, max } = detectRange(labelText);
-		const name = input.name || input.id || `rating_${Date.now()}`;
+		const name = input.name || input.id || `rating_${patchCount}`;
 
+		// Create replacement node
 		const wrapper = doc.createElement('div');
-		wrapper.innerHTML = makeRatingWidget(name, min, max);
+		wrapper.innerHTML = buildRatingWidget(name, min, max);
 
-		// replaceWith() is standard in modern browsers
-		input.replaceWith(wrapper);
-		patched = true;
-
-		console.log(
-			`[postProcess] Upgraded input "${name}" → rating scale ${min}–${max}`,
-			'\nLabel:', labelText.slice(0, 80)
-		);
+		try {
+			input.replaceWith(wrapper);
+			patchCount++;
+			console.log(
+				`[postProcess] ✔ Upgraded to rating scale ${min}–${max}:`,
+				labelText.slice(0, 80)
+			);
+		} catch (e) {
+			console.warn('[postProcess] replaceWith failed:', e);
+		}
 	});
 
-	if (!patched) return html;
+	console.log(`[postProcess] Done. ${patchCount} input(s) upgraded to rating scale.`);
+
+	if (patchCount === 0) return html;
 
 	// Inject CSS once
-	if (!html.includes('.r-btn')) {
-		const styleEl = doc.createElement('style');
-		styleEl.textContent = RATING_CSS;
-		(doc.head || doc.documentElement).appendChild(styleEl);
+	if (!html.includes('rating-scale')) {
+		try {
+			const styleEl = doc.createElement('style');
+			styleEl.textContent = '\n' + RATING_CSS + '\n';
+			(doc.head || doc.documentElement).appendChild(styleEl);
+		} catch (e) {
+			console.warn('[postProcess] CSS inject failed:', e);
+		}
 	}
 
-	return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+	try {
+		return '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+	} catch (e) {
+		console.warn('[postProcess] outerHTML failed:', e);
+		return html;
+	}
 }
