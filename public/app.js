@@ -531,7 +531,7 @@ if (aiBtn) {
 			const res = await fetch(`${getApiBase()}/api/builder/generate-survey-json`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ prompt: llmPrompt, messages: [], htmlSample: '' }),
+				body: JSON.stringify({ prompt: llmPrompt, messages: [], htmlSample: '', }),
 			});
 			const data = await res.json();
 			if (!res.ok || !data.ok || !data.survey) {
@@ -760,20 +760,26 @@ async function saveGenerationToSubmissions(prompt, html) {
 	return data.submission;
 }
 
+/**
+ * Kept for backwards-compatibility (called from AI-edit tab and older code paths).
+ * Now sends no htmlSample to avoid sending large HTML back to Claude.
+ * @param {string} prompt
+ */
 async function fetchSurveyJsonAfterGenerate(prompt) {
 	const res = await fetch(`${getApiBase()}/api/builder/generate-survey-json`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({
 			prompt,
-			messages: conversation.map((m) => ({
+			// Truncate history and send no htmlSample to stay under rate limits
+			messages: conversation.slice(-4).map((m) => ({
 				role: m.role,
 				content:
-					typeof m.content === 'string' && m.content.length > 5000
-						? `${m.content.slice(0, 5000)}\n…(truncated)`
+					typeof m.content === 'string' && m.content.length > 1500
+						? `${m.content.slice(0, 1500)}\n…(truncated)`
 						: m.content,
 			})),
-			htmlSample: lastHtml,
+			htmlSample: '',
 		}),
 	});
 	const data = await res.json().catch(() => ({}));
@@ -927,11 +933,11 @@ generateBtn.addEventListener('click', async () => {
 
 	/* ── Debug: confirm both inputs are merged ── */
 	console.log('──── Form Generation Debug ────');
-	console.log('DOCX / Document content:', uploadedDocumentText
+	console.log('DOCX content (first 300):', uploadedDocumentText
 		? uploadedDocumentText.slice(0, 300) + (uploadedDocumentText.length > 300 ? '…' : '')
 		: '(none)');
 	console.log('User Prompt:', manualPrompt || '(none)');
-	console.log('Final AI Prompt sent to model:\n', prompt);
+	console.log('Final prompt length (chars):', prompt.length);
 	console.log('───────────────────────────────');
 
 	if (!prompt) {
@@ -945,54 +951,75 @@ generateBtn.addEventListener('click', async () => {
 	lastSurveySpec = null;
 	updateSurveyDetailsVisibility();
 	updateSaveFormButtonState();
-	setLoading(true, 'Generating your form…');
+	setLoading(true, 'Generating survey schema…');
 	copyBtn.disabled = true;
 	downloadBtn.disabled = true;
 
 	try {
-		const res = await fetch(`${getApiBase()}/generate`, {
+		/*
+		 * JSON-first generation: ask for a compact survey JSON schema instead of
+		 * generating a full HTML page. This avoids the huge system prompt + HTML
+		 * output that was triggering the 30k tokens/min rate limit (429 errors).
+		 * The frontend renders the preview from the JSON spec via renderSurveyHtml.
+		 */
+		const res = await fetch(`${getApiBase()}/api/builder/generate-survey-json`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				prompt,
-				messages: conversation,
+				// No conversation history for initial generation — keeps tokens low.
+				// History is only useful for follow-up edits via the AI Edit tab.
+				messages: [],
+				htmlSample: '',
 			}),
 		});
 
-		const ct = res.headers.get('content-type') || '';
-		const bodyText = await res.text();
+		const data = await res.json().catch(() => ({}));
 
-		if (!res.ok) {
-			throw new Error(parseErrorResponse(res, bodyText));
+		if (!res.ok || !data.ok || !data.survey) {
+			const errMsg = data.error || (res.status === 429
+				? 'Rate limited — please wait a moment and try again.'
+				: `Generation failed (${res.status})`);
+			throw new Error(errMsg);
 		}
 
-		if (!ct.includes('text/html')) {
-			throw new Error(parseErrorResponse(res, bodyText));
-		}
+		/* ── Build spec + render preview from it ── */
+		lastSurveySpec = normalizeSpec(data.survey);
 
-		// Post-process: upgrade any text inputs that are rating questions → scale buttons
-		lastHtml = postProcessRatingFields(bodyText);
-		console.log('[postProcess] Rating upgrade applied. HTML length:', lastHtml.length);
+		// Render HTML from the spec (handles rating, matrix_rating, etc. natively)
+		const previewHtml = specToPreviewDocument(lastSurveySpec);
+		lastHtml = previewHtml;
 
-		conversation.push({ role: 'user', content: prompt });
-		conversation.push({ role: 'assistant', content: lastHtml });
+		/* ── Save to conversation (compact — JSON not HTML) ── */
+		conversation.push({ role: 'user', content: prompt.slice(0, 2000) });
+		conversation.push({ role: 'assistant', content: JSON.stringify(data.survey).slice(0, 3000) });
 		saveConversation();
 		savePromptToHistory(prompt);
 
+		/* ── Update UI ── */
 		highlightCode(lastHtml);
 		setPreviewSrcdoc(lastHtml);
 		copyBtn.disabled = false;
 		downloadBtn.disabled = false;
 
-		setLoading(true, 'Building survey JSON…');
-		await fetchSurveyJsonAfterGenerate(prompt);
-		updateSaveFormButtonState();
+		if (surveyTitleInput && !surveyTitleInput.value.trim() && typeof data.survey.title === 'string') {
+			surveyTitleInput.value = data.survey.title.trim();
+		}
+		if (surveyDescriptionInput && !surveyDescriptionInput.value.trim()) {
+			const d = typeof data.survey.description === 'string' ? data.survey.description.trim() : '';
+			surveyDescriptionInput.value = d;
+		}
 
-		setLoading(true, 'Saving prompt and response…');
+		updateSurveyDetailsVisibility();
+		updateSaveFormButtonState();
+		syncEditorAndPreview();
+		showToast('Survey generated — edit questions or save', 'success');
+
+		/* ── Save to submissions (non-blocking) ── */
+		setLoading(true, 'Saving…');
 		try {
 			await saveGenerationToSubmissions(prompt, lastHtml);
-			setSuccessBanner('Prompt and generated form saved to submissions.');
-			showToast('Saved to submissions', 'success');
+			setSuccessBanner('Survey generated and saved.');
 		} catch (saveErr) {
 			const saveMsg = saveErr instanceof Error ? saveErr.message : 'Save failed';
 			showToast(`Submissions save failed: ${saveMsg}`, 'error');
@@ -1003,7 +1030,6 @@ generateBtn.addEventListener('click', async () => {
 					if (sessionData.session) {
 						await insertSubmission(client, { message: prompt, result: lastHtml });
 						setSuccessBanner('Saved via Supabase (submissions).');
-						showToast('Saved to submissions (Supabase)', 'success');
 					}
 				} catch {
 					/* already surfaced API error */

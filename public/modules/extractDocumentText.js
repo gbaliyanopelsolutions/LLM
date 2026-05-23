@@ -135,13 +135,33 @@ export async function extractTextFromFile(file) {
 }
 
 /**
+ * Maximum characters of document text sent to the AI.
+ * Keeps the total prompt well inside the 30 k token/min rate limit.
+ */
+const MAX_DOC_CHARS = 12_000;
+
+/**
+ * Collapse redundant whitespace in extracted document text to reduce token count.
+ * @param {string} raw
+ * @returns {string}
+ */
+function cleanDocumentText(raw) {
+	return String(raw || '')
+		.replace(/[ \t]+/g, ' ')        // collapse horizontal whitespace
+		.replace(/\n[ \t]+/g, '\n')     // strip leading whitespace on each line
+		.replace(/\n{3,}/g, '\n\n')     // collapse 3+ blank lines → 1 blank line
+		.trim();
+}
+
+/**
  * Merge manual prompt with extracted document text for the LLM.
  *
  * Rules:
- *  - doc only  → friendly extraction prompt
+ *  - doc only  → lightweight extraction request
  *  - manual only → pass through unchanged
- *  - both       → structured prompt: doc questions first, then
- *                 user instructions explicitly marked as MANDATORY
+ *  - both       → structured prompt: doc first, then user instructions as MANDATORY
+ *
+ * Document text is cleaned and hard-capped at MAX_DOC_CHARS before sending.
  *
  * @param {string} userPrompt
  * @param {string} documentText
@@ -150,43 +170,37 @@ export async function extractTextFromFile(file) {
  */
 export function buildEffectivePrompt(userPrompt, documentText, fileName = '') {
 	const manual = String(userPrompt || '').trim();
-	const doc    = String(documentText || '').trim();
+	const cleaned = cleanDocumentText(documentText);
 	const label  = fileName ? ` "${fileName}"` : '';
 
 	/* ── No document uploaded ── */
-	if (!doc) {
+	if (!cleaned) {
 		return manual;
 	}
 
-	const docBlock = doc.length > 48_000 ? `${doc.slice(0, 48_000)}\n…(truncated)` : doc;
+	const docBlock = cleaned.length > MAX_DOC_CHARS
+		? `${cleaned.slice(0, MAX_DOC_CHARS)}\n…(truncated)`
+		: cleaned;
 
 	/* ── Document only, no extra prompt ── */
 	if (!manual) {
 		return [
-			`Create a complete, production-ready HTML survey form from the uploaded document${label} below.`,
-			'Extract ALL questions, sections, and requirements. Preserve field types, order, and required status.',
-			`====== DOCUMENT CONTENT${label} ======`,
+			`Extract ALL survey questions from the document${label} below and generate the survey.`,
+			`====== DOCUMENT${label} ======`,
 			docBlock,
-			'====== END OF DOCUMENT ======',
+			'====== END DOCUMENT ======',
 		].join('\n\n');
 	}
 
 	/* ── Both document + extra prompt ── */
-	// User instructions are placed AFTER the document as the final directive.
-	// They are marked as MANDATORY so the model cannot skip them.
 	return [
-		`Create a complete, production-ready HTML survey/form from the document${label} below,`,
-		'and apply ALL of the additional requirements listed at the bottom.',
-		'',
-		`====== DOCUMENT CONTENT${label} ======`,
+		`Generate a survey from the document${label} below. Apply ALL requirements listed after it.`,
+		`====== DOCUMENT${label} ======`,
 		docBlock,
-		'====== END OF DOCUMENT ======',
+		'====== END DOCUMENT ======',
 		'',
-		'====== ADDITIONAL REQUIREMENTS (YOU MUST FOLLOW EVERY ITEM BELOW) ======',
+		'====== REQUIREMENTS (MANDATORY — follow every item) ======',
 		manual,
-		'====== END OF REQUIREMENTS ======',
-		'',
-		'IMPORTANT: Build the form using the questions from the document above AND apply every',
-		'requirement listed above. Do NOT ignore any instruction. Combine both into one output.',
+		'====== END REQUIREMENTS ======',
 	].join('\n\n');
 }
