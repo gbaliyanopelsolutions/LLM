@@ -100,11 +100,14 @@ function showRenderMode(mode) {
 	if (mode === 'iframe') {
 		setBlockVisible(stateIframe, true);
 		setBlockVisible(stateFallback, false);
+		// The iframe already contains its own submit button inside the form card.
+		// Hide the outer footer button to avoid a confusing duplicate.
+		setBlockVisible(surveyFooter, false);
 	} else {
 		setBlockVisible(stateIframe, false);
 		setBlockVisible(stateFallback, true);
+		setBlockVisible(surveyFooter, true);
 	}
-	setBlockVisible(surveyFooter, true);
 }
 
 /**

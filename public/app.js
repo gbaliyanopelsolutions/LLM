@@ -1084,7 +1084,13 @@ if (saveFormBtn) {
 		// reflects any edits (manual or AI) made after the original LLM HTML.
 		const editorSpec = normalizeSpec(lastSurveySpec);
 		const { buildFormParts } = await import('./modules/renderSurveyHtml.js');
-		const { formHtml, formCss } = buildFormParts(editorSpec);
+		const { formHtml: rawFormHtml, formCss } = buildFormParts(editorSpec);
+
+		// Add data-survey-slot="0/1/2…" to each field so the server's
+		// bindQuestionFieldsToHtml() can rebind them to the real DB question_ids.
+		// Without this, the iframe bridge collects answers keyed by editor UUIDs
+		// which never match the DB question_ids → validation always fails.
+		const { formHtml } = prepareFormHtmlForSave(rawFormHtml, editorSpec.questions);
 		// Send editor types directly; backend mapQuestionType() handles
 		// text/email/number/textarea/select/radio/checkbox/date → DB enum.
 		const surveyPayload = {
