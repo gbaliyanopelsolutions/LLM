@@ -196,10 +196,14 @@ export function validateRequiredAnswers(answers, questions) {
 export function normalizeAnswersForSubmit(raw, questions) {
 	/** @type {Record<string, string | string[]>} */
 	const answers = {};
-	for (const q of questions) {
+	for (let i = 0; i < questions.length; i++) {
+		const q = questions[i];
 		const id = q.question_id;
 		const type = String(q.type || 'text');
-		const v = raw[id] ?? raw[`q-${id}`];
+		// Priority: DB question_id → q-prefixed → position fallback (__pos_N).
+		// The __pos_N fallback handles surveys saved before the slot-binding fix
+		// where data-question-id still holds editor UUIDs instead of DB UDs.
+		const v = raw[id] ?? raw[`q-${id}`] ?? raw[`__pos_${i}`];
 		if (v === undefined || v === null || v === '') {
 			continue;
 		}
@@ -221,27 +225,65 @@ export function normalizeAnswersForSubmit(raw, questions) {
 export function buildPublicSrcdoc(parts) {
 	const css = String(parts.formCss || '');
 	const body = String(parts.formHtml || '');
+	// The bridge collects answers two ways:
+	//   1. By data-question-id  → works for newly saved surveys (DB UUID stamped)
+	//   2. By __pos_N (field order) → fallback for older surveys where data-question-id
+	//      still holds editor UUIDs that don't match the DB question_ids.
+	// normalizeAnswersForSubmit() in form.js tries key 1 first, then key 2.
 	const bridge = `
 (function () {
   function collectAnswers() {
     var answers = {};
-    var els = document.querySelectorAll('[data-question-id]');
+    var seenRadio = {};
+    var seenCheck = {};
+    var slotIdx = 0;
+    var form = document.querySelector('form');
+    var root = form || document.body;
+    var els = root.querySelectorAll('input, select, textarea');
     for (var i = 0; i < els.length; i++) {
       var el = els[i];
-      var qid = el.getAttribute('data-question-id');
-      if (!qid) continue;
       var type = (el.getAttribute('type') || '').toLowerCase();
+      if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'reset') continue;
+      var qid = el.getAttribute('data-question-id') || null;
+      var posKey = '__pos_' + slotIdx;
+
       if (type === 'radio') {
-        if (el.checked) answers[qid] = el.value;
+        var rName = el.getAttribute('name') || ('__r' + slotIdx);
+        if (seenRadio[rName]) continue;
+        seenRadio[rName] = true;
+        var safeRName = rName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        var checked = root.querySelector('input[type="radio"][name="' + safeRName + '"]:checked');
+        if (checked) {
+          if (qid) answers[qid] = checked.value;
+          answers[posKey] = checked.value;
+        }
+        slotIdx++;
         continue;
       }
+
       if (type === 'checkbox') {
-        if (!el.checked) continue;
-        if (!answers[qid]) answers[qid] = [];
-        if (Array.isArray(answers[qid])) answers[qid].push(el.value);
+        var cName = el.getAttribute('name') || null;
+        if (cName && seenCheck[cName]) continue;
+        if (cName) seenCheck[cName] = true;
+        var safeCName = cName ? cName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') : null;
+        var cEls = safeCName
+          ? root.querySelectorAll('input[type="checkbox"][name="' + safeCName + '"]')
+          : [el];
+        var vals = [];
+        for (var j = 0; j < cEls.length; j++) { if (cEls[j].checked) vals.push(cEls[j].value); }
+        if (vals.length) {
+          if (qid) answers[qid] = vals;
+          answers[posKey] = vals;
+        }
+        slotIdx++;
         continue;
       }
-      if (el.value !== undefined && el.value !== '') answers[qid] = String(el.value);
+
+      if (el.value !== undefined && el.value !== '') {
+        if (qid) answers[qid] = String(el.value);
+        answers[posKey] = String(el.value);
+      }
+      slotIdx++;
     }
     return answers;
   }
