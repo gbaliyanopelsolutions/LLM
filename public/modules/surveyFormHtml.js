@@ -337,6 +337,10 @@ export function buildPublicSrcdoc(parts) {
 <style>
 html, body { margin: 0; height: auto; min-height: 0; overflow: visible; box-sizing: border-box; }
 *, *::before, *::after { box-sizing: inherit; }
+/* Hide any submit button rendered inside the form — the outer page footer
+   button is the single canonical trigger and posts via postMessage. */
+button[type="submit"], input[type="submit"],
+.survey-submit, .survey-submit-row { display: none !important; }
 ${css}
 </style>
 </head>

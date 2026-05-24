@@ -100,14 +100,13 @@ function showRenderMode(mode) {
 	if (mode === 'iframe') {
 		setBlockVisible(stateIframe, true);
 		setBlockVisible(stateFallback, false);
-		// The iframe already contains its own submit button inside the form card.
-		// Hide the outer footer button to avoid a confusing duplicate.
-		setBlockVisible(surveyFooter, false);
 	} else {
 		setBlockVisible(stateIframe, false);
 		setBlockVisible(stateFallback, true);
-		setBlockVisible(surveyFooter, true);
 	}
+	// Always show the outer footer button — it is the single canonical submit trigger.
+	// The inner submit button inside the iframe is hidden via CSS in buildPublicSrcdoc.
+	setBlockVisible(surveyFooter, true);
 }
 
 /**
