@@ -225,14 +225,19 @@ export function normalizeAnswersForSubmit(raw, questions) {
 export function buildPublicSrcdoc(parts) {
 	const css = String(parts.formCss || '');
 	const body = String(parts.formHtml || '');
-	// The bridge collects answers two ways:
-	//   1. By data-question-id  → works for newly saved surveys (DB UUID stamped)
-	//   2. By __pos_N (field order) → fallback for older surveys where data-question-id
-	//      still holds editor UUIDs that don't match the DB question_ids.
-	// normalizeAnswersForSubmit() in form.js tries key 1 first, then key 2.
+	// The bridge collects answers in two complementary ways:
+	//   1. data-question-id key  – works for all surveys after the server-side
+	//      rebindDataQuestionIds() fix stamps actual DB question_ids into the HTML.
+	//   2. __pos_N key (field DOM order) – extra safety fallback.
+	//
+	// For multi-step forms the bridge also ACCUMULATES answers on every `change`
+	// event so that answers from earlier steps are not lost when those DOM nodes
+	// are removed before the final submit.
 	const bridge = `
 (function () {
-  function collectAnswers() {
+  var accumulated = {};
+
+  function collectFromDom() {
     var answers = {};
     var seenRadio = {};
     var seenCheck = {};
@@ -287,6 +292,25 @@ export function buildPublicSrcdoc(parts) {
     }
     return answers;
   }
+
+  function captureNow() {
+    var current = collectFromDom();
+    for (var k in current) {
+      var v = current[k];
+      if (v !== null && v !== undefined && v !== '') {
+        accumulated[k] = v;
+      }
+    }
+  }
+
+  // Capture on every field change so multi-step forms retain earlier answers
+  document.addEventListener('change', captureNow, true);
+
+  function collectAnswers() {
+    captureNow();
+    return accumulated;
+  }
+
   function notifySubmit() {
     window.parent.postMessage({ type: 'public-survey-submit', answers: collectAnswers() }, '*');
   }
