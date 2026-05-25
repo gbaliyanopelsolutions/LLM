@@ -111,6 +111,22 @@ function extractRatingRange(text) {
 }
 
 /**
+ * Remove Qualtrics artefacts from question/option/row text:
+ *  - Leading question-number prefix  "Q0 ", "Q12 ", "Q3. "
+ *  - Trailing Qualtrics value labels " (1)", " (2)", " (11)" etc.
+ * @param {string} str
+ * @returns {string}
+ */
+function cleanQualtricsText(str) {
+	return String(str || '')
+		// Strip leading Q-number prefix e.g. "Q10 ", "Q3. "
+		.replace(/^Q\d+[\s.]+/i, '')
+		// Strip one or more trailing Qualtrics value numbers " (1)" or " (2) (3)"
+		.replace(/(\s*\(\d+\))+\s*$/, '')
+		.trim();
+}
+
+/**
  * @param {unknown} raw
  * @returns {EditorQuestion|null}
  */
@@ -119,12 +135,13 @@ export function normalizeQuestion(raw) {
 		return null;
 	}
 	const obj = /** @type {Record<string, unknown>} */ (raw);
-	const text =
+	const rawText =
 		typeof obj.question === 'string'
 			? obj.question
 			: typeof obj.question_text === 'string'
 				? /** @type {string} */ (obj.question_text)
 				: '';
+	const text = cleanQualtricsText(rawText);
 	const incomingType =
 		typeof obj.type === 'string' ? obj.type : 'text';
 	const isDbType = ['single_choice', 'multiple_choice'].includes(String(incomingType));
@@ -144,9 +161,9 @@ export function normalizeQuestion(raw) {
 	const optsJson = obj.options_json;
 	let options = [];
 	if (Array.isArray(optsRaw)) {
-		options = optsRaw.map((o) => String(o));
+		options = optsRaw.map((o) => cleanQualtricsText(String(o)));
 	} else if (optsJson && typeof optsJson === 'object' && Array.isArray(/** @type {{ options?: unknown }} */ (optsJson).options)) {
-		options = /** @type {unknown[]} */ (/** @type {{ options?: unknown[] }} */ (optsJson).options).map((o) => String(o));
+		options = /** @type {unknown[]} */ (/** @type {{ options?: unknown[] }} */ (optsJson).options).map((o) => cleanQualtricsText(String(o)));
 	}
 	const requiredFromOpts =
 		optsJson && typeof optsJson === 'object' && typeof /** @type {{ required?: unknown }} */ (optsJson).required === 'boolean'
@@ -155,12 +172,25 @@ export function normalizeQuestion(raw) {
 	const required = typeof obj.required === 'boolean' ? obj.required : Boolean(requiredFromOpts);
 
 	const placeholder = typeof obj.placeholder === 'string' ? obj.placeholder : '';
-	const validation =
+	let validation =
 		obj.validation && typeof obj.validation === 'object'
 			? /** @type {Record<string, unknown>} */ (obj.validation)
 			: obj.validation_rules && typeof obj.validation_rules === 'object'
 				? /** @type {Record<string, unknown>} */ (obj.validation_rules)
 				: {};
+
+	// For matrix_rating: pull scale.min/max from the Claude JSON schema field
+	const scaleRaw = obj.scale && typeof obj.scale === 'object'
+		? /** @type {Record<string, unknown>} */ (obj.scale)
+		: null;
+	if (scaleRaw && type === 'matrix_rating') {
+		if (scaleRaw.min !== undefined && validation.min === undefined) {
+			validation = { ...validation, min: Number(scaleRaw.min) };
+		}
+		if (scaleRaw.max !== undefined && validation.max === undefined) {
+			validation = { ...validation, max: Number(scaleRaw.max) };
+		}
+	}
 
 	// For rating questions, inject range into validation if not already set
 	const finalValidation = /** @type {EditorQuestion['validation']} */ ({ ...validation });
@@ -175,9 +205,9 @@ export function normalizeQuestion(raw) {
 		}
 	}
 
-	// Extract rows for matrix_rating type
+	// Extract rows for matrix_rating type — strip Qualtrics trailing numbers
 	const rowsRaw = obj.rows;
-	const rows = Array.isArray(rowsRaw) ? rowsRaw.map((r) => String(r)) : [];
+	const rows = Array.isArray(rowsRaw) ? rowsRaw.map((r) => cleanQualtricsText(String(r))) : [];
 
 	return {
 		id: typeof obj.id === 'string' && obj.id ? obj.id : typeof obj.question_id === 'string' ? obj.question_id : nextLocalId(),

@@ -14,6 +14,41 @@ import {
 	toLlmSpec,
 } from './modules/surveyEditor.js';
 
+/**
+ * Extract explicit style hints (colors, logo URL) from the user's raw typed
+ * prompt so we can GUARANTEE they are applied even if Claude omits the style
+ * block in its JSON (which happens when the DOCX content dominates the prompt).
+ *
+ * @param {string} text - the user's typed prompt (NOT the merged DOCX+prompt)
+ * @returns {{ backgroundColor?: string, textColor?: string, accentColor?: string, logoUrl?: string }}
+ */
+function parseStyleFromPrompt(text) {
+	const t = String(text || '');
+	/** @type {Record<string, string>} */
+	const s = {};
+
+	// Background color — "background color #abc" / "background: #abc" / "bg #abc"
+	const bg = t.match(/(?:background(?:\s+color)?|bg)\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i);
+	if (bg) s.backgroundColor = bg[1];
+
+	// Text / font color — "font color #abc" / "text color #abc" / "color #abc"
+	const tc =
+		t.match(/(?:font|text)\s+color\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i) ||
+		t.match(/(?<![a-z])color\s*[:#]\s*(#[0-9a-fA-F]{3,8})/i) ||
+		t.match(/^color\s+(#[0-9a-fA-F]{3,8})/im);
+	if (tc) s.textColor = tc[1];
+
+	// Accent / button / primary color
+	const ac = t.match(/(?:accent|button|primary)\s+color\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i);
+	if (ac) s.accentColor = ac[1];
+
+	// Logo URL — "logo ... https://..." / "logo image url https://..."
+	const lu = t.match(/logo[^]*?(https?:\/\/[^\s,\n"']+)/i);
+	if (lu) s.logoUrl = lu[1].replace(/[,\s]+$/, '');
+
+	return s;
+}
+
 const STORAGE_CONVERSATION = 'formGen_conversation_v1';
 const STORAGE_PROMPTS = 'formGen_promptHistory_v1';
 /** Set when user expands source; absent = default hidden. */
@@ -985,6 +1020,17 @@ generateBtn.addEventListener('click', async () => {
 
 		/* ── Build spec + render preview from it ── */
 		lastSurveySpec = normalizeSpec(data.survey);
+
+		// Client-side style guarantee: parse colours/logo from the raw typed prompt
+		// and merge them into the spec. AI-returned values keep priority; this only
+		// fills gaps when Claude omits the style block (common with large DOCX input).
+		const clientStyle = parseStyleFromPrompt(manualPrompt);
+		if (Object.keys(clientStyle).length > 0) {
+			// clientStyle provides the base; AI spec.style (if any) can override individual fields
+			const merged = { ...clientStyle, ...(lastSurveySpec.style || {}) };
+			lastSurveySpec = { ...lastSurveySpec, style: merged };
+			console.log('[Style] merged from prompt+AI →', merged);
+		}
 
 		// Render HTML from the spec (handles rating, matrix_rating, etc. natively)
 		const previewHtml = specToPreviewDocument(lastSurveySpec);
