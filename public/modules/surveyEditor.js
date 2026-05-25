@@ -37,7 +37,14 @@ export function normalizeSpec(raw) {
 	const questions = list
 		.map((q) => normalizeQuestion(q))
 		.filter((q) => q !== null);
-	return { title, description, questions: /** @type {EditorQuestion[]} */ (questions) };
+	// Preserve the style block (colours + logo) from the AI-generated spec.
+	const style = obj.style && typeof obj.style === 'object' ? obj.style : undefined;
+	return {
+		title,
+		description,
+		...(style ? { style } : {}),
+		questions: /** @type {EditorQuestion[]} */ (questions),
+	};
 }
 
 /**

@@ -97,23 +97,54 @@ export function dbTypeToEditorType(dbType) {
 }
 
 /**
+ * Build the survey CSS. Accepts an optional style override object so prompt-driven
+ * colours (background, text, accent, card, logo) are applied automatically.
+ *
+ * @param {{ backgroundColor?: string, textColor?: string, accentColor?: string,
+ *           cardColor?: string, logoUrl?: string } | null | undefined} [style]
  * @returns {string}
  */
-export function buildSurveyCss() {
+export function buildSurveyCss(style) {
+	const s = style && typeof style === 'object' ? style : {};
+
+	// Build the :root override block from whatever style fields were provided.
+	const overrideParts = [];
+	if (s.backgroundColor) overrideParts.push(`--bg:${s.backgroundColor};`);
+	if (s.textColor)        overrideParts.push(`--text:${s.textColor}; --label:${s.textColor}; --opt-text:${s.textColor};`);
+	if (s.accentColor)      overrideParts.push(`--primary:${s.accentColor}; --primary-strong:${s.accentColor};`);
+	if (s.cardColor)        overrideParts.push(`--card:${s.cardColor}; --input-bg:${s.cardColor};`);
+	// When a dark background is requested and no explicit card colour was given,
+	// auto-set the card to a slightly lighter shade so it's still distinct.
+	if (s.backgroundColor && !s.cardColor) {
+		overrideParts.push(`--card:${s.backgroundColor}; --input-bg:${s.backgroundColor};`);
+	}
+	// When the caller provides a text colour the border and muted tones should
+	// stay legible — set them semi-transparently relative to the text colour.
+	if (s.textColor) {
+		overrideParts.push(`--border: rgba(128,128,128,0.35); --muted: rgba(128,128,128,0.7);`);
+	}
+	const overrideBlock = overrideParts.length
+		? `:root { ${overrideParts.join(' ')} }`
+		: '';
+
 	return `
 :root {
   --primary: #5b8cff;
   --primary-strong: #4f7be0;
   --text: #0f172a;
+  --label: #334155;
+  --opt-text: #1e293b;
   --muted: #64748b;
   --border: #e2e8f0;
   --danger: #dc2626;
   --bg: #f8fafc;
   --card: #ffffff;
+  --input-bg: #ffffff;
   --radius: 14px;
   --radius-sm: 10px;
   --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
 }
+${overrideBlock}
 * { box-sizing: border-box; }
 body {
   margin: 0;
@@ -132,11 +163,23 @@ body {
   box-shadow: var(--shadow);
 }
 .survey-header { margin-bottom: 1.25rem; }
+.survey-logo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.survey-logo img {
+  max-height: 56px;
+  max-width: 220px;
+  object-fit: contain;
+  display: block;
+}
 .survey-title {
   margin: 0 0 0.4rem;
   font-size: clamp(1.2rem, 2.6vw, 1.5rem);
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: var(--text);
 }
 .survey-desc {
   margin: 0;
@@ -154,7 +197,7 @@ body {
   display: block;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--label);
   margin-bottom: 0.5rem;
 }
 .survey-required { color: var(--danger); margin-left: 2px; }
@@ -165,7 +208,7 @@ body {
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-family: inherit;
-  background: #fff;
+  background: var(--input-bg);
   color: var(--text);
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
@@ -181,7 +224,7 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   gap: 0.55rem;
   padding: 0.35rem 0;
   font-size: 0.9rem;
-  color: #1e293b;
+  color: var(--opt-text);
   cursor: pointer;
 }
 .survey-opt-row input { accent-color: var(--primary); transform: scale(1.05); }
@@ -230,7 +273,7 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   height: 44px;
   border-radius: 12px;
   border: 1.5px solid var(--border);
-  background: #fff;
+  background: var(--input-bg);
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--text);
@@ -275,10 +318,10 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 1;
 }
 .matrix-tbl th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; }
-.matrix-tbl td { padding: 0.55rem 0.35rem; text-align: center; border-bottom: 1px solid #f1f5f9; }
-.matrix-tbl td.mtx-rl { text-align: left; padding-left: 0.85rem; font-weight: 500; color: #1e293b; min-width: 160px; line-height: 1.35; }
+.matrix-tbl td { padding: 0.55rem 0.35rem; text-align: center; border-bottom: 1px solid var(--border); }
+.matrix-tbl td.mtx-rl { text-align: left; padding-left: 0.85rem; font-weight: 500; color: var(--opt-text); min-width: 160px; line-height: 1.35; }
 .matrix-tbl tbody tr:last-child td { border-bottom: none; }
-.matrix-tbl tbody tr:hover td { background: #f5f8ff; }
+.matrix-tbl tbody tr:hover td { background: rgba(91,140,255,0.05); }
 .matrix-tbl input[type="radio"] { width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary); margin: 0; }
 @media (max-width: 540px) {
   .matrix-tbl { min-width: 440px; }
@@ -464,9 +507,15 @@ function renderQuestionMarkup(q, idx) {
  */
 
 /**
+ * @typedef {{ backgroundColor?: string, textColor?: string, accentColor?: string,
+ *             cardColor?: string, logoUrl?: string }} SurveyStyle
+ */
+
+/**
  * @typedef {object} EditorSpec
  * @property {string} title
  * @property {string} [description]
+ * @property {SurveyStyle} [style]
  * @property {EditorQuestion[]} questions
  */
 
@@ -478,9 +527,16 @@ export function buildFormParts(spec) {
 	const title = spec?.title || 'Survey';
 	const desc = spec?.description || '';
 	const questions = Array.isArray(spec?.questions) ? spec.questions : [];
+	const style = spec?.style && typeof spec.style === 'object' ? spec.style : {};
+
+	const logoUrl = String(style.logoUrl || '').trim();
+	const logoHtml = logoUrl
+		? `<div class="survey-logo"><img src="${escapeAttr(logoUrl)}" alt="Logo" /></div>`
+		: '';
 
 	const header = `
     <header class="survey-header">
+      ${logoHtml}
       <h1 class="survey-title">${escapeHtml(title)}</h1>
       ${desc ? `<p class="survey-desc">${escapeHtml(desc)}</p>` : ''}
     </header>`;
@@ -498,7 +554,7 @@ export function buildFormParts(spec) {
   </form>
 </div>`.trim();
 
-	return { formCss: buildSurveyCss(), formHtml: body };
+	return { formCss: buildSurveyCss(style), formHtml: body };
 }
 
 /**
