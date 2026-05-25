@@ -62,14 +62,19 @@ function parseStyleFromPrompt(text) {
 	if (ac) s.accentColor = ac[1];
 
 	// ── Logo URL ─────────────────────────────────────────────────────────────
-	// JSON:    logoUrl: "https://..." (possibly multi-line / wrapped)
+	// JSON:    logoUrl: "https://..." or logoUrl = "https://..."
 	// Natural: "logo ... https://..."
-	// Strip whitespace/newlines around the URL to handle line-wrapped pastes
-	const rawText = t.replace(/\s+/g, ' '); // collapse all whitespace for URL matching
-	const lu =
-		rawText.match(/logoUrl\s*[=:]\s*["']?(https?:\/\/[^\s"',]+)["']?/) ||
-		rawText.match(/logo[^]]*?(https?:\/\/[^\s,\n"']+)/i);
-	if (lu) s.logoUrl = lu[1].replace(/[,\s]+$/, '');
+	// URLs may be line-wrapped in the textarea; we capture what's between the
+	// quotes (which handles embedded newlines/spaces) and then strip all
+	// whitespace from the captured URL to reconstruct it.
+	const luQuoted =
+		t.match(/logoUrl\s*[=:]\s*"([^"]+)"/) ||
+		t.match(/logoUrl\s*[=:]\s*'([^']+)'/);
+	const luBare = t.replace(/\s+/g, ' ').match(
+		/(?:logoUrl\s*[=:]\s*|logo[^]]*?)(https?:\/\/[^\s"',]+)/i
+	);
+	const lu = luQuoted || luBare;
+	if (lu) s.logoUrl = lu[1].replace(/\s+/g, '').replace(/[,]+$/, '');
 
 	console.log('[parseStyleFromPrompt] extracted →', s);
 	return s;
@@ -1048,14 +1053,20 @@ generateBtn.addEventListener('click', async () => {
 		lastSurveySpec = normalizeSpec(data.survey);
 
 		// Client-side style guarantee: parse colours/logo from the raw typed prompt
-		// and merge them into the spec. AI-returned values keep priority; this only
-		// fills gaps when Claude omits the style block (common with large DOCX input).
+		// and merge them into the spec.
+		// PRIORITY: user's typed prompt ALWAYS wins — it is the explicit instruction.
+		// AI-returned style only fills in fields the user did NOT mention.
 		const clientStyle = parseStyleFromPrompt(manualPrompt);
-		if (Object.keys(clientStyle).length > 0) {
-			// clientStyle provides the base; AI spec.style (if any) can override individual fields
-			const merged = { ...clientStyle, ...(lastSurveySpec.style || {}) };
-			lastSurveySpec = { ...lastSurveySpec, style: merged };
-			console.log('[Style] merged from prompt+AI →', merged);
+		{
+			// Start with whatever Claude returned (may be partial or empty)
+			const aiStyle = (lastSurveySpec.style && typeof lastSurveySpec.style === 'object')
+				? lastSurveySpec.style : {};
+			// User's client-extracted style overrides the AI on any field it specifies
+			const merged = { ...aiStyle, ...clientStyle };
+			if (Object.keys(merged).length > 0) {
+				lastSurveySpec = { ...lastSurveySpec, style: merged };
+				console.log('[Style] client extracted →', clientStyle, '| AI →', aiStyle, '| merged →', merged);
+			}
 		}
 
 		// Render HTML from the spec (handles rating, matrix_rating, etc. natively)

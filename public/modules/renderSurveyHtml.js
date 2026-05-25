@@ -107,25 +107,36 @@ export function dbTypeToEditorType(dbType) {
 export function buildSurveyCss(style) {
 	const s = style && typeof style === 'object' ? style : {};
 
-	// Build the :root override block from whatever style fields were provided.
-	const overrideParts = [];
-	if (s.backgroundColor) overrideParts.push(`--bg:${s.backgroundColor};`);
-	if (s.textColor)        overrideParts.push(`--text:${s.textColor}; --label:${s.textColor}; --opt-text:${s.textColor};`);
-	if (s.accentColor)      overrideParts.push(`--primary:${s.accentColor}; --primary-strong:${s.accentColor};`);
-	if (s.cardColor)        overrideParts.push(`--card:${s.cardColor}; --input-bg:${s.cardColor};`);
-	// When a dark background is requested and no explicit card colour was given,
-	// auto-set the card to a slightly lighter shade so it's still distinct.
-	if (s.backgroundColor && !s.cardColor) {
-		overrideParts.push(`--card:${s.backgroundColor}; --input-bg:${s.backgroundColor};`);
+	// ── Derive card colour ────────────────────────────────────────────────────
+	// When only a page background is given we make the card slightly lighter so
+	// it reads as a distinct surface. The caller can always pass an explicit
+	// cardColor to override this.
+	const cardColor = s.cardColor
+		? s.cardColor
+		: s.backgroundColor
+			? s.backgroundColor
+			: null;
+
+	// ── Build bulletproof override block ─────────────────────────────────────
+	// Use `!important` so nothing in the default :root can win. Also apply
+	// directly to html,body for background-color so the whole iframe is painted.
+	const directRules = [];
+	if (s.backgroundColor) {
+		directRules.push(`html,body { background-color: ${s.backgroundColor} !important; }`);
 	}
-	// When the caller provides a text colour the border and muted tones should
-	// stay legible — set them semi-transparently relative to the text colour.
 	if (s.textColor) {
-		overrideParts.push(`--border: rgba(128,128,128,0.35); --muted: rgba(128,128,128,0.7);`);
+		directRules.push(`html,body,* { color: ${s.textColor} !important; }`);
 	}
-	const overrideBlock = overrideParts.length
-		? `:root { ${overrideParts.join(' ')} }`
-		: '';
+	if (s.accentColor) {
+		directRules.push(`button,.survey-submit { background: ${s.accentColor} !important; border-color: ${s.accentColor} !important; }`);
+	}
+	if (cardColor) {
+		directRules.push(`.survey-card,.survey-control,input,textarea,select { background-color: ${cardColor} !important; }`);
+	}
+	if (s.textColor) {
+		directRules.push(`.survey-field-block,.survey-opt-row,.survey-control { border-color: rgba(128,128,128,0.35) !important; }`);
+	}
+	const overrideBlock = directRules.join('\n');
 
 	return `
 :root {
@@ -166,11 +177,12 @@ body {
 .survey-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 .survey-logo img {
-  max-height: 56px;
-  max-width: 220px;
+  max-height: 64px;
+  max-width: 260px;
   object-fit: contain;
   display: block;
 }
