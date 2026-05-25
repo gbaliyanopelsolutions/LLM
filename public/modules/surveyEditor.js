@@ -48,6 +48,27 @@ export function normalizeSpec(raw) {
 }
 
 /**
+ * Returns true when the question text describes a MATRIX (one parent question
+ * with multiple sub-items rated on a scale). Such questions must NOT be
+ * auto-promoted to a single 'rating' type even if they contain "satisfied" etc.
+ *
+ * @param {string} text
+ * @returns {boolean}
+ */
+function isMatrixQuestion(text) {
+	const t = String(text || '').toLowerCase();
+	return (
+		t.includes('in terms of the following') ||
+		t.includes('rate each of the following') ||
+		t.includes('please rate the following') ||
+		t.includes('following aspects') ||
+		t.includes('following areas') ||
+		t.endsWith('following:') ||
+		t.endsWith('following')
+	);
+}
+
+/**
  * Rating question detection.
  * Uses simple string-includes checks — more reliable than regex
  * for user-supplied question text.
@@ -150,11 +171,13 @@ export function normalizeQuestion(raw) {
 			? incomingType
 			: 'text'
 	);
-	// Auto-upgrade text/number → rating when the question text signals a scale
-	// But do NOT downgrade an explicit matrix_rating
+	// Auto-upgrade text/number → rating when question text signals a single scale.
+	// NEVER upgrade when the question describes a matrix (multiple sub-items) or
+	// when the incoming type was already matrix_rating.
 	const type = resolvedType === 'matrix_rating'
 		? /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ ('matrix_rating')
-		: (resolvedType === 'text' || resolvedType === 'number') && isRatingQuestion(text)
+		: (resolvedType === 'text' || resolvedType === 'number') &&
+		  isRatingQuestion(text) && !isMatrixQuestion(text)
 			? /** @type {import('./renderSurveyHtml.js').EditorFieldType} */ ('rating')
 			: resolvedType;
 	const optsRaw = obj.options;
@@ -205,9 +228,25 @@ export function normalizeQuestion(raw) {
 		}
 	}
 
-	// Extract rows for matrix_rating type — strip Qualtrics trailing numbers
+	// Extract rows for matrix_rating type — strip Qualtrics trailing numbers.
+	// Also filter out scale-header artefacts that Claude may mistakenly include
+	// (numeric-only strings like "0","1",...,"10", or "Not at All", "Extremely").
 	const rowsRaw = obj.rows;
-	const rows = Array.isArray(rowsRaw) ? rowsRaw.map((r) => cleanQualtricsText(String(r))) : [];
+	const isScaleHeaderRow = (/** @type {string} */ r) => {
+		const v = r.trim();
+		if (/^\d+$/.test(v)) return true; // plain number: "0", "1", ..., "10"
+		const lv = v.toLowerCase();
+		return (
+			lv.startsWith('not at all') ||
+			lv.startsWith('extremely') ||
+			lv === 'n/a'
+		);
+	};
+	const rows = Array.isArray(rowsRaw)
+		? rowsRaw
+				.map((r) => cleanQualtricsText(String(r)))
+				.filter((r) => r.length > 0 && !isScaleHeaderRow(r))
+		: [];
 
 	return {
 		id: typeof obj.id === 'string' && obj.id ? obj.id : typeof obj.question_id === 'string' ? obj.question_id : nextLocalId(),

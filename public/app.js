@@ -22,30 +22,56 @@ import {
  * @param {string} text - the user's typed prompt (NOT the merged DOCX+prompt)
  * @returns {{ backgroundColor?: string, textColor?: string, accentColor?: string, logoUrl?: string }}
  */
+/**
+ * Extract explicit style hints from the user's raw typed prompt.
+ * Handles BOTH natural-language ("background color #000") AND
+ * JSON-style camelCase ("backgroundColor: '#000'") formats so the
+ * style is guaranteed to be applied regardless of how the user types it.
+ *
+ * @param {string} text
+ * @returns {{ backgroundColor?: string, textColor?: string, accentColor?: string, logoUrl?: string }}
+ */
 function parseStyleFromPrompt(text) {
 	const t = String(text || '');
 	/** @type {Record<string, string>} */
 	const s = {};
 
-	// Background color — "background color #abc" / "background: #abc" / "bg #abc"
-	const bg = t.match(/(?:background(?:\s+color)?|bg)\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i);
+	// ── Background color ─────────────────────────────────────────────────────
+	// Natural: "background color #abc" / "background: #abc" / "bg #abc"
+	// JSON:    backgroundColor: "#abc"
+	const bg =
+		t.match(/backgroundColor\s*[=:]\s*["']?(#[0-9a-fA-F]{3,8})["']?/) ||
+		t.match(/(?:background(?:\s+color)?|bg)\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i);
 	if (bg) s.backgroundColor = bg[1];
 
-	// Text / font color — "font color #abc" / "text color #abc" / "color #abc"
+	// ── Text / font color ────────────────────────────────────────────────────
+	// Natural: "font color #abc" / "text color #abc"
+	// JSON:    textColor: "#abc" / fontColor: "#abc"
 	const tc =
+		t.match(/textColor\s*[=:]\s*["']?(#[0-9a-fA-F]{3,8})["']?/) ||
+		t.match(/fontColor\s*[=:]\s*["']?(#[0-9a-fA-F]{3,8})["']?/) ||
 		t.match(/(?:font|text)\s+color\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i) ||
 		t.match(/(?<![a-z])color\s*[:#]\s*(#[0-9a-fA-F]{3,8})/i) ||
 		t.match(/^color\s+(#[0-9a-fA-F]{3,8})/im);
 	if (tc) s.textColor = tc[1];
 
-	// Accent / button / primary color
-	const ac = t.match(/(?:accent|button|primary)\s+color\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i);
+	// ── Accent / primary color ───────────────────────────────────────────────
+	const ac =
+		t.match(/accentColor\s*[=:]\s*["']?(#[0-9a-fA-F]{3,8})["']?/) ||
+		t.match(/(?:accent|button|primary)\s+color\s*[:#]?\s*(#[0-9a-fA-F]{3,8})/i);
 	if (ac) s.accentColor = ac[1];
 
-	// Logo URL — "logo ... https://..." / "logo image url https://..."
-	const lu = t.match(/logo[^]*?(https?:\/\/[^\s,\n"']+)/i);
+	// ── Logo URL ─────────────────────────────────────────────────────────────
+	// JSON:    logoUrl: "https://..." (possibly multi-line / wrapped)
+	// Natural: "logo ... https://..."
+	// Strip whitespace/newlines around the URL to handle line-wrapped pastes
+	const rawText = t.replace(/\s+/g, ' '); // collapse all whitespace for URL matching
+	const lu =
+		rawText.match(/logoUrl\s*[=:]\s*["']?(https?:\/\/[^\s"',]+)["']?/) ||
+		rawText.match(/logo[^]]*?(https?:\/\/[^\s,\n"']+)/i);
 	if (lu) s.logoUrl = lu[1].replace(/[,\s]+$/, '');
 
+	console.log('[parseStyleFromPrompt] extracted →', s);
 	return s;
 }
 
