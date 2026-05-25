@@ -142,11 +142,21 @@ const MAX_DOC_CHARS = 12_000;
 
 /**
  * Collapse redundant whitespace in extracted document text to reduce token count.
+ * Also strips Qualtrics-specific artefacts (block markers, page-break labels,
+ * survey-platform metadata) that confuse the AI and appear verbatim in forms.
  * @param {string} raw
  * @returns {string}
  */
 function cleanDocumentText(raw) {
 	return String(raw || '')
+		// Remove Qualtrics block markers: "Start of Block: Welcome", "End of Block: B3"
+		.replace(/^(Start|End)\s+of\s+Block\s*:[^\n]*/gim, '')
+		// Remove "Page Break" lines
+		.replace(/^Page\s+Break\s*$/gim, '')
+		// Remove Qualtrics display logic / embedded data lines
+		.replace(/^Display\s+Logic\s*:[^\n]*/gim, '')
+		// Remove survey-platform meta lines (e.g. "Timing First Click" Qualtrics columns)
+		.replace(/^Timing\s+First\s+Click[^\n]*/gim, '')
 		.replace(/[ \t]+/g, ' ')        // collapse horizontal whitespace
 		.replace(/\n[ \t]+/g, '\n')     // strip leading whitespace on each line
 		.replace(/\n{3,}/g, '\n\n')     // collapse 3+ blank lines → 1 blank line
