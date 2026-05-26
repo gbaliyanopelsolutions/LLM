@@ -5,7 +5,7 @@
  * builder Preview tab and the public form look identical.
  */
 
-import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js';
+import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js?v=design-editor-20260526-2';
 
 /**
  * UI-visible field type for the editor.

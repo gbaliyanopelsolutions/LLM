@@ -1,18 +1,18 @@
 import { getApiBase, getBrowserSupabase, insertSubmission } from './supabase.js';
-import { prepareFormHtmlForSave } from './modules/surveyFormHtml.js';
-import { attachAutoHeightIframe, injectFrameHeightReporter } from './modules/resizePreviewIframe.js';
+import { prepareFormHtmlForSave } from './modules/surveyFormHtml.js?v=design-editor-20260526-2';
+import { attachAutoHeightIframe, injectFrameHeightReporter } from './modules/resizePreviewIframe.js?v=design-editor-20260526-2';
 import {
 	extractTextFromFile,
 	buildEffectivePrompt,
-} from './modules/extractDocumentText.js';
-import { postProcessRatingFields } from './modules/postProcessHtml.js';
+} from './modules/extractDocumentText.js?v=design-editor-20260526-2';
+import { postProcessRatingFields } from './modules/postProcessHtml.js?v=design-editor-20260526-2';
 import {
 	normalizeSpec,
 	renderQuestionCards,
 	nextLocalId,
 	specToPreviewDocument,
 	toLlmSpec,
-} from './modules/surveyEditor.js';
+} from './modules/surveyEditor.js?v=design-editor-20260526-2';
 
 /**
  * Extract explicit style hints (colors, logo URL) from the user's raw typed

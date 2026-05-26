@@ -9,8 +9,8 @@ import {
 	buildPublicSrcdoc,
 	normalizeAnswersForSubmit,
 	validateRequiredAnswers,
-} from './modules/surveyFormHtml.js';
-import { attachAutoHeightIframe } from './modules/resizePreviewIframe.js';
+} from './modules/surveyFormHtml.js?v=design-editor-20260526-2';
+import { attachAutoHeightIframe } from './modules/resizePreviewIframe.js?v=design-editor-20260526-2';
 
 const params = new URLSearchParams(window.location.search);
 const surveyId = params.get('survey');

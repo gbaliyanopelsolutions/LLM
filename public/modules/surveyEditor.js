@@ -2,7 +2,7 @@
  * Survey editor state + question card renderer (Edit Form tab).
  */
 
-import { buildPreviewDocument, dbTypeToEditorType, fieldTypeLabel, escapeHtml } from './renderSurveyHtml.js';
+import { buildPreviewDocument, dbTypeToEditorType, fieldTypeLabel, escapeHtml } from './renderSurveyHtml.js?v=design-editor-20260526-2';
 
 /** @typedef {import('./renderSurveyHtml.js').EditorQuestion} EditorQuestion */
 /** @typedef {import('./renderSurveyHtml.js').EditorSpec} EditorSpec */

@@ -2,8 +2,8 @@
  * Client-side survey form HTML preparation (builder save) and answer helpers (public form).
  */
 
-import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js';
-import { SURVEY_INTERACTION_SCRIPT } from './renderSurveyHtml.js';
+import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js?v=design-editor-20260526-2';
+import { SURVEY_INTERACTION_SCRIPT } from './renderSurveyHtml.js?v=design-editor-20260526-2';
 
 /**
  * @param {string} specType
