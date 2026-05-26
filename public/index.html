@@ -546,6 +546,76 @@
       height: 1px; background: var(--border); margin: 0.2rem 0 0;
       grid-column: 1 / -1;
     }
+    .design-settings__actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .ds-tabs {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem;
+      padding: 0.25rem; margin-bottom: 0.9rem; border: 1px solid var(--border);
+      border-radius: var(--radius-xs); background: var(--bg-card);
+    }
+    .ds-tab {
+      appearance: none; border: none; border-radius: 9px; padding: 0.5rem 0.35rem;
+      background: transparent; color: var(--muted); font: 700 0.72rem/1 var(--font);
+      cursor: pointer; transition: background var(--tx), color var(--tx);
+    }
+    .ds-tab.is-active { background: var(--accent-soft); color: var(--accent); }
+    .ds-pane[hidden] { display: none !important; }
+    .ds-section {
+      grid-column: 1 / -1; border: 1px solid var(--border); border-radius: var(--radius-xs);
+      background: var(--bg-card); overflow: hidden;
+    }
+    .ds-section > summary {
+      list-style: none; cursor: pointer; padding: 0.7rem 0.85rem;
+      display: flex; align-items: center; gap: 0.55rem;
+      font-size: 0.78rem; font-weight: 800; color: var(--text-2);
+      border-bottom: 1px solid var(--border);
+    }
+    .ds-section > summary::-webkit-details-marker { display: none; }
+    .ds-section > summary::after {
+      content: '⌄'; margin-left: auto; color: var(--hint);
+      transition: transform var(--tx);
+    }
+    .ds-section[open] > summary::after { transform: rotate(180deg); }
+    .ds-section__body {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;
+      padding: 0.85rem;
+    }
+    .ds-field input[type="number"],
+    .ds-field select,
+    .ds-field textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: var(--radius-xs);
+      background: #fff; color: var(--text); font: 600 0.82rem/1.4 var(--font);
+      padding: 0.55rem 0.65rem; transition: border-color var(--tx), box-shadow var(--tx);
+    }
+    .ds-field textarea { min-height: 84px; resize: vertical; font-family: "Courier New", monospace; font-weight: 500; }
+    .ds-field input[type="number"]:focus,
+    .ds-field select:focus,
+    .ds-field textarea:focus {
+      outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .ds-range-row { display: grid; grid-template-columns: 1fr 64px; gap: 0.5rem; align-items: center; }
+    .ds-range-row input[type="range"] { width: 100%; accent-color: var(--accent); }
+    .ds-switch-row {
+      display: flex; align-items: center; justify-content: space-between;
+      min-height: 40px; padding: 0.4rem 0.65rem; border: 1.5px solid var(--border);
+      border-radius: var(--radius-xs); background: #fff;
+    }
+    .ds-switch-row input { width: 18px; height: 18px; accent-color: var(--accent); }
+    .ds-preset-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    .ds-preset {
+      border: 1.5px solid var(--border); border-radius: var(--radius-xs); background: #fff;
+      padding: 0.65rem 0.5rem; font: 800 0.75rem/1 var(--font); color: var(--text-2);
+      cursor: pointer; transition: transform 0.12s ease, border-color var(--tx), box-shadow var(--tx);
+    }
+    .ds-preset:hover { transform: translateY(-1px); border-color: var(--accent); box-shadow: 0 6px 18px var(--accent-soft); }
+    .ds-help {
+      margin: 0; padding: 0.8rem; border: 1px dashed var(--border); border-radius: var(--radius-xs);
+      color: var(--muted); background: rgba(99,102,241,0.04); font-size: 0.82rem; line-height: 1.5;
+    }
+    @media (max-width: 740px) {
+      .ds-section__body, .design-settings__grid { grid-template-columns: 1fr; }
+      .ds-tabs { grid-template-columns: repeat(2, 1fr); }
+      .ds-preset-grid { grid-template-columns: 1fr; }
+    }
 
     /* ══════════════════════════════════
        BUILDER PANE — PREVIEW
@@ -1035,62 +1105,206 @@
               <!-- ── Design Settings Panel ── -->
               <div class="design-settings" id="design-settings-panel">
                 <div class="design-settings__header">
-                  <p class="design-settings__title">Design Settings</p>
-                  <button type="button" id="reset-design-btn" class="btn btn--ghost btn--small" title="Reset to defaults">↺ Reset</button>
+                  <p class="design-settings__title">Advanced Design Settings</p>
+                  <div class="design-settings__actions">
+                    <button type="button" id="save-theme-btn" class="btn btn--ghost btn--small" title="Save current theme">Save Theme</button>
+                    <button type="button" id="reset-design-btn" class="btn btn--ghost btn--small" title="Reset to defaults">Reset</button>
+                  </div>
                 </div>
 
-                <div class="design-settings__grid">
+                <div class="ds-tabs" role="tablist" aria-label="Design panel tabs">
+                  <button type="button" class="ds-tab is-active" data-ds-tab="content">Content</button>
+                  <button type="button" class="ds-tab" data-ds-tab="design">Design</button>
+                  <button type="button" class="ds-tab" data-ds-tab="theme">Theme</button>
+                  <button type="button" class="ds-tab" data-ds-tab="preview">Preview</button>
+                </div>
 
-                  <!-- Background Color -->
-                  <div class="ds-field">
-                    <label class="ds-label" for="ds-bg-color">Background</label>
-                    <label class="ds-color-row" for="ds-bg-color">
-                      <input type="color" id="ds-bg-color" value="#ffffff" />
-                      <span class="ds-color-val" id="ds-bg-color-val">#ffffff</span>
-                    </label>
-                  </div>
+                <div class="design-settings__grid ds-pane" data-ds-pane="content">
+                  <p class="ds-help ds-field--full">
+                    Content editing is below this panel in the Questions section. Design changes here update the live preview instantly.
+                  </p>
+                </div>
 
-                  <!-- Font / Text Color -->
-                  <div class="ds-field">
-                    <label class="ds-label" for="ds-text-color">Text Color</label>
-                    <label class="ds-color-row" for="ds-text-color">
-                      <input type="color" id="ds-text-color" value="#000000" />
-                      <span class="ds-color-val" id="ds-text-color-val">#000000</span>
-                    </label>
-                  </div>
-
-                  <!-- Logo Upload -->
-                  <div class="ds-field ds-field--full">
-                    <label class="ds-label">Logo</label>
-                    <input type="file" id="ds-logo-input" accept="image/*" hidden />
-                    <div class="ds-logo-zone" id="ds-logo-zone">
-                      <!-- Empty state -->
-                      <div id="ds-logo-empty-state" class="ds-logo-empty">Upload Logo</div>
-                      <!-- Filled state -->
-                      <div id="ds-logo-filled-state" class="ds-logo-filled" hidden>
-                        <img id="ds-logo-img" src="" alt="Logo" />
-                        <span class="ds-logo-name" id="ds-logo-name">logo.png</span>
-                        <button type="button" id="ds-logo-remove-btn" class="ds-logo-remove-btn" title="Remove logo">×</button>
+                <div class="design-settings__grid ds-pane" data-ds-pane="design" hidden>
+                  <details class="ds-section" open>
+                    <summary>▣ Form Design Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field">
+                        <label class="ds-label" for="ds-bg-color">Form Background</label>
+                        <label class="ds-color-row" for="ds-bg-color">
+                          <input type="color" id="ds-bg-color" data-style="backgroundColor" value="#ffffff" />
+                          <span class="ds-color-val" id="ds-bg-color-val">#ffffff</span>
+                        </label>
+                      </div>
+                      <div class="ds-field">
+                        <label class="ds-label" for="ds-text-color">Form Text Color</label>
+                        <label class="ds-color-row" for="ds-text-color">
+                          <input type="color" id="ds-text-color" data-style="textColor" value="#000000" />
+                          <span class="ds-color-val" id="ds-text-color-val">#000000</span>
+                        </label>
+                      </div>
+                      <div class="ds-field">
+                        <label class="ds-label" for="ds-form-border-color">Border Color</label>
+                        <label class="ds-color-row" for="ds-form-border-color"><input type="color" id="ds-form-border-color" data-style="formBorderColor" value="#e2e8f0" /><span class="ds-color-val">#e2e8f0</span></label>
+                      </div>
+                      <div class="ds-field">
+                        <label class="ds-label" for="ds-form-radius">Border Radius</label>
+                        <div class="ds-range-row"><input type="range" id="ds-form-radius" data-style="formBorderRadius" min="0" max="36" value="14" /><input type="number" min="0" max="36" value="14" data-style-linked="formBorderRadius" /></div>
+                      </div>
+                      <div class="ds-field">
+                        <label class="ds-label" for="ds-form-width">Form Width</label>
+                        <div class="ds-range-row"><input type="range" id="ds-form-width" data-style="formWidth" min="420" max="1100" value="720" /><input type="number" min="420" max="1100" value="720" data-style-linked="formWidth" /></div>
+                      </div>
+                      <div class="ds-field">
+                        <label class="ds-label" for="ds-form-padding">Form Padding</label>
+                        <div class="ds-range-row"><input type="range" id="ds-form-padding" data-style="formPadding" min="12" max="56" value="24" /><input type="number" min="12" max="56" value="24" data-style-linked="formPadding" /></div>
+                      </div>
+                      <div class="ds-field ds-field--full">
+                        <label class="ds-label">Shadow</label>
+                        <label class="ds-switch-row"><span>Enable form shadow</span><input type="checkbox" data-style="formShadow" checked /></label>
                       </div>
                     </div>
-                  </div>
+                  </details>
 
-                  <!-- Logo Position -->
+                  <details class="ds-section">
+                    <summary>H Heading Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Heading Color</label><label class="ds-color-row"><input type="color" data-style="headingColor" value="#0f172a" /><span class="ds-color-val">#0f172a</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Heading Font Size</label><div class="ds-range-row"><input type="range" data-style="headingFontSize" min="18" max="48" value="24" /><input type="number" min="18" max="48" value="24" data-style-linked="headingFontSize" /></div></div>
+                      <div class="ds-field"><label class="ds-label">Heading Weight</label><select data-style="headingFontWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600">Semi Bold</option><option value="700" selected>Bold</option><option value="800">Extra Bold</option></select></div>
+                      <div class="ds-field"><label class="ds-label">Heading Alignment</label><select data-style="headingAlignment"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>⌗ Label Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Label Color</label><label class="ds-color-row"><input type="color" data-style="labelColor" value="#334155" /><span class="ds-color-val">#334155</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Label Font Size</label><div class="ds-range-row"><input type="range" data-style="labelFontSize" min="11" max="22" value="14" /><input type="number" min="11" max="22" value="14" data-style-linked="labelFontSize" /></div></div>
+                      <div class="ds-field ds-field--full"><label class="ds-label">Label Font Weight</label><select data-style="labelFontWeight"><option value="400">Regular</option><option value="500">Medium</option><option value="600" selected>Semi Bold</option><option value="700">Bold</option><option value="800">Extra Bold</option></select></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>▶ Button Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Next Bg</label><label class="ds-color-row"><input type="color" data-style="nextButtonBg" value="#ffffff" /><span class="ds-color-val">#ffffff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Next Text</label><label class="ds-color-row"><input type="color" data-style="nextButtonText" value="#0f172a" /><span class="ds-color-val">#0f172a</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Next Radius</label><div class="ds-range-row"><input type="range" data-style="nextButtonRadius" min="0" max="28" value="10" /><input type="number" min="0" max="28" value="10" data-style-linked="nextButtonRadius" /></div></div>
+                      <div class="ds-field"><label class="ds-label">Next Hover</label><label class="ds-color-row"><input type="color" data-style="nextButtonHover" value="#f1f5ff" /><span class="ds-color-val">#f1f5ff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Previous Bg</label><label class="ds-color-row"><input type="color" data-style="prevButtonBg" value="#ffffff" /><span class="ds-color-val">#ffffff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Previous Text</label><label class="ds-color-row"><input type="color" data-style="prevButtonText" value="#0f172a" /><span class="ds-color-val">#0f172a</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Submit Bg</label><label class="ds-color-row"><input type="color" data-style="submitButtonBg" value="#5b8cff" /><span class="ds-color-val">#5b8cff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Submit Text</label><label class="ds-color-row"><input type="color" data-style="submitButtonText" value="#ffffff" /><span class="ds-color-val">#ffffff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Submit Radius</label><div class="ds-range-row"><input type="range" data-style="submitButtonRadius" min="0" max="28" value="10" /><input type="number" min="0" max="28" value="10" data-style-linked="submitButtonRadius" /></div></div>
+                      <div class="ds-field"><label class="ds-label">Hover Animation</label><select data-style="submitHoverAnimation"><option value="lift" selected>Lift</option><option value="glow">Glow</option><option value="scale">Scale</option><option value="none">None</option></select></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>▤ Input Field Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Input Bg</label><label class="ds-color-row"><input type="color" data-style="inputBg" value="#ffffff" /><span class="ds-color-val">#ffffff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Input Text</label><label class="ds-color-row"><input type="color" data-style="inputText" value="#0f172a" /><span class="ds-color-val">#0f172a</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Input Border</label><label class="ds-color-row"><input type="color" data-style="inputBorder" value="#e2e8f0" /><span class="ds-color-val">#e2e8f0</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Focus Border</label><label class="ds-color-row"><input type="color" data-style="inputFocusBorder" value="#5b8cff" /><span class="ds-color-val">#5b8cff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Input Radius</label><div class="ds-range-row"><input type="range" data-style="inputRadius" min="0" max="28" value="10" /><input type="number" min="0" max="28" value="10" data-style-linked="inputRadius" /></div></div>
+                      <div class="ds-field"><label class="ds-label">Placeholder</label><label class="ds-color-row"><input type="color" data-style="placeholderColor" value="#94a3b8" /><span class="ds-color-val">#94a3b8</span></label></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>◉ Checkbox / Radio Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Checkbox Bg</label><label class="ds-color-row"><input type="color" data-style="checkboxBg" value="#ffffff" /><span class="ds-color-val">#ffffff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Checkbox Border</label><label class="ds-color-row"><input type="color" data-style="checkboxBorder" value="#c9d0db" /><span class="ds-color-val">#c9d0db</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Checkbox Active</label><label class="ds-color-row"><input type="color" data-style="checkboxActive" value="#5b8cff" /><span class="ds-color-val">#5b8cff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Radio Color</label><label class="ds-color-row"><input type="color" data-style="radioColor" value="#c9d0db" /><span class="ds-color-val">#c9d0db</span></label></div>
+                      <div class="ds-field ds-field--full"><label class="ds-label">Radio Selected</label><label class="ds-color-row"><input type="color" data-style="radioSelectedColor" value="#5b8cff" /><span class="ds-color-val">#5b8cff</span></label></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>▦ Table / Matrix Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Table Bg</label><label class="ds-color-row"><input type="color" data-style="tableBg" value="#ffffff" /><span class="ds-color-val">#ffffff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Table Border</label><label class="ds-color-row"><input type="color" data-style="tableBorder" value="#e2e8f0" /><span class="ds-color-val">#e2e8f0</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Header Bg</label><label class="ds-color-row"><input type="color" data-style="tableHeaderBg" value="#eef2f8" /><span class="ds-color-val">#eef2f8</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Header Text</label><label class="ds-color-row"><input type="color" data-style="tableHeaderText" value="#4f5f7a" /><span class="ds-color-val">#4f5f7a</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Matrix Circle</label><label class="ds-color-row"><input type="color" data-style="matrixCircleColor" value="#c9d0db" /><span class="ds-color-val">#c9d0db</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Matrix Selected</label><label class="ds-color-row"><input type="color" data-style="matrixSelectedColor" value="#5b8cff" /><span class="ds-color-val">#5b8cff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Row Divider</label><label class="ds-color-row"><input type="color" data-style="rowDividerColor" value="#e2e8f0" /><span class="ds-color-val">#e2e8f0</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Alternate Row</label><label class="ds-color-row"><input type="color" data-style="alternateRowBg" value="#f8fafc" /><span class="ds-color-val">#f8fafc</span></label></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>▬ Progress Bar Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field"><label class="ds-label">Progress Color</label><label class="ds-color-row"><input type="color" data-style="progressBarColor" value="#5b8cff" /><span class="ds-color-val">#5b8cff</span></label></div>
+                      <div class="ds-field"><label class="ds-label">Progress Bg</label><label class="ds-color-row"><input type="color" data-style="progressBgColor" value="#e2e8f0" /><span class="ds-color-val">#e2e8f0</span></label></div>
+                      <div class="ds-field ds-field--full"><label class="ds-label">Progress Height</label><div class="ds-range-row"><input type="range" data-style="progressHeight" min="3" max="16" value="4" /><input type="number" min="3" max="16" value="4" data-style-linked="progressHeight" /></div></div>
+                    </div>
+                  </details>
+
+                  <details class="ds-section">
+                    <summary>▧ Logo Settings</summary>
+                    <div class="ds-section__body">
+                      <div class="ds-field ds-field--full">
+                        <label class="ds-label">Upload Logo</label>
+                        <input type="file" id="ds-logo-input" accept="image/*" hidden />
+                        <div class="ds-logo-zone" id="ds-logo-zone">
+                          <div id="ds-logo-empty-state" class="ds-logo-empty">Upload Logo</div>
+                          <div id="ds-logo-filled-state" class="ds-logo-filled" hidden>
+                            <img id="ds-logo-img" src="" alt="Logo" />
+                            <span class="ds-logo-name" id="ds-logo-name">logo.png</span>
+                            <button type="button" id="ds-logo-remove-btn" class="ds-logo-remove-btn" title="Remove logo">×</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="ds-field"><label class="ds-label">Logo Width</label><div class="ds-range-row"><input type="range" data-style="logoWidth" min="40" max="420" value="260" /><input type="number" min="40" max="420" value="260" data-style-linked="logoWidth" /></div></div>
+                      <div class="ds-field"><label class="ds-label">Logo Height</label><div class="ds-range-row"><input type="range" data-style="logoHeight" min="24" max="180" value="64" /><input type="number" min="24" max="180" value="64" data-style-linked="logoHeight" /></div></div>
+                      <div class="ds-field ds-field--full">
+                        <label class="ds-label">Logo Position</label>
+                        <div class="ds-pos-group" role="group" aria-label="Logo position">
+                          <button type="button" class="ds-pos-btn" data-pos="left" title="Top Left">Left</button>
+                          <button type="button" class="ds-pos-btn is-active" data-pos="center" title="Top Center">Center</button>
+                          <button type="button" class="ds-pos-btn" data-pos="right" title="Top Right">Right</button>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+
+                <div class="design-settings__grid ds-pane" data-ds-pane="theme" hidden>
                   <div class="ds-field ds-field--full">
-                    <label class="ds-label">Logo Position</label>
-                    <div class="ds-pos-group" role="group" aria-label="Logo position">
-                      <button type="button" class="ds-pos-btn" data-pos="left" title="Top Left">
-                        ⬛ Left
-                      </button>
-                      <button type="button" class="ds-pos-btn is-active" data-pos="center" title="Top Center">
-                        ⬛ Center
-                      </button>
-                      <button type="button" class="ds-pos-btn" data-pos="right" title="Top Right">
-                        ⬛ Right
-                      </button>
+                    <label class="ds-label">Light / Dark Mode</label>
+                    <label class="ds-switch-row"><span>Dark theme</span><input type="checkbox" id="ds-dark-toggle" /></label>
+                  </div>
+                  <div class="ds-field ds-field--full">
+                    <label class="ds-label">Predefined Theme Presets</label>
+                    <div class="ds-preset-grid">
+                      <button type="button" class="ds-preset" data-theme-preset="minimal">Minimal</button>
+                      <button type="button" class="ds-preset" data-theme-preset="dark">Dark SaaS</button>
+                      <button type="button" class="ds-preset" data-theme-preset="soft">Soft Purple</button>
                     </div>
                   </div>
+                  <div class="ds-field ds-field--full">
+                    <label class="ds-label" for="theme-json-box">Import / Export Theme JSON</label>
+                    <textarea id="theme-json-box" placeholder='{"backgroundColor":"#ffffff","textColor":"#000000"}'></textarea>
+                  </div>
+                  <div class="ds-field ds-field--full">
+                    <div class="design-settings__actions">
+                      <button type="button" id="export-theme-btn" class="btn btn--ghost btn--small">Export JSON</button>
+                      <button type="button" id="import-theme-btn" class="btn btn--ghost btn--small">Import JSON</button>
+                    </div>
+                  </div>
+                </div>
 
+                <div class="design-settings__grid ds-pane" data-ds-pane="preview" hidden>
+                  <p class="ds-help ds-field--full">
+                    The right-side Preview Form tab updates immediately as you change colors, spacing, logo, buttons, fields, progress bar, and matrix settings. No page reload is required.
+                  </p>
                 </div>
               </div>
               <!-- ── / Design Settings Panel ── -->

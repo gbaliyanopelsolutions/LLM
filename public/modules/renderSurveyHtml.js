@@ -97,6 +97,27 @@ export function dbTypeToEditorType(dbType) {
 }
 
 /**
+ * @param {unknown} v
+ * @param {string} fallback
+ * @returns {string}
+ */
+function cssValue(v, fallback) {
+	const s = String(v ?? '').trim();
+	return s || fallback;
+}
+
+/**
+ * @param {unknown} v
+ * @param {string} fallback
+ * @returns {string}
+ */
+function cssPx(v, fallback) {
+	const s = String(v ?? '').trim();
+	if (!s) return fallback;
+	return /^\d+(\.\d+)?$/.test(s) ? `${s}px` : s;
+}
+
+/**
  * Build the survey CSS. Accepts an optional style override object so prompt-driven
  * colours (background, text, accent, card, logo) are applied automatically.
  *
@@ -106,60 +127,88 @@ export function dbTypeToEditorType(dbType) {
  */
 export function buildSurveyCss(style) {
 	const s = style && typeof style === 'object' ? style : {};
-
-	// ── Derive card colour ────────────────────────────────────────────────────
-	// When only a page background is given we make the card slightly lighter so
-	// it reads as a distinct surface. The caller can always pass an explicit
-	// cardColor to override this.
-	const cardColor = s.cardColor
-		? s.cardColor
-		: s.backgroundColor
-			? s.backgroundColor
-			: null;
-
-	// ── Build bulletproof override block ─────────────────────────────────────
-	// Use `!important` so nothing in the default :root can win. Also apply
-	// directly to html,body for background-color so the whole iframe is painted.
+	const primary = cssValue(s.accentColor || s.submitButtonBg || s.radioSelectedColor, '#5b8cff');
+	const formShadow = s.formShadow === false || s.formShadow === 'false'
+		? 'none'
+		: '0 4px 24px rgba(15, 23, 42, 0.08)';
 	const directRules = [];
-	if (s.backgroundColor) {
-		directRules.push(`html,body { background-color: ${s.backgroundColor} !important; }`);
-	}
-	if (s.textColor) {
-		directRules.push(`html,body,* { color: ${s.textColor} !important; }`);
-	}
-	if (s.accentColor) {
-		directRules.push(`button,.survey-submit { background: ${s.accentColor} !important; border-color: ${s.accentColor} !important; }`);
-	}
-	if (cardColor) {
-		directRules.push(`.survey-card,.survey-control,input,textarea,select { background-color: ${cardColor} !important; }`);
-	}
-	if (s.textColor) {
-		directRules.push(`.survey-field-block,.survey-opt-row,.survey-control { border-color: rgba(128,128,128,0.35) !important; }`);
-	}
 	// Logo position — left | center | right (default: center)
 	if (s.logoPosition) {
 		const posMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
 		const justify = posMap[s.logoPosition] || 'center';
 		directRules.push(`.survey-logo { justify-content: ${justify} !important; transition: justify-content 0.2s ease; }`);
 	}
+	switch (s.submitHoverAnimation) {
+		case 'glow':
+			directRules.push('.survey-submit:hover { box-shadow: 0 0 0 4px rgba(91,140,255,0.22), 0 14px 36px rgba(91,140,255,0.45) !important; }');
+			break;
+		case 'scale':
+			directRules.push('.survey-submit:hover { transform: scale(1.04) !important; }');
+			break;
+		case 'none':
+			directRules.push('.survey-submit:hover { transform: none !important; box-shadow: none !important; }');
+			break;
+		default:
+			directRules.push('.survey-submit:hover { transform: translateY(-1px); }');
+			break;
+	}
 	const overrideBlock = directRules.join('\n');
 
 	return `
 :root {
-  --primary: #5b8cff;
+  --primary: ${primary};
   --primary-strong: #4f7be0;
-  --text: #0f172a;
-  --label: #334155;
+  --text: ${cssValue(s.textColor, '#0f172a')};
+  --label: ${cssValue(s.labelColor, '#334155')};
   --opt-text: #1e293b;
   --muted: #64748b;
-  --border: #e2e8f0;
+  --border: ${cssValue(s.formBorderColor || s.inputBorder, '#e2e8f0')};
   --danger: #dc2626;
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --input-bg: #ffffff;
-  --radius: 14px;
-  --radius-sm: 10px;
-  --shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  --bg: ${cssValue(s.backgroundColor, '#f8fafc')};
+  --card: ${cssValue(s.cardColor || s.backgroundColor, '#ffffff')};
+  --input-bg: ${cssValue(s.inputBg, '#ffffff')};
+  --input-text: ${cssValue(s.inputText || s.textColor, '#0f172a')};
+  --input-border: ${cssValue(s.inputBorder, '#e2e8f0')};
+  --input-focus: ${cssValue(s.inputFocusBorder || s.accentColor, primary)};
+  --placeholder-color: ${cssValue(s.placeholderColor, '#94a3b8')};
+  --radius: ${cssPx(s.formBorderRadius, '14px')};
+  --radius-sm: ${cssPx(s.inputRadius, '10px')};
+  --form-width: ${cssPx(s.formWidth, '720px')};
+  --form-padding: ${cssPx(s.formPadding, '24px')};
+  --shadow: ${formShadow};
+  --heading-color: ${cssValue(s.headingColor || s.textColor, '#0f172a')};
+  --heading-size: ${cssPx(s.headingFontSize, '24px')};
+  --heading-weight: ${cssValue(s.headingFontWeight, '700')};
+  --heading-align: ${cssValue(s.headingAlignment, 'left')};
+  --label-size: ${cssPx(s.labelFontSize, '14px')};
+  --label-weight: ${cssValue(s.labelFontWeight, '600')};
+  --next-btn-bg: ${cssValue(s.nextButtonBg, '#ffffff')};
+  --next-btn-text: ${cssValue(s.nextButtonText, '#0f172a')};
+  --next-btn-radius: ${cssPx(s.nextButtonRadius, '10px')};
+  --next-btn-hover: ${cssValue(s.nextButtonHover, '#f1f5ff')};
+  --prev-btn-bg: ${cssValue(s.prevButtonBg, '#ffffff')};
+  --prev-btn-text: ${cssValue(s.prevButtonText, '#0f172a')};
+  --submit-btn-bg: ${cssValue(s.submitButtonBg || s.accentColor, primary)};
+  --submit-btn-text: ${cssValue(s.submitButtonText, '#ffffff')};
+  --submit-btn-radius: ${cssPx(s.submitButtonRadius, '10px')};
+  --checkbox-bg: ${cssValue(s.checkboxBg, '#ffffff')};
+  --checkbox-border: ${cssValue(s.checkboxBorder || s.radioColor, '#c9d0db')};
+  --checkbox-active: ${cssValue(s.checkboxActive || s.radioSelectedColor || s.accentColor, primary)};
+  --radio-color: ${cssValue(s.radioColor, '#c9d0db')};
+  --radio-selected: ${cssValue(s.radioSelectedColor || s.accentColor, primary)};
+  --table-bg: ${cssValue(s.tableBg, '#ffffff')};
+  --table-border: ${cssValue(s.tableBorder, '#e2e8f0')};
+  --table-header-bg: ${cssValue(s.tableHeaderBg, '#eef2f8')};
+  --table-header-text: ${cssValue(s.tableHeaderText, '#4f5f7a')};
+  --matrix-circle: ${cssValue(s.matrixCircleColor || s.radioColor, '#c9d0db')};
+  --matrix-selected: ${cssValue(s.matrixSelectedColor || s.accentColor, primary)};
+  --row-divider: ${cssValue(s.rowDividerColor, '#e2e8f0')};
+  --alternate-row-bg: ${cssValue(s.alternateRowBg, '#f8fafc')};
+  --progress-color: ${cssValue(s.progressBarColor || s.accentColor, primary)};
+  --progress-bg: ${cssValue(s.progressBgColor, '#e2e8f0')};
+  --progress-height: ${cssPx(s.progressHeight, '4px')};
+  --logo-width: ${cssPx(s.logoWidth, '260px')};
+  --logo-height: ${cssPx(s.logoHeight, '64px')};
 }
 ${overrideBlock}
 * { box-sizing: border-box; }
@@ -171,15 +220,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 .survey-card {
-  max-width: 720px;
+  max-width: var(--form-width);
   margin: 0 auto;
-  padding: 1.5rem 1.25rem 2rem;
+  padding: var(--form-padding);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  transition: background 0.2s ease, border-color 0.2s ease, border-radius 0.2s ease, box-shadow 0.2s ease, padding 0.2s ease;
 }
-.survey-header { margin-bottom: 1.25rem; }
+.survey-header { margin-bottom: 1.25rem; text-align: var(--heading-align); }
 .survey-logo {
   display: flex;
   align-items: center;
@@ -187,17 +237,17 @@ body {
   margin-bottom: 1rem;
 }
 .survey-logo img {
-  max-height: 64px;
-  max-width: 260px;
+  max-height: var(--logo-height);
+  max-width: var(--logo-width);
   object-fit: contain;
   display: block;
 }
 .survey-title {
   margin: 0 0 0.4rem;
-  font-size: clamp(1.2rem, 2.6vw, 1.5rem);
-  font-weight: 700;
+  font-size: var(--heading-size);
+  font-weight: var(--heading-weight);
   letter-spacing: -0.02em;
-  color: var(--text);
+  color: var(--heading-color);
 }
 .survey-desc {
   margin: 0;
@@ -213,8 +263,8 @@ body {
 .survey-field-block:last-of-type { border-bottom: none; }
 .survey-field-label {
   display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
   color: var(--label);
   margin-bottom: 0.5rem;
 }
@@ -222,19 +272,20 @@ body {
 .survey-control {
   width: 100%;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-family: inherit;
   background: var(--input-bg);
-  color: var(--text);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+  color: var(--input-text);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
 }
 .survey-control:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--input-focus);
   box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
 }
+.survey-control::placeholder { color: var(--placeholder-color); }
 textarea.survey-control { min-height: 110px; resize: vertical; }
 /* ── Option cards (radio / checkbox) ── */
 .survey-opt-row {
@@ -242,7 +293,7 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   align-items: center;
   gap: 0.85rem;
   padding: 0.8rem 1rem;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--input-border);
   border-radius: var(--radius-sm);
   margin-bottom: 0.5rem;
   font-size: 0.93rem;
@@ -254,11 +305,11 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 }
 .survey-opt-row:last-child { margin-bottom: 0; }
 .survey-opt-row:hover {
-  border-color: var(--primary);
+  border-color: var(--radio-selected);
   background: rgba(91,140,255,0.04);
 }
 .survey-opt-row.is-selected {
-  border-color: var(--primary);
+  border-color: var(--radio-selected);
   background: rgba(91,140,255,0.07);
   box-shadow: 0 0 0 3px rgba(91,140,255,0.12);
 }
@@ -269,15 +320,20 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 .survey-opt-check {
   width: 20px; height: 20px; min-width: 20px;
   border-radius: 50%;
-  border: 2px solid #c9d0db;
-  background: #fff;
+  border: 2px solid var(--radio-color);
+  background: var(--checkbox-bg);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; transition: all 0.15s ease;
 }
 .survey-opt-check.is-checkbox { border-radius: 5px; }
 .survey-opt-row.is-selected .survey-opt-check {
-  border-color: var(--primary);
-  background: var(--primary);
+  border-color: var(--radio-selected);
+  background: var(--radio-selected);
+}
+.survey-opt-check.is-checkbox { border-color: var(--checkbox-border); }
+.survey-opt-row.is-selected .survey-opt-check.is-checkbox {
+  border-color: var(--checkbox-active);
+  background: var(--checkbox-active);
 }
 .survey-opt-row.is-selected .survey-opt-check::after {
   content: '';
@@ -313,15 +369,15 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   text-transform: uppercase;
 }
 .survey-progress-track {
-  height: 4px;
+  height: var(--progress-height);
   border-radius: 9px;
-  background: var(--border);
+  background: var(--progress-bg);
   overflow: hidden;
 }
 .survey-progress-fill {
   height: 100%;
   border-radius: 9px;
-  background: linear-gradient(90deg, var(--primary), #7c5cff);
+  background: var(--progress-color);
   transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 /* ── Step panels ── */
@@ -337,23 +393,24 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 .survey-nav-btn {
   appearance: none;
   border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--next-btn-radius);
   padding: 0.62rem 1.3rem;
-  background: var(--card);
-  color: var(--text);
+  background: var(--next-btn-bg);
+  color: var(--next-btn-text);
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
-.survey-nav-btn:hover { border-color: var(--primary); background: rgba(91,140,255,0.06); }
+.survey-nav-btn:hover { border-color: var(--primary); background: var(--next-btn-hover); }
+#sf-prev { background: var(--prev-btn-bg); color: var(--prev-btn-text); }
 .survey-submit {
   appearance: none;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--submit-btn-radius);
   padding: 0.7rem 1.5rem;
-  background: linear-gradient(135deg, var(--primary), #7c5cff);
-  color: #fff;
+  background: var(--submit-btn-bg);
+  color: var(--submit-btn-text);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -419,35 +476,36 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 /* ── Matrix rating ── */
 .matrix-question { margin-bottom: 0.5rem; }
 .matrix-scale-info { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); padding: 0 2px 6px; }
-.matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: var(--radius-sm); }
-.matrix-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 520px; }
+.matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--table-border); border-radius: var(--radius-sm); background: var(--table-bg); }
+.matrix-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 520px; background: var(--table-bg); }
 .matrix-tbl thead th {
   padding: 0.5rem 0.3rem; text-align: center; font-weight: 700;
-  font-size: 0.72rem; color: #4f5f7a; background: #eef2f8;
-  border-bottom: 2px solid #c8d4e8; white-space: nowrap;
+  font-size: 0.72rem; color: var(--table-header-text); background: var(--table-header-bg);
+  border-bottom: 2px solid var(--table-border); white-space: nowrap;
 }
-.matrix-tbl thead th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; white-space: normal; background: #eef2f8; }
+.matrix-tbl thead th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; white-space: normal; background: var(--table-header-bg); }
 .matrix-tbl thead th.mtx-scale-first, .matrix-tbl thead th.mtx-scale-last {
   white-space: normal; font-size: 0.68rem; line-height: 1.25; min-width: 56px; max-width: 72px; text-align: center;
-  color: #3b5bdb; font-weight: 800;
+  color: var(--table-header-text); font-weight: 800;
 }
-.matrix-tbl td { padding: 0.5rem 0.3rem; text-align: center; border-bottom: 1px solid var(--border); min-width: 44px; }
+.matrix-tbl td { padding: 0.5rem 0.3rem; text-align: center; border-bottom: 1px solid var(--row-divider); min-width: 44px; }
 .matrix-tbl td.mtx-rl { text-align: left; padding-left: 0.85rem; font-weight: 500; color: var(--opt-text); min-width: 160px; line-height: 1.35; }
 .matrix-tbl tbody tr:last-child td { border-bottom: none; }
+.matrix-tbl tbody tr:nth-child(even) td { background: var(--alternate-row-bg); }
 .matrix-tbl tbody tr:hover td { background: rgba(91,140,255,0.05); }
 /* CSS-only radio circles — renders perfectly in every column width */
 .mtx-radio-lbl { display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .mtx-radio-lbl input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 .mtx-radio-dot {
   width: 20px; height: 20px; border-radius: 50%;
-  border: 2px solid #c9d0db; background: #fff;
+  border: 2px solid var(--matrix-circle); background: #fff;
   display: block; flex-shrink: 0;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
-.mtx-radio-lbl:hover .mtx-radio-dot { border-color: var(--primary); }
+.mtx-radio-lbl:hover .mtx-radio-dot { border-color: var(--matrix-selected); }
 .mtx-radio-lbl input:checked + .mtx-radio-dot {
-  border-color: var(--primary);
-  background: var(--primary);
+  border-color: var(--matrix-selected);
+  background: var(--matrix-selected);
   box-shadow: inset 0 0 0 5px #fff;
 }
 @media (max-width: 600px) {

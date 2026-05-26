@@ -265,10 +265,15 @@ let currentEditId = null;
 /* ─────────────────────────────────────────────
    DESIGN SETTINGS PANEL — element refs
 ───────────────────────────────────────────── */
-const dsBgColorInput   = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-bg-color'));
-const dsBgColorVal     = document.getElementById('ds-bg-color-val');
-const dsTextColorInput = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-text-color'));
-const dsTextColorVal   = document.getElementById('ds-text-color-val');
+const designControls   = Array.from(document.querySelectorAll('[data-style]'));
+const designLinkedInputs = Array.from(document.querySelectorAll('[data-style-linked]'));
+const designTabs       = Array.from(document.querySelectorAll('[data-ds-tab]'));
+const designPanes      = Array.from(document.querySelectorAll('[data-ds-pane]'));
+const themeJsonBox     = /** @type {HTMLTextAreaElement|null} */ (document.getElementById('theme-json-box'));
+const exportThemeBtn   = document.getElementById('export-theme-btn');
+const importThemeBtn   = document.getElementById('import-theme-btn');
+const saveThemeBtn     = document.getElementById('save-theme-btn');
+const darkToggle       = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-dark-toggle'));
 const dsLogoZone       = document.getElementById('ds-logo-zone');
 const dsLogoInput      = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-logo-input'));
 const dsLogoEmptyState = document.getElementById('ds-logo-empty-state');
@@ -279,7 +284,179 @@ const dsLogoRemoveBtn  = document.getElementById('ds-logo-remove-btn');
 const dsPosBtns        = Array.from(document.querySelectorAll('.ds-pos-btn'));
 const resetDesignBtn   = document.getElementById('reset-design-btn');
 
-const DS_DEFAULTS = { backgroundColor: '#ffffff', textColor: '#000000', logoUrl: '', logoPosition: 'center' };
+const STORAGE_THEME = 'surveyBuilder_savedTheme_v1';
+
+const DS_DEFAULTS = {
+	backgroundColor: '#ffffff',
+	textColor: '#000000',
+	formBorderColor: '#e2e8f0',
+	formBorderRadius: '14',
+	formWidth: '720',
+	formPadding: '24',
+	formShadow: true,
+	headingColor: '#0f172a',
+	headingFontSize: '24',
+	headingFontWeight: '700',
+	headingAlignment: 'left',
+	labelColor: '#334155',
+	labelFontSize: '14',
+	labelFontWeight: '600',
+	nextButtonBg: '#ffffff',
+	nextButtonText: '#0f172a',
+	nextButtonRadius: '10',
+	nextButtonHover: '#f1f5ff',
+	prevButtonBg: '#ffffff',
+	prevButtonText: '#0f172a',
+	submitButtonBg: '#5b8cff',
+	submitButtonText: '#ffffff',
+	submitButtonRadius: '10',
+	submitHoverAnimation: 'lift',
+	inputBg: '#ffffff',
+	inputText: '#0f172a',
+	inputBorder: '#e2e8f0',
+	inputRadius: '10',
+	placeholderColor: '#94a3b8',
+	inputFocusBorder: '#5b8cff',
+	checkboxBg: '#ffffff',
+	checkboxBorder: '#c9d0db',
+	checkboxActive: '#5b8cff',
+	radioColor: '#c9d0db',
+	radioSelectedColor: '#5b8cff',
+	tableBg: '#ffffff',
+	tableBorder: '#e2e8f0',
+	tableHeaderBg: '#eef2f8',
+	tableHeaderText: '#4f5f7a',
+	matrixCircleColor: '#c9d0db',
+	matrixSelectedColor: '#5b8cff',
+	rowDividerColor: '#e2e8f0',
+	alternateRowBg: '#f8fafc',
+	progressBarColor: '#5b8cff',
+	progressBgColor: '#e2e8f0',
+	progressHeight: '4',
+	logoUrl: '',
+	logoWidth: '260',
+	logoHeight: '64',
+	logoPosition: 'center',
+};
+
+const THEME_PRESETS = {
+	minimal: {
+		backgroundColor: '#ffffff',
+		textColor: '#111827',
+		formBorderColor: '#e5e7eb',
+		formShadow: false,
+		headingColor: '#111827',
+		labelColor: '#374151',
+		submitButtonBg: '#111827',
+		progressBarColor: '#111827',
+		radioSelectedColor: '#111827',
+		matrixSelectedColor: '#111827',
+	},
+	dark: {
+		backgroundColor: '#000000',
+		textColor: '#ffffff',
+		formBorderColor: '#334155',
+		headingColor: '#ffffff',
+		labelColor: '#e5e7eb',
+		inputBg: '#050505',
+		inputText: '#ffffff',
+		inputBorder: '#334155',
+		tableBg: '#050505',
+		tableBorder: '#334155',
+		tableHeaderBg: '#111827',
+		tableHeaderText: '#ffffff',
+		submitButtonBg: '#ffffff',
+		submitButtonText: '#000000',
+		nextButtonBg: '#ffffff',
+		nextButtonText: '#000000',
+		prevButtonBg: '#ffffff',
+		prevButtonText: '#000000',
+		progressBgColor: '#334155',
+		progressBarColor: '#8b5cf6',
+		radioSelectedColor: '#8b5cf6',
+		matrixSelectedColor: '#8b5cf6',
+	},
+	soft: {
+		backgroundColor: '#f5f3ff',
+		textColor: '#312e81',
+		formBorderColor: '#ddd6fe',
+		headingColor: '#4c1d95',
+		labelColor: '#5b21b6',
+		submitButtonBg: '#7c3aed',
+		progressBarColor: '#7c3aed',
+		radioSelectedColor: '#7c3aed',
+		matrixSelectedColor: '#7c3aed',
+		tableHeaderBg: '#ede9fe',
+		tableHeaderText: '#5b21b6',
+	},
+};
+
+function showDesignPane(tab) {
+	designTabs.forEach((btn) => btn.classList.toggle('is-active', btn.getAttribute('data-ds-tab') === tab));
+	designPanes.forEach((pane) => {
+		pane.hidden = pane.getAttribute('data-ds-pane') !== tab;
+	});
+}
+
+function updateColorValueLabel(input) {
+	const row = input.closest('.ds-color-row');
+	const val = row ? row.querySelector('.ds-color-val') : null;
+	if (val) val.textContent = input.value;
+}
+
+function setControlValue(key, value) {
+	const ctrl = /** @type {HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement|undefined} */ (
+		designControls.find((el) => el.getAttribute('data-style') === key)
+	);
+	if (!ctrl) return;
+	if (ctrl instanceof HTMLInputElement && ctrl.type === 'checkbox') {
+		ctrl.checked = Boolean(value);
+	} else {
+		ctrl.value = String(value ?? '');
+		if (ctrl instanceof HTMLInputElement && ctrl.type === 'color') updateColorValueLabel(ctrl);
+	}
+	const linked = /** @type {HTMLInputElement|undefined} */ (
+		designLinkedInputs.find((el) => el.getAttribute('data-style-linked') === key)
+	);
+	if (linked) linked.value = String(value ?? '');
+}
+
+function getControlValue(ctrl) {
+	if (ctrl instanceof HTMLInputElement && ctrl.type === 'checkbox') return ctrl.checked;
+	return ctrl.value;
+}
+
+function readDesignControls() {
+	/** @type {Record<string, string|boolean>} */
+	const style = {};
+	designControls.forEach((ctrl) => {
+		const key = ctrl.getAttribute('data-style');
+		if (!key) return;
+		style[key] = getControlValue(/** @type {HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement} */ (ctrl));
+	});
+	return style;
+}
+
+function setDesignControls(style) {
+	const merged = { ...DS_DEFAULTS, ...(style || {}) };
+	Object.keys(DS_DEFAULTS).forEach((key) => setControlValue(key, merged[key]));
+}
+
+function syncLogoControlsFromStyle(style) {
+	const logoUrl = String(style?.logoUrl || '');
+	if (logoUrl && dsLogoImg && dsLogoEmptyState && dsLogoFilledState) {
+		dsLogoImg.src = logoUrl;
+		if (dsLogoName) dsLogoName.textContent = 'logo';
+		dsLogoEmptyState.hidden = true;
+		dsLogoFilledState.hidden = false;
+		return;
+	}
+	if (dsLogoImg) dsLogoImg.src = '';
+	if (dsLogoName) dsLogoName.textContent = '';
+	if (dsLogoEmptyState) dsLogoEmptyState.hidden = false;
+	if (dsLogoFilledState) dsLogoFilledState.hidden = true;
+	if (dsLogoInput) dsLogoInput.value = '';
+}
 
 /**
  * Read the current design panel values and merge them into lastSurveySpec.style,
@@ -289,8 +466,6 @@ const DS_DEFAULTS = { backgroundColor: '#ffffff', textColor: '#000000', logoUrl:
 function applyDesignSettings() {
 	if (!lastSurveySpec) return;
 
-	const bg  = dsBgColorInput  ? dsBgColorInput.value  : DS_DEFAULTS.backgroundColor;
-	const tc  = dsTextColorInput ? dsTextColorInput.value : DS_DEFAULTS.textColor;
 	const logoUrl = (dsLogoImg && dsLogoFilledState && !dsLogoFilledState.hidden)
 		? (dsLogoImg.src || '')
 		: '';
@@ -299,8 +474,7 @@ function applyDesignSettings() {
 
 	const newStyle = {
 		...(lastSurveySpec.style || {}),
-		backgroundColor: bg,
-		textColor: tc,
+		...readDesignControls(),
 		logoPosition: pos,
 	};
 	if (logoUrl) newStyle.logoUrl = logoUrl;
@@ -320,41 +494,39 @@ function applyDesignSettings() {
 function syncDesignPanelFromSpec() {
 	const s = (lastSurveySpec && lastSurveySpec.style) ? lastSurveySpec.style : {};
 
-	if (dsBgColorInput) {
-		const bg = String(s.backgroundColor || DS_DEFAULTS.backgroundColor);
-		dsBgColorInput.value = bg;
-		if (dsBgColorVal) dsBgColorVal.textContent = bg;
-	}
-	if (dsTextColorInput) {
-		const tc = String(s.textColor || DS_DEFAULTS.textColor);
-		dsTextColorInput.value = tc;
-		if (dsTextColorVal) dsTextColorVal.textContent = tc;
-	}
-	if (s.logoUrl && dsLogoImg && dsLogoEmptyState && dsLogoFilledState) {
-		dsLogoImg.src = String(s.logoUrl);
-		if (dsLogoName) dsLogoName.textContent = 'logo';
-		dsLogoEmptyState.hidden = true;
-		dsLogoFilledState.hidden = false;
-	}
+	setDesignControls(s);
+	syncLogoControlsFromStyle(s);
 	const pos = String(s.logoPosition || 'center');
 	dsPosBtns.forEach((b) => b.classList.toggle('is-active', b.getAttribute('data-pos') === pos));
 }
 
-/* ── Background color ── */
-if (dsBgColorInput) {
-	dsBgColorInput.addEventListener('input', () => {
-		if (dsBgColorVal) dsBgColorVal.textContent = dsBgColorInput.value;
-		applyDesignSettings();
-	});
-}
+designTabs.forEach((btn) => {
+	btn.addEventListener('click', () => showDesignPane(btn.getAttribute('data-ds-tab') || 'content'));
+});
 
-/* ── Text color ── */
-if (dsTextColorInput) {
-	dsTextColorInput.addEventListener('input', () => {
-		if (dsTextColorVal) dsTextColorVal.textContent = dsTextColorInput.value;
+designControls.forEach((ctrl) => {
+	ctrl.addEventListener('input', () => {
+		if (ctrl instanceof HTMLInputElement && ctrl.type === 'color') updateColorValueLabel(ctrl);
+		const key = ctrl.getAttribute('data-style');
+		const linked = /** @type {HTMLInputElement|undefined} */ (
+			designLinkedInputs.find((el) => el.getAttribute('data-style-linked') === key)
+		);
+		if (linked && ctrl instanceof HTMLInputElement) linked.value = ctrl.value;
 		applyDesignSettings();
 	});
-}
+	ctrl.addEventListener('change', applyDesignSettings);
+});
+
+designLinkedInputs.forEach((linked) => {
+	linked.addEventListener('input', () => {
+		const key = linked.getAttribute('data-style-linked');
+		const ctrl = /** @type {HTMLInputElement|undefined} */ (
+			designControls.find((el) => el.getAttribute('data-style') === key)
+		);
+		if (ctrl) ctrl.value = linked.value;
+		applyDesignSettings();
+	});
+});
 
 /* ── Logo upload: click on zone opens file picker ── */
 if (dsLogoZone) {
@@ -406,13 +578,64 @@ dsPosBtns.forEach((btn) => {
 	});
 });
 
+document.querySelectorAll('[data-theme-preset]').forEach((btn) => {
+	btn.addEventListener('click', () => {
+		const key = btn.getAttribute('data-theme-preset') || '';
+		const preset = THEME_PRESETS[key] || {};
+		setDesignControls({ ...readDesignControls(), ...preset });
+		if (darkToggle) darkToggle.checked = key === 'dark';
+		applyDesignSettings();
+	});
+});
+
+if (darkToggle) {
+	darkToggle.addEventListener('change', () => {
+		setDesignControls({
+			...readDesignControls(),
+			...(darkToggle.checked ? THEME_PRESETS.dark : THEME_PRESETS.minimal),
+		});
+		applyDesignSettings();
+	});
+}
+
+if (exportThemeBtn) {
+	exportThemeBtn.addEventListener('click', () => {
+		const style = lastSurveySpec?.style || readDesignControls();
+		if (themeJsonBox) themeJsonBox.value = JSON.stringify(style, null, 2);
+		showToast('Theme JSON exported', 'success');
+	});
+}
+
+if (importThemeBtn) {
+	importThemeBtn.addEventListener('click', () => {
+		try {
+			const parsed = JSON.parse(themeJsonBox?.value || '{}');
+			if (!parsed || typeof parsed !== 'object') throw new Error('Invalid theme JSON');
+			setDesignControls(parsed);
+			syncLogoControlsFromStyle(parsed);
+			if (parsed.logoPosition) {
+				dsPosBtns.forEach((b) => b.classList.toggle('is-active', b.getAttribute('data-pos') === parsed.logoPosition));
+			}
+			applyDesignSettings();
+			showToast('Theme imported', 'success');
+		} catch (err) {
+			showToast(err instanceof Error ? err.message : 'Invalid theme JSON', 'error');
+		}
+	});
+}
+
+if (saveThemeBtn) {
+	saveThemeBtn.addEventListener('click', () => {
+		const style = lastSurveySpec?.style || readDesignControls();
+		localStorage.setItem(STORAGE_THEME, JSON.stringify(style));
+		showToast('Theme saved in this browser', 'success');
+	});
+}
+
 /* ── Reset Design ── */
 if (resetDesignBtn) {
 	resetDesignBtn.addEventListener('click', () => {
-		if (dsBgColorInput) { dsBgColorInput.value = DS_DEFAULTS.backgroundColor; }
-		if (dsBgColorVal) dsBgColorVal.textContent = DS_DEFAULTS.backgroundColor;
-		if (dsTextColorInput) { dsTextColorInput.value = DS_DEFAULTS.textColor; }
-		if (dsTextColorVal) dsTextColorVal.textContent = DS_DEFAULTS.textColor;
+		setDesignControls(DS_DEFAULTS);
 		if (dsLogoImg) dsLogoImg.src = '';
 		if (dsLogoName) dsLogoName.textContent = '';
 		if (dsLogoEmptyState) dsLogoEmptyState.hidden = false;
@@ -422,12 +645,7 @@ if (resetDesignBtn) {
 		if (lastSurveySpec) {
 			lastSurveySpec = {
 				...lastSurveySpec,
-				style: {
-					...(lastSurveySpec.style || {}),
-					backgroundColor: DS_DEFAULTS.backgroundColor,
-					textColor: DS_DEFAULTS.textColor,
-					logoPosition: DS_DEFAULTS.logoPosition,
-				},
+				style: { ...DS_DEFAULTS },
 			};
 			delete lastSurveySpec.style.logoUrl;
 			const html = specToPreviewDocument(lastSurveySpec);
@@ -436,6 +654,19 @@ if (resetDesignBtn) {
 		}
 		showToast('Design reset to defaults', 'default');
 	});
+}
+
+try {
+	const savedTheme = JSON.parse(localStorage.getItem(STORAGE_THEME) || 'null');
+	if (savedTheme && typeof savedTheme === 'object') {
+		setDesignControls(savedTheme);
+		syncLogoControlsFromStyle(savedTheme);
+		if (savedTheme.logoPosition) {
+			dsPosBtns.forEach((b) => b.classList.toggle('is-active', b.getAttribute('data-pos') === savedTheme.logoPosition));
+		}
+	}
+} catch {
+	setDesignControls(DS_DEFAULTS);
 }
 
 /**
