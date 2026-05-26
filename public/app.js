@@ -260,6 +260,182 @@ let pendingDeleteId = null;
 /** @type {string | null} */
 let currentEditId = null;
 
+/* ─────────────────────────────────────────────
+   DESIGN SETTINGS PANEL — element refs
+───────────────────────────────────────────── */
+const dsBgColorInput   = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-bg-color'));
+const dsBgColorVal     = document.getElementById('ds-bg-color-val');
+const dsTextColorInput = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-text-color'));
+const dsTextColorVal   = document.getElementById('ds-text-color-val');
+const dsLogoZone       = document.getElementById('ds-logo-zone');
+const dsLogoInput      = /** @type {HTMLInputElement|null} */ (document.getElementById('ds-logo-input'));
+const dsLogoEmptyState = document.getElementById('ds-logo-empty-state');
+const dsLogoFilledState= document.getElementById('ds-logo-filled-state');
+const dsLogoImg        = /** @type {HTMLImageElement|null} */ (document.getElementById('ds-logo-img'));
+const dsLogoName       = document.getElementById('ds-logo-name');
+const dsLogoRemoveBtn  = document.getElementById('ds-logo-remove-btn');
+const dsPosBtns        = Array.from(document.querySelectorAll('.ds-pos-btn'));
+const resetDesignBtn   = document.getElementById('reset-design-btn');
+
+const DS_DEFAULTS = { backgroundColor: '#ffffff', textColor: '#000000', logoUrl: '', logoPosition: 'center' };
+
+/**
+ * Read the current design panel values and merge them into lastSurveySpec.style,
+ * then immediately re-render the preview. Called by every design control's change
+ * handler so the preview stays in sync with no page reload.
+ */
+function applyDesignSettings() {
+	if (!lastSurveySpec) return;
+
+	const bg  = dsBgColorInput  ? dsBgColorInput.value  : DS_DEFAULTS.backgroundColor;
+	const tc  = dsTextColorInput ? dsTextColorInput.value : DS_DEFAULTS.textColor;
+	const logoUrl = (dsLogoImg && dsLogoFilledState && !dsLogoFilledState.hidden)
+		? (dsLogoImg.src || '')
+		: '';
+	const activePosBtn = dsPosBtns.find((b) => b.classList.contains('is-active'));
+	const pos = activePosBtn ? (activePosBtn.getAttribute('data-pos') || 'center') : 'center';
+
+	const newStyle = {
+		...(lastSurveySpec.style || {}),
+		backgroundColor: bg,
+		textColor: tc,
+		logoPosition: pos,
+	};
+	if (logoUrl) newStyle.logoUrl = logoUrl;
+	else delete newStyle.logoUrl;
+
+	lastSurveySpec = { ...lastSurveySpec, style: newStyle };
+
+	const html = specToPreviewDocument(lastSurveySpec);
+	lastHtml = html;
+	setPreviewSrcdoc(html);
+}
+
+/**
+ * Read spec.style and push the values back into the Design Settings panel controls.
+ * Called after every form generation so the panel reflects the generated form's style.
+ */
+function syncDesignPanelFromSpec() {
+	const s = (lastSurveySpec && lastSurveySpec.style) ? lastSurveySpec.style : {};
+
+	if (dsBgColorInput) {
+		const bg = String(s.backgroundColor || DS_DEFAULTS.backgroundColor);
+		dsBgColorInput.value = bg;
+		if (dsBgColorVal) dsBgColorVal.textContent = bg;
+	}
+	if (dsTextColorInput) {
+		const tc = String(s.textColor || DS_DEFAULTS.textColor);
+		dsTextColorInput.value = tc;
+		if (dsTextColorVal) dsTextColorVal.textContent = tc;
+	}
+	if (s.logoUrl && dsLogoImg && dsLogoEmptyState && dsLogoFilledState) {
+		dsLogoImg.src = String(s.logoUrl);
+		if (dsLogoName) dsLogoName.textContent = 'logo';
+		dsLogoEmptyState.hidden = true;
+		dsLogoFilledState.hidden = false;
+	}
+	const pos = String(s.logoPosition || 'center');
+	dsPosBtns.forEach((b) => b.classList.toggle('is-active', b.getAttribute('data-pos') === pos));
+}
+
+/* ── Background color ── */
+if (dsBgColorInput) {
+	dsBgColorInput.addEventListener('input', () => {
+		if (dsBgColorVal) dsBgColorVal.textContent = dsBgColorInput.value;
+		applyDesignSettings();
+	});
+}
+
+/* ── Text color ── */
+if (dsTextColorInput) {
+	dsTextColorInput.addEventListener('input', () => {
+		if (dsTextColorVal) dsTextColorVal.textContent = dsTextColorInput.value;
+		applyDesignSettings();
+	});
+}
+
+/* ── Logo upload: click on zone opens file picker ── */
+if (dsLogoZone) {
+	dsLogoZone.addEventListener('click', (e) => {
+		// Don't trigger upload when clicking the remove button
+		if (e.target === dsLogoRemoveBtn || (dsLogoRemoveBtn && dsLogoRemoveBtn.contains(/** @type {Node} */ (e.target)))) return;
+		if (dsLogoFilledState && !dsLogoFilledState.hidden) return; // logo already set, only remove btn works
+		dsLogoInput?.click();
+	});
+}
+
+if (dsLogoInput) {
+	dsLogoInput.addEventListener('change', () => {
+		const file = dsLogoInput.files?.[0];
+		if (!file) return;
+		const reader = new FileReader();
+		reader.onload = (ev) => {
+			const url = typeof ev.target?.result === 'string' ? ev.target.result : '';
+			if (!url) return;
+			if (dsLogoImg) dsLogoImg.src = url;
+			if (dsLogoName) dsLogoName.textContent = file.name;
+			if (dsLogoEmptyState) dsLogoEmptyState.hidden = true;
+			if (dsLogoFilledState) dsLogoFilledState.hidden = false;
+			applyDesignSettings();
+		};
+		reader.readAsDataURL(file);
+	});
+}
+
+/* ── Remove logo ── */
+if (dsLogoRemoveBtn) {
+	dsLogoRemoveBtn.addEventListener('click', (e) => {
+		e.stopPropagation();
+		if (dsLogoImg) dsLogoImg.src = '';
+		if (dsLogoName) dsLogoName.textContent = '';
+		if (dsLogoEmptyState) dsLogoEmptyState.hidden = false;
+		if (dsLogoFilledState) dsLogoFilledState.hidden = true;
+		if (dsLogoInput) dsLogoInput.value = '';
+		applyDesignSettings();
+	});
+}
+
+/* ── Logo position ── */
+dsPosBtns.forEach((btn) => {
+	btn.addEventListener('click', () => {
+		dsPosBtns.forEach((b) => b.classList.remove('is-active'));
+		btn.classList.add('is-active');
+		applyDesignSettings();
+	});
+});
+
+/* ── Reset Design ── */
+if (resetDesignBtn) {
+	resetDesignBtn.addEventListener('click', () => {
+		if (dsBgColorInput) { dsBgColorInput.value = DS_DEFAULTS.backgroundColor; }
+		if (dsBgColorVal) dsBgColorVal.textContent = DS_DEFAULTS.backgroundColor;
+		if (dsTextColorInput) { dsTextColorInput.value = DS_DEFAULTS.textColor; }
+		if (dsTextColorVal) dsTextColorVal.textContent = DS_DEFAULTS.textColor;
+		if (dsLogoImg) dsLogoImg.src = '';
+		if (dsLogoName) dsLogoName.textContent = '';
+		if (dsLogoEmptyState) dsLogoEmptyState.hidden = false;
+		if (dsLogoFilledState) dsLogoFilledState.hidden = true;
+		if (dsLogoInput) dsLogoInput.value = '';
+		dsPosBtns.forEach((b) => b.classList.toggle('is-active', b.getAttribute('data-pos') === DS_DEFAULTS.logoPosition));
+		if (lastSurveySpec) {
+			lastSurveySpec = {
+				...lastSurveySpec,
+				style: {
+					...(lastSurveySpec.style || {}),
+					backgroundColor: DS_DEFAULTS.backgroundColor,
+					textColor: DS_DEFAULTS.textColor,
+					logoPosition: DS_DEFAULTS.logoPosition,
+				},
+			};
+			delete lastSurveySpec.style.logoUrl;
+			const html = specToPreviewDocument(lastSurveySpec);
+			lastHtml = html;
+			setPreviewSrcdoc(html);
+		}
+		showToast('Design reset to defaults', 'default');
+	});
+}
+
 /**
  * Update local spec + sync iframe preview to current spec.
  */
@@ -1096,6 +1272,7 @@ generateBtn.addEventListener('click', async () => {
 		updateSurveyDetailsVisibility();
 		updateSaveFormButtonState();
 		syncEditorAndPreview();
+		syncDesignPanelFromSpec();     // reflect generated style in Design Settings panel
 		switchBuilderTab('preview');   // show the rendered form immediately
 		showToast('Survey generated — edit questions or save', 'success');
 

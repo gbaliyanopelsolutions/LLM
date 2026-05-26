@@ -136,6 +136,12 @@ export function buildSurveyCss(style) {
 	if (s.textColor) {
 		directRules.push(`.survey-field-block,.survey-opt-row,.survey-control { border-color: rgba(128,128,128,0.35) !important; }`);
 	}
+	// Logo position — left | center | right (default: center)
+	if (s.logoPosition) {
+		const posMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
+		const justify = posMap[s.logoPosition] || 'center';
+		directRules.push(`.survey-logo { justify-content: ${justify} !important; transition: justify-content 0.2s ease; }`);
+	}
 	const overrideBlock = directRules.join('\n');
 
 	return `

@@ -452,6 +452,102 @@
     .editor-ai__textarea::placeholder { color: var(--hint); }
 
     /* ══════════════════════════════════
+       DESIGN SETTINGS PANEL
+    ══════════════════════════════════ */
+    .design-settings {
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.1rem 1.1rem;
+      background: var(--bg-soft);
+      transition: border-color var(--tx);
+    }
+    .design-settings__header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.9rem;
+    }
+    .design-settings__title {
+      font-size: 0.875rem; font-weight: 700; color: var(--text); margin: 0;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .design-settings__title::before { content: '🎨'; font-size: 0.85rem; }
+    .design-settings__grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;
+    }
+    .ds-field { display: flex; flex-direction: column; gap: 0.3rem; }
+    .ds-field--full { grid-column: 1 / -1; }
+    .ds-label {
+      font-size: 0.72rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    /* Color picker row */
+    .ds-color-row {
+      display: flex; align-items: center; gap: 0.55rem;
+      background: var(--bg-card); border: 1.5px solid var(--border);
+      border-radius: var(--radius-xs); padding: 0.35rem 0.65rem;
+      cursor: pointer; transition: border-color var(--tx), box-shadow var(--tx);
+    }
+    .ds-color-row:hover { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .ds-color-row input[type="color"] {
+      width: 26px; height: 26px; border: none; border-radius: 6px;
+      cursor: pointer; padding: 0; background: none; flex-shrink: 0;
+    }
+    .ds-color-val {
+      font-size: 0.8rem; font-weight: 600; color: var(--text-2);
+      font-family: 'Courier New', monospace; letter-spacing: 0.03em;
+    }
+    /* Logo upload */
+    .ds-logo-zone {
+      background: var(--bg-card); border: 1.5px dashed var(--border);
+      border-radius: var(--radius-xs); padding: 0.65rem 0.9rem;
+      transition: border-color var(--tx), background var(--tx);
+      cursor: pointer;
+    }
+    .ds-logo-zone:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .ds-logo-empty {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; font-weight: 600; color: var(--accent);
+    }
+    .ds-logo-empty::before { content: '+'; font-size: 1.1rem; font-weight: 700; }
+    .ds-logo-filled { display: flex; align-items: center; gap: 0.75rem; }
+    .ds-logo-filled img {
+      max-height: 36px; max-width: 100px; object-fit: contain;
+      border-radius: 4px; border: 1px solid var(--border); background: #fff;
+    }
+    .ds-logo-name {
+      flex: 1; font-size: 0.78rem; color: var(--text-2); min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ds-logo-remove-btn {
+      appearance: none; border: none; background: rgba(239,68,68,0.1);
+      color: var(--danger); border-radius: 50%; width: 22px; height: 22px;
+      font-size: 15px; line-height: 1; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; padding: 0;
+      transition: background var(--tx), transform 0.1s;
+    }
+    .ds-logo-remove-btn:hover { background: var(--danger); color: #fff; transform: scale(1.1); }
+    /* Position buttons */
+    .ds-pos-group { display: flex; gap: 0.35rem; }
+    .ds-pos-btn {
+      flex: 1; appearance: none;
+      border: 1.5px solid var(--border); border-radius: var(--radius-xs);
+      background: var(--bg-card); padding: 0.45rem 0;
+      font-size: 0.78rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; font-family: var(--font);
+      transition: all var(--tx); display: flex; align-items: center;
+      justify-content: center; gap: 0.3rem;
+    }
+    .ds-pos-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .ds-pos-btn.is-active {
+      background: var(--accent-soft); border-color: var(--accent);
+      color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+    /* Divider before panel */
+    .ds-divider {
+      height: 1px; background: var(--border); margin: 0.2rem 0 0;
+      grid-column: 1 / -1;
+    }
+
+    /* ══════════════════════════════════
        BUILDER PANE — PREVIEW
     ══════════════════════════════════ */
     #preview {
@@ -961,6 +1057,69 @@
                 ></textarea>
                 <button type="button" class="btn btn--primary btn--small" id="editor-ai-btn">Update Form with AI</button>
               </div>
+
+              <!-- ── Design Settings Panel ── -->
+              <div class="design-settings" id="design-settings-panel">
+                <div class="design-settings__header">
+                  <p class="design-settings__title">Design Settings</p>
+                  <button type="button" id="reset-design-btn" class="btn btn--ghost btn--small" title="Reset to defaults">↺ Reset</button>
+                </div>
+
+                <div class="design-settings__grid">
+
+                  <!-- Background Color -->
+                  <div class="ds-field">
+                    <label class="ds-label" for="ds-bg-color">Background</label>
+                    <label class="ds-color-row" for="ds-bg-color">
+                      <input type="color" id="ds-bg-color" value="#ffffff" />
+                      <span class="ds-color-val" id="ds-bg-color-val">#ffffff</span>
+                    </label>
+                  </div>
+
+                  <!-- Font / Text Color -->
+                  <div class="ds-field">
+                    <label class="ds-label" for="ds-text-color">Text Color</label>
+                    <label class="ds-color-row" for="ds-text-color">
+                      <input type="color" id="ds-text-color" value="#000000" />
+                      <span class="ds-color-val" id="ds-text-color-val">#000000</span>
+                    </label>
+                  </div>
+
+                  <!-- Logo Upload -->
+                  <div class="ds-field ds-field--full">
+                    <label class="ds-label">Logo</label>
+                    <input type="file" id="ds-logo-input" accept="image/*" hidden />
+                    <div class="ds-logo-zone" id="ds-logo-zone">
+                      <!-- Empty state -->
+                      <div id="ds-logo-empty-state" class="ds-logo-empty">Upload Logo</div>
+                      <!-- Filled state -->
+                      <div id="ds-logo-filled-state" class="ds-logo-filled" hidden>
+                        <img id="ds-logo-img" src="" alt="Logo" />
+                        <span class="ds-logo-name" id="ds-logo-name">logo.png</span>
+                        <button type="button" id="ds-logo-remove-btn" class="ds-logo-remove-btn" title="Remove logo">×</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Logo Position -->
+                  <div class="ds-field ds-field--full">
+                    <label class="ds-label">Logo Position</label>
+                    <div class="ds-pos-group" role="group" aria-label="Logo position">
+                      <button type="button" class="ds-pos-btn" data-pos="left" title="Top Left">
+                        ⬛ Left
+                      </button>
+                      <button type="button" class="ds-pos-btn is-active" data-pos="center" title="Top Center">
+                        ⬛ Center
+                      </button>
+                      <button type="button" class="ds-pos-btn" data-pos="right" title="Top Right">
+                        ⬛ Right
+                      </button>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+              <!-- ── / Design Settings Panel ── -->
             </div>
 
             <div
