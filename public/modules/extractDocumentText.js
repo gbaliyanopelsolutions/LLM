@@ -67,19 +67,105 @@ async function extractTxt(file) {
 }
 
 /**
+ * Strip Qualtrics Q-number prefix and trailing value labels from a string.
+ * @param {string} s
+ * @returns {string}
+ */
+function cleanLabel(s) {
+	return String(s || '')
+		.replace(/^Q\d+[\s.]+/i, '')
+		.replace(/(\s*\(\d+\))+\s*$/, '')
+		.trim();
+}
+
+/**
+ * Parse mammoth HTML output to pre-detect matrix/table questions.
+ * Returns an array of matrix descriptors that are injected into the AI prompt
+ * so Claude never has to guess about matrix structure from raw text.
+ *
+ * @param {string} html - HTML string from mammoth.convertToHtml
+ * @returns {Array<{question:string, rows:string[], min:number, max:number}>}
+ */
+function detectMatricesFromDocxHtml(html) {
+	if (!html || typeof window === 'undefined') return [];
+	try {
+		const doc = new DOMParser().parseFromString(html, 'text/html');
+		/** @type {Array<{question:string, rows:string[], min:number, max:number}>} */
+		const found = [];
+		let lastPara = '';
+
+		for (const el of Array.from(doc.body.children)) {
+			const tag = el.tagName.toLowerCase();
+
+			if (tag === 'table') {
+				const trs = Array.from(el.querySelectorAll('tr'));
+				if (trs.length < 2) { lastPara = ''; continue; }
+
+				// Header row cells (skip first – it's the row-label column)
+				const hdrCells = Array.from(trs[0].querySelectorAll('td,th')).slice(1);
+				const hdrTexts = hdrCells.map((c) => c.textContent.trim()).filter(Boolean);
+
+				// Need ≥3 scale cells containing numbers
+				const nums = hdrTexts.map((t) => {
+					const m = t.match(/\d+/);
+					return m ? parseInt(m[0], 10) : NaN;
+				}).filter((n) => !isNaN(n));
+
+				if (nums.length < 3) { lastPara = ''; continue; }
+
+				const min = Math.min(...nums);
+				const max = Math.max(...nums);
+
+				// Row labels (first cell of every body row)
+				const rows = trs.slice(1).map((tr) => {
+					const first = tr.querySelector('td,th');
+					return first ? cleanLabel(first.textContent.trim()) : '';
+				}).filter(Boolean);
+
+				if (rows.length >= 2 && lastPara) {
+					found.push({ question: cleanLabel(lastPara), rows, min, max });
+				}
+				lastPara = '';
+				continue;
+			}
+
+			const txt = el.textContent.trim();
+			if (txt) lastPara = txt;
+		}
+		return found;
+	} catch (e) {
+		console.warn('[detectMatrices] error:', e);
+		return [];
+	}
+}
+
+/**
  * @param {File} file
- * @returns {Promise<string>}
+ * @returns {Promise<{ text: string, matrices: Array<{question:string, rows:string[], min:number, max:number}> }>}
  */
 async function extractDocx(file) {
-	const mammoth = /** @type {{ extractRawText: (o: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }> } | undefined} */ (
+	const mammoth = /** @type {{ extractRawText: Function, convertToHtml: Function } | undefined} */ (
 		window.mammoth
 	);
 	if (!mammoth) {
 		throw new Error('DOCX support failed to load. Refresh the page and try again.');
 	}
 	const arrayBuffer = await file.arrayBuffer();
-	const result = await mammoth.extractRawText({ arrayBuffer });
-	return String(result.value || '').trim();
+
+	// Run both extractions in parallel
+	const [textResult, htmlResult] = await Promise.all([
+		mammoth.extractRawText({ arrayBuffer }),
+		mammoth.convertToHtml({ arrayBuffer }).catch(() => ({ value: '' })),
+	]);
+
+	const text = String(textResult.value || '').trim();
+	const html = String(htmlResult.value || '').trim();
+	const matrices = detectMatricesFromDocxHtml(html);
+
+	console.log('[DOCX] extracted text chars:', text.length, '| detected matrices:', matrices.length);
+	if (matrices.length) console.log('[DOCX] matrices →', matrices);
+
+	return { text, matrices };
 }
 
 /**
@@ -117,18 +203,32 @@ async function extractPdf(file) {
  * @param {File} file
  * @returns {Promise<string>}
  */
+/**
+ * Extract text and optional structural hints from an uploaded file.
+ *
+ * For .docx files, returns { text: string, matrices: Array } where
+ * `matrices` contains pre-detected matrix questions extracted from DOCX tables.
+ *
+ * For all other types, returns { text: string, matrices: [] }.
+ *
+ * @param {File} file
+ * @returns {Promise<{ text: string, matrices: Array<{question:string, rows:string[], min:number, max:number}> }>}
+ */
 export async function extractTextFromFile(file) {
 	validateUploadFile(file);
 	const ext = getFileExtension(file);
 
 	if (ext === '.txt') {
-		return extractTxt(file);
+		const text = await extractTxt(file);
+		return { text, matrices: [] };
 	}
 	if (ext === '.docx') {
+		// extractDocx now returns { text, matrices }
 		return extractDocx(file);
 	}
 	if (ext === '.pdf') {
-		return extractPdf(file);
+		const text = await extractPdf(file);
+		return { text, matrices: [] };
 	}
 
 	throw new Error('Unsupported file type.');
@@ -171,21 +271,41 @@ function cleanDocumentText(raw) {
  *  - manual only → pass through unchanged
  *  - both       → structured prompt: doc first, then user instructions as MANDATORY
  *
+ * `matrixHints` is an optional array of pre-detected matrix structures from the
+ * DOCX HTML pass.  When present they are appended as a "PRE-DETECTED MATRIX" block
+ * so Claude can copy the rows/scale exactly rather than guessing from raw text.
+ *
  * Document text is cleaned and hard-capped at MAX_DOC_CHARS before sending.
  *
  * @param {string} userPrompt
  * @param {string} documentText
  * @param {string} [fileName]
+ * @param {Array<{question:string, rows:string[], min:number, max:number}>} [matrixHints]
  * @returns {string}
  */
-export function buildEffectivePrompt(userPrompt, documentText, fileName = '') {
+export function buildEffectivePrompt(userPrompt, documentText, fileName = '', matrixHints = []) {
 	const manual = String(userPrompt || '').trim();
 	const cleaned = cleanDocumentText(documentText);
 	const label  = fileName ? ` "${fileName}"` : '';
 
+	/* ── Build optional matrix hints block ── */
+	let matrixBlock = '';
+	if (Array.isArray(matrixHints) && matrixHints.length > 0) {
+		const lines = matrixHints.map((m, i) => {
+			const rowList = m.rows.map((r) => `  - ${r}`).join('\n');
+			return `MATRIX ${i + 1}:\n  Question: "${m.question}"\n  Scale: ${m.min}–${m.max}\n  Rows:\n${rowList}`;
+		});
+		matrixBlock = [
+			'',
+			'====== PRE-DETECTED MATRIX QUESTIONS (use type "matrix_rating", exact rows, exact scale) ======',
+			lines.join('\n\n'),
+			'====== END MATRIX HINTS ======',
+		].join('\n');
+	}
+
 	/* ── No document uploaded ── */
 	if (!cleaned) {
-		return manual;
+		return manual + matrixBlock;
 	}
 
 	const docBlock = cleaned.length > MAX_DOC_CHARS
@@ -199,6 +319,7 @@ export function buildEffectivePrompt(userPrompt, documentText, fileName = '') {
 			`====== DOCUMENT${label} ======`,
 			docBlock,
 			'====== END DOCUMENT ======',
+			matrixBlock,
 		].join('\n\n');
 	}
 
@@ -208,7 +329,7 @@ export function buildEffectivePrompt(userPrompt, documentText, fileName = '') {
 		`====== DOCUMENT${label} ======`,
 		docBlock,
 		'====== END DOCUMENT ======',
-		'',
+		matrixBlock,
 		'====== REQUIREMENTS (MANDATORY — follow every item) ======',
 		manual,
 		'====== END REQUIREMENTS ======',

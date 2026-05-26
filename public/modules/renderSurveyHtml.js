@@ -329,21 +329,39 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 .matrix-question { margin-bottom: 0.5rem; }
 .matrix-scale-info { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); padding: 0 2px 6px; }
 .matrix-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border); border-radius: var(--radius-sm); }
-.matrix-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 480px; }
+.matrix-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 520px; }
 .matrix-tbl thead th {
-  padding: 0.45rem 0.35rem; text-align: center; font-weight: 700;
-  font-size: 0.74rem; color: var(--muted); background: var(--bg);
-  border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 1;
+  padding: 0.5rem 0.3rem; text-align: center; font-weight: 700;
+  font-size: 0.72rem; color: var(--muted); background: var(--bg);
+  border-bottom: 2px solid var(--border); white-space: nowrap;
 }
-.matrix-tbl th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; }
-.matrix-tbl td { padding: 0.55rem 0.35rem; text-align: center; border-bottom: 1px solid var(--border); }
+.matrix-tbl thead th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; white-space: normal; }
+.matrix-tbl thead th.mtx-scale-first, .matrix-tbl thead th.mtx-scale-last {
+  white-space: normal; font-size: 0.68rem; line-height: 1.25; min-width: 56px; max-width: 72px; text-align: center;
+}
+.matrix-tbl td { padding: 0.5rem 0.3rem; text-align: center; border-bottom: 1px solid var(--border); min-width: 44px; }
 .matrix-tbl td.mtx-rl { text-align: left; padding-left: 0.85rem; font-weight: 500; color: var(--opt-text); min-width: 160px; line-height: 1.35; }
 .matrix-tbl tbody tr:last-child td { border-bottom: none; }
 .matrix-tbl tbody tr:hover td { background: rgba(91,140,255,0.05); }
-.matrix-tbl input[type="radio"] { width: 17px; height: 17px; cursor: pointer; accent-color: var(--primary); margin: 0; }
-@media (max-width: 540px) {
-  .matrix-tbl { min-width: 440px; }
-  .matrix-tbl th.mtx-lh, .matrix-tbl td.mtx-rl { min-width: 120px; font-size: 0.76rem; }
+/* CSS-only radio circles — renders perfectly in every column width */
+.mtx-radio-lbl { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.mtx-radio-lbl input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
+.mtx-radio-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid #c9d0db; background: #fff;
+  display: block; flex-shrink: 0;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.mtx-radio-lbl:hover .mtx-radio-dot { border-color: var(--primary); }
+.mtx-radio-lbl input:checked + .mtx-radio-dot {
+  border-color: var(--primary);
+  background: var(--primary);
+  box-shadow: inset 0 0 0 5px #fff;
+}
+@media (max-width: 600px) {
+  .matrix-tbl { min-width: 480px; }
+  .matrix-tbl thead th.mtx-lh, .matrix-tbl td.mtx-rl { min-width: 120px; font-size: 0.76rem; }
+  .mtx-radio-dot { width: 17px; height: 17px; }
 }
 `.trim();
 }
@@ -478,22 +496,36 @@ function renderQuestionMarkup(q, idx) {
 		const safeMMn = Number.isFinite(mMin) ? mMin : 0;
 		const safeMMax = Number.isFinite(mMax) && mMax > safeMMn ? mMax : 10;
 		const mSteps = Array.from({ length: safeMMax - safeMMn + 1 }, (_, i) => safeMMn + i);
-		const headerCols = mSteps.map((n) => `<th>${escapeHtml(String(n))}</th>`).join('');
+
+		// Scale labels: first and last columns show "0\nNot at all" / "10\nExtremely" style
+		const scaleLabels = q.scaleLabels && typeof q.scaleLabels === 'object'
+			? q.scaleLabels
+			: {};
+		const minLabel = scaleLabels.min || (safeMMn === 0 ? 'Not at all' : String(safeMMn));
+		const maxLabel = scaleLabels.max || (safeMMax === 10 ? 'Extremely' : String(safeMMax));
+
+		const headerCols = mSteps.map((n, idx) => {
+			if (idx === 0) {
+				return `<th class="mtx-scale-first">${escapeHtml(String(n))}<br/><span style="font-weight:400;font-size:0.64rem;color:inherit;">${escapeHtml(minLabel)}</span></th>`;
+			}
+			if (idx === mSteps.length - 1) {
+				return `<th class="mtx-scale-last">${escapeHtml(String(n))}<br/><span style="font-weight:400;font-size:0.64rem;color:inherit;">${escapeHtml(maxLabel)}</span></th>`;
+			}
+			return `<th>${escapeHtml(String(n))}</th>`;
+		}).join('');
+
 		/** @type {string[]} */
 		const matrixRows = Array.isArray(q.rows) ? /** @type {string[]} */(q.rows) : [];
 		const bodyRows = matrixRows.map((row, ri) => {
 			const rName = `${name}_r${ri}`;
+			// Use CSS-only custom radio so circles render perfectly in any column width
 			const cols = mSteps
-				.map((n) => `<td><input type="radio" name="${escapeAttr(rName)}" value="${n}"${dataAttr} /></td>`)
+				.map((n) => `<td><label class="mtx-radio-lbl"><input type="radio" name="${escapeAttr(rName)}" value="${n}"${dataAttr} /><span class="mtx-radio-dot"></span></label></td>`)
 				.join('');
 			return `<tr><td class="mtx-rl">${escapeHtml(String(row))}</td>${cols}</tr>`;
 		}).join('');
 		control = `
       <div class="matrix-question">
-        <div class="matrix-scale-info">
-          <span>${escapeHtml(safeMMn + ' = Not at all satisfied')}</span>
-          <span>${escapeHtml(safeMMax + ' = Extremely satisfied')}</span>
-        </div>
         <div class="matrix-wrap">
           <table class="matrix-tbl" role="group" aria-labelledby="${id}_lbl">
             <thead><tr><th class="mtx-lh"></th>${headerCols}</tr></thead>

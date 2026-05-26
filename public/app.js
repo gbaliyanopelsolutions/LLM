@@ -139,6 +139,8 @@ const docUploadRemove = document.getElementById('doc-upload-remove');
 let uploadedDocumentText = '';
 /** @type {string} */
 let uploadedFileName = '';
+/** @type {Array<{question:string, rows:string[], min:number, max:number}>} */
+let uploadedDocxMatrices = [];
 
 /** @type {{ role: string, content: string }[]} */
 let conversation = [];
@@ -1081,6 +1083,7 @@ function setDocUploadStatus(message, variant = 'default') {
 function clearUploadedDocument() {
 	uploadedDocumentText = '';
 	uploadedFileName = '';
+	uploadedDocxMatrices = [];
 	if (docUploadInput) {
 		docUploadInput.value = '';
 	}
@@ -1096,19 +1099,27 @@ function clearUploadedDocument() {
 async function handleUploadedFile(file) {
 	setDocUploadStatus('Reading file…');
 	try {
-		const text = await extractTextFromFile(file);
+		const result = await extractTextFromFile(file);
+		// extractTextFromFile now always returns { text, matrices }
+		const text = typeof result === 'string' ? result : (result.text || '');
+		const matrices = typeof result === 'object' && result.matrices ? result.matrices : [];
 		if (!text) {
 			throw new Error('No readable text found in this file.');
 		}
 		uploadedDocumentText = text;
 		uploadedFileName = file.name;
+		uploadedDocxMatrices = matrices;
+		if (matrices.length) {
+			console.log('[app] Pre-detected DOCX matrices:', matrices.length, matrices);
+		}
 		if (docUploadChip && docUploadChipName && docUploadChipMeta) {
 			docUploadChipName.textContent = file.name;
 			docUploadChipMeta.textContent = formatFileSize(file.size);
 			docUploadChip.hidden = false;
 		}
+		const matrixNote = matrices.length ? ` (${matrices.length} matrix question${matrices.length > 1 ? 's' : ''} detected)` : '';
 		setDocUploadStatus(
-			`Loaded ${text.length.toLocaleString()} characters from document.`,
+			`Loaded ${text.length.toLocaleString()} characters from document.${matrixNote}`,
 			'success'
 		);
 		showToast('Document ready — click Generate', 'success');
@@ -1171,7 +1182,7 @@ initDocumentUpload();
 
 generateBtn.addEventListener('click', async () => {
 	const manualPrompt = promptInput.value.trim();
-	const prompt = buildEffectivePrompt(manualPrompt, uploadedDocumentText, uploadedFileName);
+	const prompt = buildEffectivePrompt(manualPrompt, uploadedDocumentText, uploadedFileName, uploadedDocxMatrices);
 
 	/* ── Debug: confirm both inputs are merged ── */
 	console.log('──── Form Generation Debug ────');
