@@ -3,6 +3,7 @@
  */
 
 import { FRAME_HEIGHT_REPORT_SCRIPT } from './resizePreviewIframe.js';
+import { SURVEY_INTERACTION_SCRIPT } from './renderSurveyHtml.js';
 
 /**
  * @param {string} specType
@@ -347,6 +348,7 @@ ${css}
 <body>
 ${body}
 <script>${bridge}<\/script>
+<script>${SURVEY_INTERACTION_SCRIPT}<\/script>
 <script>${FRAME_HEIGHT_REPORT_SCRIPT}<\/script>
 </body>
 </html>`;

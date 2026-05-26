@@ -248,6 +248,9 @@ export function normalizeQuestion(raw) {
 				.filter((r) => r.length > 0 && !isScaleHeaderRow(r))
 		: [];
 
+	// Preserve page/step grouping from Claude's JSON
+	const page = typeof obj.page === 'number' && obj.page >= 1 ? obj.page : undefined;
+
 	return {
 		id: typeof obj.id === 'string' && obj.id ? obj.id : typeof obj.question_id === 'string' ? obj.question_id : nextLocalId(),
 		question: text || 'Untitled question',
@@ -257,6 +260,7 @@ export function normalizeQuestion(raw) {
 		options,
 		rows,
 		validation: finalValidation,
+		...(page !== undefined ? { page } : {}),
 	};
 }
 

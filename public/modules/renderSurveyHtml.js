@@ -236,27 +236,117 @@ body {
   box-shadow: 0 0 0 3px rgba(91, 140, 255, 0.18);
 }
 textarea.survey-control { min-height: 110px; resize: vertical; }
+/* ── Option cards (radio / checkbox) ── */
 .survey-opt-row {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.35rem 0;
-  font-size: 0.9rem;
+  gap: 0.85rem;
+  padding: 0.8rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  font-size: 0.93rem;
   color: var(--opt-text);
   cursor: pointer;
+  background: var(--card);
+  user-select: none;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.14s ease;
 }
-.survey-opt-row input { accent-color: var(--primary); transform: scale(1.05); }
+.survey-opt-row:last-child { margin-bottom: 0; }
+.survey-opt-row:hover {
+  border-color: var(--primary);
+  background: rgba(91,140,255,0.04);
+}
+.survey-opt-row.is-selected {
+  border-color: var(--primary);
+  background: rgba(91,140,255,0.07);
+  box-shadow: 0 0 0 3px rgba(91,140,255,0.12);
+}
+.survey-opt-row input[type="radio"],
+.survey-opt-row input[type="checkbox"] {
+  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+}
+.survey-opt-check {
+  width: 20px; height: 20px; min-width: 20px;
+  border-radius: 50%;
+  border: 2px solid #c9d0db;
+  background: #fff;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.15s ease;
+}
+.survey-opt-check.is-checkbox { border-radius: 5px; }
+.survey-opt-row.is-selected .survey-opt-check {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+.survey-opt-row.is-selected .survey-opt-check::after {
+  content: '';
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  display: block;
+}
+.survey-opt-row.is-selected .survey-opt-check.is-checkbox::after {
+  border-radius: 1px;
+  width: 10px; height: 6px;
+  background: none;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) translateY(-1px);
+}
 .survey-empty-options {
   margin: 0.25rem 0 0;
   font-size: 0.8rem;
   color: var(--muted);
   font-style: italic;
 }
-.survey-submit-row {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: flex-end;
+/* ── Step progress bar ── */
+.survey-progress {
+  margin-bottom: 1.5rem;
 }
+.survey-step-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.survey-progress-track {
+  height: 4px;
+  border-radius: 9px;
+  background: var(--border);
+  overflow: hidden;
+}
+.survey-progress-fill {
+  height: 100%;
+  border-radius: 9px;
+  background: linear-gradient(90deg, var(--primary), #7c5cff);
+  transition: width 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+/* ── Step panels ── */
+.survey-step[hidden] { display: none; }
+/* ── Navigation row ── */
+.survey-nav-row {
+  margin-top: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.survey-nav-btn {
+  appearance: none;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.62rem 1.3rem;
+  background: var(--card);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.survey-nav-btn:hover { border-color: var(--primary); background: rgba(91,140,255,0.06); }
 .survey-submit {
   appearance: none;
   border: none;
@@ -269,6 +359,7 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
   cursor: pointer;
   box-shadow: 0 8px 22px rgba(91, 140, 255, 0.32);
   transition: transform 0.15s ease, box-shadow 0.18s ease;
+  margin-left: auto;
 }
 .survey-submit:hover { box-shadow: 0 10px 26px rgba(91, 140, 255, 0.45); }
 .survey-submit:active { transform: scale(0.98); }
@@ -332,12 +423,13 @@ textarea.survey-control { min-height: 110px; resize: vertical; }
 .matrix-tbl { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 520px; }
 .matrix-tbl thead th {
   padding: 0.5rem 0.3rem; text-align: center; font-weight: 700;
-  font-size: 0.72rem; color: var(--muted); background: var(--bg);
-  border-bottom: 2px solid var(--border); white-space: nowrap;
+  font-size: 0.72rem; color: #4f5f7a; background: #eef2f8;
+  border-bottom: 2px solid #c8d4e8; white-space: nowrap;
 }
-.matrix-tbl thead th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; white-space: normal; }
+.matrix-tbl thead th.mtx-lh { text-align: left; padding-left: 0.85rem; min-width: 160px; white-space: normal; background: #eef2f8; }
 .matrix-tbl thead th.mtx-scale-first, .matrix-tbl thead th.mtx-scale-last {
   white-space: normal; font-size: 0.68rem; line-height: 1.25; min-width: 56px; max-width: 72px; text-align: center;
+  color: #3b5bdb; font-weight: 800;
 }
 .matrix-tbl td { padding: 0.5rem 0.3rem; text-align: center; border-bottom: 1px solid var(--border); min-width: 44px; }
 .matrix-tbl td.mtx-rl { text-align: left; padding-left: 0.85rem; font-weight: 500; color: var(--opt-text); min-width: 160px; line-height: 1.35; }
@@ -427,9 +519,8 @@ function renderQuestionMarkup(q, idx) {
 						.map(
 							(opt, i) => `
         <label class="survey-opt-row">
-          <input type="radio" name="${name}" value="${escapeAttr(opt)}"${dataAttr}${
-								i === 0 ? reqAttr : ''
-							} />
+          <input type="radio" name="${name}" value="${escapeAttr(opt)}"${dataAttr}${i === 0 ? reqAttr : ''} />
+          <span class="survey-opt-check"></span>
           <span>${escapeHtml(opt)}</span>
         </label>`
 						)
@@ -445,6 +536,7 @@ function renderQuestionMarkup(q, idx) {
 							(opt) => `
         <label class="survey-opt-row">
           <input type="checkbox" name="${name}" value="${escapeAttr(opt)}"${dataAttr} />
+          <span class="survey-opt-check is-checkbox"></span>
           <span>${escapeHtml(opt)}</span>
         </label>`
 						)
@@ -570,6 +662,49 @@ function renderQuestionMarkup(q, idx) {
  */
 
 /**
+ * Auto-group questions into pages when no `page` property is set.
+ * Matrix questions get their own page; others are batched by 3.
+ *
+ * @param {EditorQuestion[]} questions
+ * @returns {Map<number, EditorQuestion[]>}
+ */
+function groupQuestionsByPage(questions) {
+	/** @type {Map<number, EditorQuestion[]>} */
+	const map = new Map();
+
+	// Check if any question has an explicit page number
+	const hasPages = questions.some((q) => typeof q.page === 'number' && q.page >= 1);
+
+	if (hasPages) {
+		for (const q of questions) {
+			const pg = typeof q.page === 'number' && q.page >= 1 ? q.page : 1;
+			if (!map.has(pg)) map.set(pg, []);
+			map.get(pg).push(q);
+		}
+	} else {
+		// Auto-group: matrix on own page, others in batches of 3
+		let pg = 1;
+		let batchCount = 0;
+		for (const q of questions) {
+			if (q.type === 'matrix_rating') {
+				if (batchCount > 0) { pg++; batchCount = 0; }
+				if (!map.has(pg)) map.set(pg, []);
+				map.get(pg).push(q);
+				pg++; batchCount = 0;
+			} else {
+				if (!map.has(pg)) map.set(pg, []);
+				map.get(pg).push(q);
+				batchCount++;
+				if (batchCount >= 3) { pg++; batchCount = 0; }
+			}
+		}
+	}
+
+	// Return sorted by page number
+	return new Map([...map.entries()].sort((a, b) => a[0] - b[0]));
+}
+
+/**
  * @param {EditorSpec} spec
  * @returns {{ formCss: string, formHtml: string }}
  */
@@ -591,21 +726,133 @@ export function buildFormParts(spec) {
       ${desc ? `<p class="survey-desc">${escapeHtml(desc)}</p>` : ''}
     </header>`;
 
-	const questionsHtml = questions.map((q, i) => renderQuestionMarkup(q, i)).join('\n');
+	// ── Group questions into steps ──────────────────────────────────────────
+	const pageMap = groupQuestionsByPage(questions);
+	const pages = [...pageMap.values()];
+	const totalSteps = pages.length;
+	const isMultiStep = totalSteps > 1;
+
+	// Global question index counter for stable ids across pages
+	let qIdx = 0;
+	const stepsHtml = pages.map((pageQs, stepIdx) => {
+		const qHtml = pageQs.map((q) => renderQuestionMarkup(q, qIdx++)).join('\n');
+		return `<div class="survey-step" data-step="${stepIdx}"${stepIdx > 0 ? ' hidden' : ''}>${qHtml}</div>`;
+	}).join('\n');
+
+	// ── Progress bar (only for multi-step) ─────────────────────────────────
+	const progressHtml = isMultiStep ? `
+    <div class="survey-progress" id="sf-progress">
+      <div class="survey-step-label">Step <span id="sf-cur">1</span> of <span id="sf-tot">${totalSteps}</span></div>
+      <div class="survey-progress-track"><div class="survey-progress-fill" id="sf-fill" style="width:${Math.round(100/totalSteps)}%"></div></div>
+    </div>` : '';
+
+	// ── Navigation / submit row ─────────────────────────────────────────────
+	const navHtml = isMultiStep ? `
+    <div class="survey-nav-row" id="sf-nav">
+      <button type="button" class="survey-nav-btn" id="sf-prev" style="display:none">← Back</button>
+      <button type="button" class="survey-nav-btn" id="sf-next" style="margin-left:auto">Next →</button>
+      <button type="submit" class="survey-submit" id="sf-submit" style="display:none">Submit responses</button>
+    </div>` : `
+    <div class="survey-nav-row">
+      <button type="submit" class="survey-submit">Submit responses</button>
+    </div>`;
 
 	const body = `
 <div class="survey-card">
   <form id="public-survey-form" novalidate>
     ${header}
-    ${questionsHtml}
-    <div class="survey-submit-row">
-      <button type="submit" class="survey-submit">Submit responses</button>
-    </div>
+    ${progressHtml}
+    ${stepsHtml}
+    ${navHtml}
   </form>
 </div>`.trim();
 
 	return { formCss: buildSurveyCss(style), formHtml: body };
 }
+
+/**
+ * Multi-step navigation + option-card interaction script embedded in the rendered form.
+ * Self-contained IIFE — works in both the preview iframe and the public form page.
+ * Exported so surveyFormHtml.js can embed it in the public form iframe too.
+ */
+export const SURVEY_INTERACTION_SCRIPT = `(function(){
+  var form = document.getElementById('public-survey-form');
+  if (!form) return;
+
+  /* ── Option card selection ───────────────────────────────────────────── */
+  function initOptCards() {
+    form.querySelectorAll('.survey-opt-row').forEach(function(row) {
+      var inp = row.querySelector('input[type="radio"],input[type="checkbox"]');
+      if (!inp) return;
+      // Sync visual state on page load (e.g. browser back)
+      if (inp.checked) row.classList.add('is-selected');
+      row.addEventListener('click', function() {
+        if (inp.type === 'radio') {
+          var nm = inp.name;
+          form.querySelectorAll('input[name="' + nm + '"]').forEach(function(r) {
+            var p = r.closest('.survey-opt-row');
+            if (p) p.classList.remove('is-selected');
+          });
+          row.classList.add('is-selected');
+          inp.checked = true;
+        } else {
+          inp.checked = !inp.checked;
+          row.classList.toggle('is-selected', inp.checked);
+        }
+      });
+    });
+  }
+
+  /* ── Multi-step navigation ───────────────────────────────────────────── */
+  var steps  = Array.from(form.querySelectorAll('.survey-step'));
+  var total  = steps.length;
+  var curEl  = document.getElementById('sf-cur');
+  var fillEl = document.getElementById('sf-fill');
+  var prevBtn= document.getElementById('sf-prev');
+  var nextBtn= document.getElementById('sf-next');
+  var subBtn = document.getElementById('sf-submit');
+  var cur = 0;
+
+  function pct(n, t) { return Math.round((n / t) * 100) + '%'; }
+
+  function showStep(idx) {
+    steps.forEach(function(s, i) { s.hidden = (i !== idx); });
+    if (curEl)  curEl.textContent  = idx + 1;
+    if (fillEl) fillEl.style.width = pct(idx + 1, total);
+    if (prevBtn) prevBtn.style.display = idx === 0 ? 'none' : '';
+    if (nextBtn) nextBtn.style.display = idx === total - 1 ? 'none' : '';
+    if (subBtn)  subBtn.style.display  = idx === total - 1 ? '' : 'none';
+    // re-init cards for the newly visible step
+    initOptCards();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function validateStep(idx) {
+    var ok = true;
+    steps[idx].querySelectorAll('[required]').forEach(function(el) {
+      if (!el.value || (el.type === 'radio' && !steps[idx].querySelector('input[name="' + el.name + '"]:checked'))) {
+        if (!ok) return;
+        el.reportValidity();
+        ok = false;
+      }
+    });
+    return ok;
+  }
+
+  if (total > 1) {
+    if (nextBtn) nextBtn.addEventListener('click', function() {
+      if (!validateStep(cur)) return;
+      if (cur < total - 1) { cur++; showStep(cur); }
+    });
+    if (prevBtn) prevBtn.addEventListener('click', function() {
+      if (cur > 0) { cur--; showStep(cur); }
+    });
+    showStep(0);
+  } else {
+    // Single-step: still init cards
+    initOptCards();
+  }
+})();`;
 
 /**
  * Standalone HTML document for the Preview tab iframe.
@@ -625,6 +872,7 @@ export function buildPreviewDocument(spec) {
 <body>
 ${formHtml}
 <script>${FRAME_HEIGHT_REPORT_SCRIPT}<\/script>
+<script>${SURVEY_INTERACTION_SCRIPT}<\/script>
 </body>
 </html>`;
 }
