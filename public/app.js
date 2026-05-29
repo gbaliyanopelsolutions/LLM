@@ -233,6 +233,9 @@ const editorCardsEl = document.getElementById('editor-cards');
 const addQuestionBtn = document.getElementById('editor-add-question-btn');
 const aiInput = document.getElementById('editor-ai-input');
 const aiBtn = document.getElementById('editor-ai-btn');
+const editWithAiBtn = document.getElementById('edit-with-ai-btn');
+const aiEditModal = document.getElementById('ai-edit-modal');
+const aiEditModalCloseBtn = document.getElementById('ai-edit-modal-close');
 
 const editModal = document.getElementById('editor-edit-modal');
 const editForm = document.getElementById('editor-edit-form');
@@ -700,6 +703,31 @@ builderTabs.forEach((btn) => {
 });
 switchBuilderTab('preview');
 
+/* ─────────────────────────────────────────────
+   "EDIT WITH AI" BUTTON AND MODAL
+───────────────────────────────────────────── */
+if (editWithAiBtn) {
+	editWithAiBtn.addEventListener('click', () => {
+		if (aiEditModal) {
+			aiEditModal.hidden = false;
+			if (aiInput) aiInput.focus();
+		}
+	});
+}
+
+if (aiEditModalCloseBtn) {
+	aiEditModalCloseBtn.addEventListener('click', () => {
+		if (aiEditModal) aiEditModal.hidden = true;
+	});
+}
+
+/* Close modal on Escape key */
+if (aiEditModal) {
+	aiEditModal.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') aiEditModal.hidden = true;
+	});
+}
+
 /**
  * Open the edit modal seeded from a question (or blank for new).
  *
@@ -1016,6 +1044,7 @@ if (aiBtn) {
 			aiInput.value = '';
 			syncEditorAndPreview();
 			showToast('Form updated with AI', 'success');
+			if (aiEditModal) aiEditModal.hidden = true;
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'AI update failed';
 			showToast(msg, 'error');

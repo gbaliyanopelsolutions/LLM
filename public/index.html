@@ -297,6 +297,21 @@
 
     .btn--small { padding: 0.45rem 0.9rem; font-size: 0.8rem; }
     .btn--danger-ghost { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+
+    /* ══════════════════════════════════
+       PREVIEW EDIT AI BAR
+    ══════════════════════════════════ */
+    .preview-edit-ai-bar {
+      padding: 1.25rem 1.25rem 0;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      margin-top: 0.75rem;
+    }
+    .preview-edit-ai-bar .btn--primary { width: 100%; }
+
+    @media (max-width: 768px) {
+      .preview-edit-ai-bar { padding: 1rem 1rem 0; }
+    }
     .btn--danger-ghost:hover { background: rgba(239,68,68,0.07); }
 
     .actions {
@@ -1083,6 +1098,7 @@
                 data-builder-tab="edit"
                 aria-selected="false"
                 aria-controls="builder-pane-edit"
+                hidden
               >Edit Form</button>
               <button
                 type="button"
@@ -1317,23 +1333,6 @@
                 <button type="button" class="btn btn--primary btn--small" id="editor-add-question-btn">+ Add Question</button>
               </div>
               <div id="editor-cards" class="editor-cards"></div>
-
-              <div class="editor-ai">
-                <p class="editor-ai__title">Edit with AI</p>
-                <p class="editor-ai__hint">
-                  Describe a change in plain English. Examples:
-                  <em>"Add a customer satisfaction rating"</em>,
-                  <em>"Make this form shorter"</em>,
-                  <em>"Add an email field at the top"</em>.
-                </p>
-                <textarea
-                  id="editor-ai-input"
-                  class="editor-ai__textarea"
-                  rows="3"
-                  placeholder="What should change?"
-                ></textarea>
-                <button type="button" class="btn btn--primary btn--small" id="editor-ai-btn">Update Form with AI</button>
-              </div>
             </div>
 
             <div
@@ -1343,6 +1342,9 @@
               aria-labelledby="builder-tab-preview"
             >
               <iframe id="preview" title="Live form preview" sandbox="allow-scripts allow-same-origin"></iframe>
+              <div class="preview-edit-ai-bar">
+                <button type="button" class="btn btn--primary" id="edit-with-ai-btn">✦ Edit with AI</button>
+              </div>
             </div>
             <div class="preview-footer">
               <div class="survey-details" id="survey-details-section" hidden aria-labelledby="survey-details-heading">
@@ -1542,6 +1544,28 @@
         <button type="button" class="btn btn--primary" id="copy-public-url-btn">Copy URL</button>
         <button type="button" class="btn btn--ghost" id="open-public-form-btn">Open form</button>
         <button type="button" class="btn btn--ghost" id="close-save-modal-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ai-edit-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="ai-edit-modal-title">
+    <div class="modal-card">
+      <h2 id="ai-edit-modal-title">Edit with AI</h2>
+      <p class="editor-ai__hint" style="margin: 0.5rem 0 1rem;">
+        Describe a change in plain English. Examples:
+        <em>"Add a customer satisfaction rating"</em>,
+        <em>"Make this form shorter"</em>,
+        <em>"Add an email field at the top"</em>.
+      </p>
+      <textarea
+        id="editor-ai-input"
+        class="editor-ai__textarea input-control"
+        rows="4"
+        placeholder="What should change?"
+      ></textarea>
+      <div class="editor-modal-actions" style="margin-top: 1rem;">
+        <button type="button" class="btn btn--ghost" id="ai-edit-modal-close">Cancel</button>
+        <button type="button" class="btn btn--primary" id="editor-ai-btn">Update Form with AI</button>
       </div>
     </div>
   </div>
