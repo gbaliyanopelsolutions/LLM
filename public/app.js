@@ -1022,12 +1022,26 @@ if (aiBtn) {
 		try {
 			const currentSpec = toLlmSpec(normalizeSpec(lastSurveySpec));
 			const llmPrompt = [
-				`Update the survey based on this instruction:`,
-				instruction,
-				'',
-				'Return the full updated survey JSON (title, description, questions[]) only.',
-				'',
-				'Current survey JSON:',
+				`Update ONLY the styling/theme of this survey based on the instruction below.`,
+				`DO NOT change the form structure, questions, options, or question types.`,
+				``,
+				`Instruction: ${instruction}`,
+				``,
+				`Return a JSON object with ONLY the theme/styling changes:`,
+				`{`,
+				`  "style": {`,
+				`    "backgroundColor": "#color or null",`,
+				`    "textColor": "#color or null",`,
+				`    "accentColor": "#color or null",`,
+				`    "logoUrl": "url or null"`,
+				`  },`,
+				`  "title": "updated title or null",`,
+				`  "description": "updated description or null"`,
+				`}`,
+				``,
+				`IMPORTANT: Do NOT include or modify questions[], options, matrix structure, or any form components.`,
+				``,
+				`Current survey:`,
 				JSON.stringify(currentSpec, null, 2),
 			].join('\n');
 
@@ -1040,7 +1054,19 @@ if (aiBtn) {
 			if (!res.ok || !data.ok || !data.survey) {
 				throw new Error(data.error || 'AI update failed');
 			}
-			lastSurveySpec = normalizeSpec(data.survey);
+
+			// Merge AI-provided theme changes with existing form structure
+			const updatedSpec = data.survey;
+			const mergedSpec = {
+				...lastSurveySpec,
+				title: updatedSpec.title || lastSurveySpec.title,
+				description: updatedSpec.description || lastSurveySpec.description,
+				style: { ...lastSurveySpec.style, ...updatedSpec.style },
+				// PRESERVE original questions structure - do NOT override
+				questions: lastSurveySpec.questions,
+			};
+
+			lastSurveySpec = normalizeSpec(mergedSpec);
 			aiInput.value = '';
 			syncEditorAndPreview();
 			showToast('Form updated with AI', 'success');
