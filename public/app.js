@@ -1876,8 +1876,12 @@ async function loadFormById() {
 		if (surveyTitleInput) surveyTitleInput.value = survey.name || '';
 		if (surveyDescriptionInput) surveyDescriptionInput.value = survey.description || '';
 		if (surveyStatusSelect) surveyStatusSelect.value = survey.status || 'draft';
-		if (maxSubmissionsInput && survey.max_submissions) {
-			maxSubmissionsInput.value = String(survey.max_submissions);
+		if (maxSubmissionsInput) {
+			maxSubmissionsInput.value = survey.max_submissions ? String(survey.max_submissions) : '';
+		}
+		// Populate company select if it exists and the survey has a company_id
+		if (companySelect && survey.company_id) {
+			companySelect.value = survey.company_id;
 		}
 
 		updateSurveyDetailsVisibility();
