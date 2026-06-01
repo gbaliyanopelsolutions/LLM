@@ -82,6 +82,7 @@ create table if not exists public.surveys (
 	status public.survey_status not null default 'draft',
 	company_id uuid not null references public.companies (company_id) on delete cascade,
 	settings_json jsonb not null default '{}'::jsonb,
+	style_json jsonb,
 	max_submissions integer,
 	total_submissions integer not null default 0,
 	form_html text,
@@ -96,6 +97,7 @@ create table if not exists public.surveys (
 );
 
 comment on column public.surveys.settings_json is 'Survey-level config (JSONB).';
+comment on column public.surveys.style_json is 'Form styling/theme data: backgroundColor, textColor, accentColor, logoUrl (JSONB).';
 comment on column public.surveys.max_submissions is 'Optional cap on form submissions. NULL = unlimited.';
 comment on column public.surveys.total_submissions is 'Completed public form submissions (incremented once per submit).';
 comment on column public.surveys.form_html is 'Sanitized LLM form body HTML for public iframe (fields bound to question_id).';

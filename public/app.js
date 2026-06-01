@@ -1828,7 +1828,9 @@ async function loadFormById() {
 				options: [],
 				...q
 			})),
-			style: {},
+			style: (survey.style_json && typeof survey.style_json === 'object')
+				? survey.style_json
+				: (survey.style || {}),
 		};
 
 		lastSurveySpec = normalizeSpec(spec);
