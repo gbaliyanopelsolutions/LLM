@@ -12,6 +12,7 @@ const { isDatabaseConfigured, testConnection } = require('../db.js');
 const { runSurveyMaxSubmissionsMigration } = require('../database/runSurveyMaxSubmissionsMigration.js');
 const { runSurveyFormDesignMigration } = require('../database/runSurveyFormDesignMigration.js');
 const { runSurveyQuestionFieldsMigration } = require('../database/runSurveyQuestionFieldsMigration.js');
+const { runStyleJsonMigration } = require('../database/runStyleJsonMigration.js');
 
 function routingHelp() {
 	return [
@@ -48,6 +49,7 @@ async function main() {
 		const maxSub = await runSurveyMaxSubmissionsMigration();
 		const formDesign = await runSurveyFormDesignMigration();
 		const questionFields = await runSurveyQuestionFieldsMigration();
+		const styleJson = await runStyleJsonMigration();
 		// eslint-disable-next-line no-console
 		console.log(
 			'[db:migrate] Done — max_submissions:',
@@ -56,6 +58,8 @@ async function main() {
 			formDesign.executed,
 			'statement(s); question_fields:',
 			questionFields.executed,
+			'statement(s); style_json:',
+			styleJson.executed,
 			'statement(s).'
 		);
 	} catch (err) {

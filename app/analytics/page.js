@@ -54,6 +54,7 @@ const SUGGESTED = [
 const NAV = [
 	{ href: '/dashboard', label: 'Dashboard',    Icon: LayoutDashboard, group: 'Overview' },
 	{ href: '/index',     label: 'Form Builder', Icon: WrenchIcon,      group: 'Build', badge: 'AI' },
+	{ href: '/forms',     label: 'Forms',        Icon: FileText,        group: 'Manage' },
 	{ href: '/survey',    label: 'My Surveys',   Icon: FileText,        group: 'Manage' },
 	{ href: '/add-company', label: 'Companies',  Icon: Building2,       group: 'Manage' },
 	{ href: '/analytics', label: 'Analytics',    Icon: BarChart2,       group: 'Manage', badge: 'New' },
