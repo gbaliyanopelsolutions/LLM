@@ -217,7 +217,6 @@ function setupDropdowns() {
 
 	document.querySelectorAll('.forms-actions-menu-btn').forEach(btn => {
 		btn.addEventListener('click', (e) => {
-			e.stopPropagation();
 			const menu = btn.closest('.forms-actions-menu');
 			if (menu) {
 				menu.classList.remove('is-open');
