@@ -1820,14 +1820,20 @@ async function loadFormById() {
 		const spec = {
 			title: survey.name || '',
 			description: survey.description || '',
-			questions: questions.map((q) => ({
-				id: q.question_id,
-				text: q.question_text,
-				type: q.type,
-				required: false,
-				options: [],
-				...q
-			})),
+			questions: questions.map((q) => {
+				const opts = q.options_json && typeof q.options_json === 'object' ? q.options_json : {};
+				return {
+					id: q.question_id,
+					text: q.question_text,
+					type: q.type,
+					required: Boolean(opts.required),
+					options: Array.isArray(opts.options) ? opts.options : [],
+					options_json: opts,
+					placeholder: q.placeholder || '',
+					validation_rules: q.validation_rules || {},
+					...q
+				};
+			}),
 			style: (survey.style_json && typeof survey.style_json === 'object')
 				? survey.style_json
 				: (survey.style || {}),
