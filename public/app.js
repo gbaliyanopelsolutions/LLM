@@ -1795,3 +1795,68 @@ if (conversation.length > 0) {
 		}
 	}
 }
+
+// Load form by ID if formId parameter is present in URL
+async function loadFormById() {
+	const params = new URLSearchParams(window.location.search);
+	const formId = params.get('formId');
+	if (!formId) return;
+
+	try {
+		setLoading(true, 'Loading form…');
+		const apiBase = getApiBase();
+		const res = await fetch(`${apiBase}/api/builder/surveys/${encodeURIComponent(formId)}`, {
+			headers: { 'Content-Type': 'application/json' },
+		});
+		const data = await res.json();
+		if (!res.ok || !data.ok || !data.survey) {
+			throw new Error(data.error || 'Failed to load form');
+		}
+
+		const survey = data.survey;
+		const questions = data.questions || [];
+
+		// Build the survey spec from loaded data
+		const spec = {
+			title: survey.name || '',
+			description: survey.description || '',
+			questions: questions.map((q) => ({
+				id: q.question_id,
+				text: q.question_text,
+				type: q.type,
+				required: false,
+				options: [],
+				...q
+			})),
+			style: {},
+		};
+
+		lastSurveySpec = normalizeSpec(spec);
+		lastHtml = specToPreviewDocument(lastSurveySpec);
+		highlightCode(lastHtml);
+		setPreviewSrcdoc(lastHtml);
+		copyBtn.disabled = false;
+		downloadBtn.disabled = false;
+		syncEditorAndPreview();
+
+		if (surveyTitleInput) surveyTitleInput.value = survey.name || '';
+		if (surveyDescriptionInput) surveyDescriptionInput.value = survey.description || '';
+		if (surveyStatusSelect) surveyStatusSelect.value = survey.status || 'draft';
+		if (maxSubmissionsInput && survey.max_submissions) {
+			maxSubmissionsInput.value = String(survey.max_submissions);
+		}
+
+		updateSurveyDetailsVisibility();
+		updateSaveFormButtonState();
+
+		showToast('Form loaded', 'success');
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : 'Failed to load form';
+		showToast(msg, 'error');
+		setError(msg);
+	} finally {
+		setLoading(false, 'Generating your form…');
+	}
+}
+
+loadFormById();
