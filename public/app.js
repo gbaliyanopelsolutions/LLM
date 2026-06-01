@@ -1027,19 +1027,30 @@ if (aiBtn) {
 				``,
 				`Instruction: ${instruction}`,
 				``,
-				`Return a JSON object with ONLY the theme/styling changes:`,
+				`Return a JSON object with the styling changes. You can use any of these style properties:`,
 				`{`,
 				`  "style": {`,
-				`    "backgroundColor": "#color or null",`,
-				`    "textColor": "#color or null",`,
-				`    "accentColor": "#color or null",`,
-				`    "logoUrl": "url or null"`,
+				`    "backgroundColor": "#hex-color or null",  // background color`,
+				`    "textColor": "#hex-color or null",        // general text color`,
+				`    "accentColor": "#hex-color or null",      // accent/button color`,
+				`    "logoUrl": "url or null",                 // logo image URL`,
+				`    "labelColor": "#hex-color or null",       // label/heading color`,
+				`    "borderColor": "#hex-color or null",      // border color`,
+				`    "inputBackgroundColor": "#hex-color or null",  // input field background`,
+				`    "inputTextColor": "#hex-color or null",        // input field text color`,
+				`    "checkboxColor": "#hex-color or null",    // checkbox/radio color`,
+				`    "buttonColor": "#hex-color or null",      // button color`,
+				`    "buttonTextColor": "#hex-color or null"   // button text color`,
 				`  },`,
 				`  "title": "updated title or null",`,
 				`  "description": "updated description or null"`,
 				`}`,
 				``,
-				`IMPORTANT: Do NOT include or modify questions[], options, matrix structure, or any form components.`,
+				`IMPORTANT: `,
+				`- Do NOT include questions[], options, or form structure`,
+				`- Only return the properties you want to change`,
+				`- All color values must be hex format (#000000) or null`,
+				`- Return ONLY valid JSON, no explanations`,
 				``,
 				`Current survey:`,
 				JSON.stringify(currentSpec, null, 2),
@@ -1051,17 +1062,22 @@ if (aiBtn) {
 				body: JSON.stringify({ prompt: llmPrompt, messages: [], htmlSample: '', }),
 			});
 			const data = await res.json();
-			if (!res.ok || !data.ok || !data.survey) {
+			if (!res.ok || !data.ok) {
 				throw new Error(data.error || 'AI update failed');
 			}
 
-			// Merge AI-provided theme changes with existing form structure
-			const updatedSpec = data.survey;
+			// Validate and merge AI response
+			let updatedSpec = data.survey || {};
+
+			// Safely merge theme changes with existing form structure
 			const mergedSpec = {
 				...lastSurveySpec,
-				title: updatedSpec.title || lastSurveySpec.title,
-				description: updatedSpec.description || lastSurveySpec.description,
-				style: { ...lastSurveySpec.style, ...updatedSpec.style },
+				title: (updatedSpec && updatedSpec.title) || lastSurveySpec.title,
+				description: (updatedSpec && updatedSpec.description) || lastSurveySpec.description,
+				style: {
+					...lastSurveySpec.style,
+					...(updatedSpec && updatedSpec.style ? updatedSpec.style : {})
+				},
 				// PRESERVE original questions structure - do NOT override
 				questions: lastSurveySpec.questions,
 			};
