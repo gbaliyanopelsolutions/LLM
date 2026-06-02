@@ -84,7 +84,112 @@ export default function EditCompanyPage() {
 							}}
 						>
 							<form id="company-form" noValidate>
-								{/* Form content will be inserted by edit-company.js */}
+								{/* Basic Information Section */}
+								<div style={{ marginBottom: '2rem' }}>
+									<h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--muted)' }}>Basic Information</h3>
+									<div className="form-grid">
+										<div className="field form-grid__full">
+											<label htmlFor="company-name">Company name <span className="req-label">*</span></label>
+											<input className="dsi-input" type="text" id="company-name" name="name" required autoComplete="organization" placeholder="e.g. Acme Corporation" />
+										</div>
+										<div className="field">
+											<label htmlFor="company-industry">Industry</label>
+											<input className="dsi-input" type="text" id="company-industry" name="industry" list="industry-suggestions" placeholder="Type or pick a suggestion" />
+											<datalist id="industry-suggestions">
+												<option value="Technology" />
+												<option value="Healthcare" />
+												<option value="Finance" />
+												<option value="Retail" />
+												<option value="Manufacturing" />
+												<option value="Education" />
+												<option value="Government" />
+												<option value="Professional services" />
+											</datalist>
+										</div>
+										<div className="field">
+											<label htmlFor="company-region">Region</label>
+											<input className="dsi-input" type="text" id="company-region" name="region" list="region-suggestions" placeholder="Type or pick a suggestion" />
+											<datalist id="region-suggestions">
+												<option value="North America" />
+												<option value="Europe" />
+												<option value="Asia Pacific" />
+												<option value="Middle East &amp; Africa" />
+												<option value="Latin America" />
+												<option value="India" />
+												<option value="Global" />
+											</datalist>
+										</div>
+										<div className="field form-grid__full">
+											<label htmlFor="company-tier">Tier <span className="req-label">*</span></label>
+											<select className="dsi-select" id="company-tier" name="tier" required>
+												<option value="" disabled selected hidden>Select tier</option>
+												<option value="Tier 1">Tier 1</option>
+												<option value="Tier 2">Tier 2</option>
+												<option value="Tier 3">Tier 3</option>
+											</select>
+										</div>
+										<div className="field form-grid__full">
+											<label htmlFor="company-description">Description</label>
+											<textarea className="dsi-input" id="company-description" name="description" placeholder="Optional company description..." style={{ minHeight: '80px', resize: 'vertical' }}></textarea>
+										</div>
+									</div>
+								</div>
+
+								{/* Branding Section */}
+								<div style={{ marginBottom: '2rem' }}>
+									<h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--muted)' }}>Branding</h3>
+									<div className="form-grid">
+										<div className="field form-grid__full">
+											<label htmlFor="company-logo">Logo</label>
+											<div className="file-upload-wrapper">
+												<input type="file" id="company-logo" className="file-input" accept="image/jpeg,image/png,image/webp" data-type="logo" />
+												<button type="button" className="dsi-btn dsi-btn--ghost" id="logo-btn" style={{ width: '100%' }}>Upload Logo</button>
+												<div id="logo-preview" className="file-preview"></div>
+											</div>
+										</div>
+										<div className="field form-grid__full">
+											<label htmlFor="company-banner">Banner</label>
+											<div className="file-upload-wrapper">
+												<input type="file" id="company-banner" className="file-input" accept="image/jpeg,image/png,image/webp" data-type="banner" />
+												<button type="button" className="dsi-btn dsi-btn--ghost" id="banner-btn" style={{ width: '100%' }}>Upload Banner</button>
+												<div id="banner-preview" className="file-preview"></div>
+											</div>
+										</div>
+										<div className="field">
+											<label htmlFor="bg-color">Background Color</label>
+											<div className="color-input-wrapper">
+												<input type="color" id="bg-color" className="color-input" defaultValue="#ffffff" data-field="background_color" />
+												<span id="bg-color-text" className="color-text">#ffffff</span>
+											</div>
+										</div>
+										<div className="field">
+											<label htmlFor="text-color">Text Color</label>
+											<div className="color-input-wrapper">
+												<input type="color" id="text-color" className="color-input" defaultValue="#000000" data-field="text_color" />
+												<span id="text-color-text" className="color-text">#000000</span>
+											</div>
+										</div>
+										<div className="field form-grid__full">
+											<label htmlFor="font-family">Font Family</label>
+											<select className="dsi-select" id="font-family" data-field="font_family">
+												<option value="Arial">Arial</option>
+												<option value="Helvetica">Helvetica</option>
+												<option value="Roboto" selected>Roboto</option>
+												<option value="Poppins">Poppins</option>
+												<option value="Open Sans">Open Sans</option>
+												<option value="Montserrat">Montserrat</option>
+											</select>
+										</div>
+									</div>
+								</div>
+
+								<p id="form-error" style={{ display: 'none', fontSize: '0.82rem', color: 'var(--danger)', margin: '0.5rem 0' }} role="alert"></p>
+
+								<div className="form-actions">
+									<button type="submit" className="dsi-btn dsi-btn--primary" id="save-btn">Update company</button>
+									<button type="button" className="dsi-btn dsi-btn--danger" id="delete-btn">Delete company</button>
+									<a className="dsi-btn dsi-btn--ghost" href="/companies">Cancel</a>
+								</div>
 							</form>
 						</div>
 					</div>
