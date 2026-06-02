@@ -147,6 +147,8 @@ let conversation = [];
 let lastHtml = '';
 /** @type {{ title: string, description?: string, questions: unknown[] } | null} */
 let lastSurveySpec = null;
+/** Track if a form has been created in this session */
+let formCreatedInSession = false;
 /** @type {import('@supabase/supabase-js').SupabaseClient | null | undefined} */
 let supabaseSingleton;
 
@@ -1618,10 +1620,16 @@ generateBtn.addEventListener('click', async () => {
 
 	setError('');
 	setSuccessBanner('');
-	lastSurveySpec = null;
+
+	// Determine if this is an edit request (form already created) or a new form creation
+	const isEditRequest = formCreatedInSession && lastSurveySpec;
+	if (!isEditRequest) {
+		lastSurveySpec = null;
+	}
+
 	updateSurveyDetailsVisibility();
 	updateSaveFormButtonState();
-	setLoading(true, 'Generating survey schema…');
+	setLoading(true, isEditRequest ? 'Updating form…' : 'Generating survey schema…');
 	copyBtn.disabled = true;
 	downloadBtn.disabled = true;
 
@@ -1631,12 +1639,18 @@ generateBtn.addEventListener('click', async () => {
 		 * generating a full HTML page. This avoids the huge system prompt + HTML
 		 * output that was triggering the 30k tokens/min rate limit (429 errors).
 		 * The frontend renders the preview from the JSON spec via renderSurveyHtml.
+		 *
+		 * For EDIT requests: include the existing form spec so the AI can modify it.
+		 * For NEW forms: send empty spec so the AI creates from scratch.
 		 */
+		const existingSpecForEdit = isEditRequest ? toLlmSpec(normalizeSpec(lastSurveySpec)) : null;
 		const res = await fetch(`${getApiBase()}/api/builder/generate-survey-json`, {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				prompt,
+				prompt: isEditRequest
+					? `Edit the existing form:\n\n${JSON.stringify(existingSpecForEdit, null, 2)}\n\n${prompt}`
+					: prompt,
 				// No conversation history for initial generation — keeps tokens low.
 				// History is only useful for follow-up edits via the AI Edit tab.
 				messages: [],
@@ -1702,7 +1716,10 @@ generateBtn.addEventListener('click', async () => {
 		syncEditorAndPreview();
 		syncDesignPanelFromSpec();     // reflect generated style in Design Settings panel
 		switchBuilderTab('preview');   // show the rendered form immediately
-		showToast('Survey generated — edit questions or save', 'success');
+		showToast(isEditRequest ? 'Form updated successfully' : 'Survey generated — edit questions or save', 'success');
+
+		// Mark that a form has been created/edited in this session
+		formCreatedInSession = true;
 
 		/* ── Save to submissions (non-blocking) ── */
 		setLoading(true, 'Saving…');
@@ -1881,6 +1898,7 @@ clearBtn.addEventListener('click', () => {
 	conversation = [];
 	lastHtml = '';
 	lastSurveySpec = null;
+	formCreatedInSession = false;
 	clearUploadedDocument();
 	if (surveyTitleInput) surveyTitleInput.value = '';
 	if (surveyDescriptionInput) surveyDescriptionInput.value = '';
