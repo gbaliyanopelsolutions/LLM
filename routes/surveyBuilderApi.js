@@ -4,6 +4,9 @@ const express = require('express');
 const {
 	listCompanies,
 	createCompany,
+	getCompanyById,
+	updateCompany,
+	deleteCompany,
 	generateSurveyJson,
 	saveSurvey,
 	getPublicSurvey,
@@ -16,9 +19,9 @@ const {
 } = require('../lib/surveyBuilderService.js');
 
 /**
- * @param {{ anthropic: import('@anthropic-ai/sdk').default, model: string }} deps
+ * @param {{ anthropic: import('@anthropic-ai/sdk').default, model: string, upload: import('multer').Multer }} deps
  */
-function createSurveyBuilderRouter({ anthropic, model }) {
+function createSurveyBuilderRouter({ anthropic, model, upload }) {
 	const router = express.Router();
 
 	router.get('/companies', async (req, res) => {
@@ -30,6 +33,35 @@ function createSurveyBuilderRouter({ anthropic, model }) {
 		const body = req.body && typeof req.body === 'object' ? req.body : {};
 		const out = await createCompany(body);
 		res.status(out.status).json(out.json);
+	});
+
+	router.get('/companies/:companyId', async (req, res) => {
+		const out = await getCompanyById(req.params.companyId);
+		res.status(out.status).json(out.json);
+	});
+
+	router.patch('/companies/:companyId', async (req, res) => {
+		const body = req.body && typeof req.body === 'object' ? req.body : {};
+		const out = await updateCompany(req.params.companyId, body);
+		res.status(out.status).json(out.json);
+	});
+
+	router.delete('/companies/:companyId', async (req, res) => {
+		const out = await deleteCompany(req.params.companyId);
+		res.status(out.status).json(out.json);
+	});
+
+	router.post('/companies/:companyId/upload', upload ? upload.single('file') : (req, res, next) => next(), async (req, res) => {
+		if (!upload) {
+			res.status(500).json({ ok: false, error: 'File upload not configured' });
+			return;
+		}
+		if (!req.file) {
+			res.status(400).json({ ok: false, error: 'No file uploaded' });
+			return;
+		}
+		const url = `/uploads/${req.file.fieldname === 'banner' ? 'company-banners' : 'company-logos'}/${req.file.filename}`;
+		res.json({ ok: true, url });
 	});
 
 	router.post('/submissions', async (req, res) => {

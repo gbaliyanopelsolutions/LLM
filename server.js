@@ -1,7 +1,9 @@
 const path = require('path');
+const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const express = require('express');
 const cors = require('cors');
+const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const {
@@ -104,6 +106,46 @@ app.use(cors({ origin: false }));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 
+// Configure multer for file uploads
+const uploadDirs = {
+	logos: path.join(__dirname, 'public', 'uploads', 'company-logos'),
+	banners: path.join(__dirname, 'public', 'uploads', 'company-banners'),
+};
+
+Object.values(uploadDirs).forEach((dir) => {
+	if (!fs.existsSync(dir)) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
+});
+
+const storage = multer.diskStorage({
+	destination: (req, file, cb) => {
+		const dir = file.fieldname === 'banner' ? uploadDirs.banners : uploadDirs.logos;
+		cb(null, dir);
+	},
+	filename: (req, file, cb) => {
+		const ext = path.extname(file.originalname);
+		const name = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`;
+		cb(null, name);
+	},
+});
+
+const fileFilter = (req, file, cb) => {
+	const allowedTypes = /jpeg|jpg|png|webp/;
+	const mimeType = allowedTypes.test(file.mimetype);
+	if (mimeType) {
+		cb(null, true);
+	} else {
+		cb(new Error('Only image files (JPEG, PNG, WebP) are allowed'));
+	}
+};
+
+const upload = multer({
+	storage,
+	fileFilter,
+	limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
 /**
  * Publishable Supabase client settings for the browser (anon key is intended for clients).
  * Never add service_role or other secrets to this response.
@@ -186,7 +228,7 @@ const anthropic = new Anthropic({
 });
 
 const { createSurveyBuilderRouter } = require('./routes/surveyBuilderApi.js');
-app.use('/api/builder', createSurveyBuilderRouter({ anthropic, model }));
+app.use('/api/builder', createSurveyBuilderRouter({ anthropic, model, upload }));
 
 const SYSTEM_PROMPT = `You are an expert single-file HTML form generator. Your ONLY output is one complete HTML5 document.
 
