@@ -233,11 +233,6 @@ const editorPane = document.getElementById('builder-pane-edit');
 const previewPane = document.getElementById('builder-pane-preview');
 const editorCardsEl = document.getElementById('editor-cards');
 const addQuestionBtn = document.getElementById('editor-add-question-btn');
-const aiInput = document.getElementById('editor-ai-input');
-const aiBtn = document.getElementById('editor-ai-btn');
-const editWithAiBtn = document.getElementById('edit-with-ai-btn');
-const aiEditModal = document.getElementById('ai-edit-modal');
-const aiEditModalCloseBtn = document.getElementById('ai-edit-modal-close');
 
 const editModal = document.getElementById('editor-edit-modal');
 const editForm = document.getElementById('editor-edit-form');
@@ -706,31 +701,6 @@ builderTabs.forEach((btn) => {
 });
 switchBuilderTab('preview');
 
-/* ─────────────────────────────────────────────
-   "EDIT WITH AI" BUTTON AND MODAL
-───────────────────────────────────────────── */
-if (editWithAiBtn) {
-	editWithAiBtn.addEventListener('click', () => {
-		if (aiEditModal) {
-			aiEditModal.hidden = false;
-			if (aiInput) aiInput.focus();
-		}
-	});
-}
-
-if (aiEditModalCloseBtn) {
-	aiEditModalCloseBtn.addEventListener('click', () => {
-		if (aiEditModal) aiEditModal.hidden = true;
-	});
-}
-
-/* Close modal on Escape key */
-if (aiEditModal) {
-	aiEditModal.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape') aiEditModal.hidden = true;
-	});
-}
-
 /**
  * Open the edit modal seeded from a question (or blank for new).
  *
@@ -1004,99 +974,6 @@ if (addQuestionBtn) {
 			lastSurveySpec = { title: '', description: '', questions: [] };
 		}
 		openEditModal(null);
-	});
-}
-
-if (aiBtn) {
-	aiBtn.addEventListener('click', async () => {
-		if (!aiInput) return;
-		const instruction = aiInput.value.trim();
-		if (!instruction) {
-			showToast('Describe what to change', 'error');
-			aiInput.focus();
-			return;
-		}
-		if (!lastSurveySpec) {
-			showToast('Generate a form first', 'error');
-			return;
-		}
-		aiBtn.disabled = true;
-		setLoading(true, 'Updating form with AI…');
-		try {
-			const currentSpec = toLlmSpec(normalizeSpec(lastSurveySpec));
-			const llmPrompt = [
-				`Update ONLY the styling/theme of this survey based on the instruction below.`,
-				`DO NOT change the form structure, questions, options, or question types.`,
-				``,
-				`Instruction: ${instruction}`,
-				``,
-				`Return a JSON object with the styling changes. You can use any of these style properties:`,
-				`{`,
-				`  "style": {`,
-				`    "backgroundColor": "#hex-color or null",  // background color`,
-				`    "textColor": "#hex-color or null",        // general text color`,
-				`    "accentColor": "#hex-color or null",      // accent/button color`,
-				`    "logoUrl": "url or null",                 // logo image URL`,
-				`    "labelColor": "#hex-color or null",       // label/heading color`,
-				`    "borderColor": "#hex-color or null",      // border color`,
-				`    "inputBackgroundColor": "#hex-color or null",  // input field background`,
-				`    "inputTextColor": "#hex-color or null",        // input field text color`,
-				`    "checkboxColor": "#hex-color or null",    // checkbox/radio color`,
-				`    "buttonColor": "#hex-color or null",      // button color`,
-				`    "buttonTextColor": "#hex-color or null"   // button text color`,
-				`  },`,
-				`  "title": "updated title or null",`,
-				`  "description": "updated description or null"`,
-				`}`,
-				``,
-				`IMPORTANT: `,
-				`- Do NOT include questions[], options, or form structure`,
-				`- Only return the properties you want to change`,
-				`- All color values must be hex format (#000000) or null`,
-				`- Return ONLY valid JSON, no explanations`,
-				``,
-				`Current survey:`,
-				JSON.stringify(currentSpec, null, 2),
-			].join('\n');
-
-			const res = await fetch(`${getApiBase()}/api/builder/generate-survey-json`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ prompt: llmPrompt, messages: [], htmlSample: '', }),
-			});
-			const data = await res.json();
-			if (!res.ok || !data.ok) {
-				throw new Error(data.error || 'AI update failed');
-			}
-
-			// Validate and merge AI response
-			let updatedSpec = data.survey || {};
-
-			// Safely merge theme changes with existing form structure
-			const mergedSpec = {
-				...lastSurveySpec,
-				title: (updatedSpec && updatedSpec.title) || lastSurveySpec.title,
-				description: (updatedSpec && updatedSpec.description) || lastSurveySpec.description,
-				style: {
-					...lastSurveySpec.style,
-					...(updatedSpec && updatedSpec.style ? updatedSpec.style : {})
-				},
-				// PRESERVE original questions structure - do NOT override
-				questions: lastSurveySpec.questions,
-			};
-
-			lastSurveySpec = normalizeSpec(mergedSpec);
-			aiInput.value = '';
-			syncEditorAndPreview();
-			showToast('Form updated with AI', 'success');
-			if (aiEditModal) aiEditModal.hidden = true;
-		} catch (err) {
-			const msg = err instanceof Error ? err.message : 'AI update failed';
-			showToast(msg, 'error');
-		} finally {
-			aiBtn.disabled = false;
-			setLoading(false, 'Generating your form…');
-		}
 	});
 }
 

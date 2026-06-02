@@ -972,13 +972,6 @@
       <section class="panel" aria-label="Prompt">
         <div class="panel__head">Prompt</div>
 
-        <div style="background: #f0f4f8; border-left: 3px solid #6366f1; padding: 0.75rem 1rem; margin: 0 1.25rem 1rem; border-radius: 6px; font-size: 0.85rem; color: #374151;">
-          <strong style="color: #6366f1;">📋 Form Rules:</strong><br>
-          First prompt = Create form<br>
-          Later prompts = Edit form (keep design)<br>
-          Ask for changes, not recreate
-        </div>
-
         <div class="field doc-upload-field">
           <span class="field-label" id="doc-upload-label">Upload requirements (optional)</span>
           <div
@@ -1285,9 +1278,6 @@
               aria-labelledby="builder-tab-preview"
             >
               <iframe id="preview" title="Live form preview" sandbox="allow-scripts allow-same-origin"></iframe>
-              <div class="preview-edit-ai-bar">
-                <button type="button" class="btn btn--primary" id="edit-with-ai-btn">✦ Edit with AI</button>
-              </div>
             </div>
             <div class="preview-footer">
               <div class="survey-details" id="survey-details-section" hidden aria-labelledby="survey-details-heading">
@@ -1488,28 +1478,6 @@
         <button type="button" class="btn btn--primary" id="copy-public-url-btn">Copy URL</button>
         <button type="button" class="btn btn--ghost" id="open-public-form-btn">Open form</button>
         <button type="button" class="btn btn--ghost" id="close-save-modal-btn">Close</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="ai-edit-modal" class="modal-backdrop" hidden role="dialog" aria-modal="true" aria-labelledby="ai-edit-modal-title">
-    <div class="modal-card">
-      <h2 id="ai-edit-modal-title">Edit with AI</h2>
-      <p class="editor-ai__hint" style="margin: 0.5rem 0 1rem;">
-        Describe a change in plain English. Examples:
-        <em>"Add a customer satisfaction rating"</em>,
-        <em>"Make this form shorter"</em>,
-        <em>"Add an email field at the top"</em>.
-      </p>
-      <textarea
-        id="editor-ai-input"
-        class="editor-ai__textarea input-control"
-        rows="4"
-        placeholder="What should change?"
-      ></textarea>
-      <div class="editor-modal-actions" style="margin-top: 1rem;">
-        <button type="button" class="btn btn--ghost" id="ai-edit-modal-close">Cancel</button>
-        <button type="button" class="btn btn--primary" id="editor-ai-btn">Update Form with AI</button>
       </div>
     </div>
   </div>
