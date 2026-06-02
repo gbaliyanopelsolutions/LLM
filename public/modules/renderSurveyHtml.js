@@ -209,12 +209,13 @@ export function buildSurveyCss(style) {
   --progress-height: ${cssPx(s.progressHeight, '4px')};
   --logo-width: ${cssPx(s.logoWidth, '260px')};
   --logo-height: ${cssPx(s.logoHeight, '64px')};
+  --font-family: ${s.fontFamily ? `"${s.fontFamily}", ` : ''}system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 ${overrideBlock}
 * { box-sizing: border-box; }
 body {
   margin: 0;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family);
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;

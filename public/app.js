@@ -301,6 +301,7 @@ const DS_DEFAULTS = {
 	headingFontSize: '24',
 	headingFontWeight: '700',
 	headingAlignment: 'left',
+	fontFamily: '',
 	labelColor: '#334155',
 	labelFontSize: '14',
 	labelFontWeight: '600',
@@ -1335,14 +1336,50 @@ async function setupPromptCompanySelect() {
 					};
 				}
 
+				const brandColor = metadata.background_color || '#ffffff';
+				const textColor = metadata.text_color || '#000000';
+				const logoUrl = metadata.logo_url || '';
+				const fontFamily = metadata.font_family || '';
+
 				lastSurveySpec.style = {
 					...(lastSurveySpec.style || {}),
-					backgroundColor: metadata.background_color || '#ffffff',
-					textColor: metadata.text_color || '#000000',
-					buttonBackground: metadata.background_color || '#6366f1',
-					logoUrl: metadata.logo_url || '',
-					headingFont: metadata.font_family || 'Inter',
-					labelFont: metadata.font_family || 'Inter',
+					// Background & Text
+					backgroundColor: brandColor,
+					textColor: textColor,
+
+					// Font Family (applied to all text elements)
+					fontFamily: fontFamily,
+
+					// Heading & Title (Form Title, Section Titles)
+					headingColor: textColor,
+
+					// Labels & Help Text (Labels, Input Labels, Checkbox Labels, Radio Button Labels, Dropdown Labels)
+					labelColor: textColor,
+
+					// Input fields (Input text, Placeholder Text)
+					inputText: textColor,
+					placeholderColor: textColor,
+
+					// Buttons (Submit Button Text, Next/Prev Button Text)
+					submitButtonBg: brandColor,
+					submitButtonText: textColor,
+					nextButtonBg: brandColor,
+					nextButtonText: textColor,
+					prevButtonBg: brandColor,
+					prevButtonText: textColor,
+
+					// Form borders & styling
+					formBorderColor: textColor,
+					inputBorder: textColor,
+
+					// Selection elements (Checkbox, Radio, Matrix, Progress)
+					checkboxActive: brandColor,
+					radioSelectedColor: brandColor,
+					matrixSelectedColor: brandColor,
+					progressBarColor: brandColor,
+
+					// Logo
+					logoUrl: logoUrl,
 				};
 
 				// Update design panel and preview
