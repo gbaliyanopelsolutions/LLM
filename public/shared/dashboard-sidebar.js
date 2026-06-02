@@ -21,14 +21,10 @@ class DashboardSidebar extends HTMLElement {
 			{ href: '/index', label: 'Form Builder', page: 'index', section: 'Build', icon: 'builder', badge: 'AI' },
 			{ href: '/forms', label: 'Forms', page: 'forms', section: 'Manage', icon: 'forms' },
 			{ href: '/survey', label: 'My Surveys', page: 'survey', section: 'Manage', icon: 'surveys' },
-			{ href: '/companies', label: 'Companies', page: 'companies', section: 'Manage', icon: 'companies' },
+			{ href: '/add-company', label: 'Companies', page: 'add-company', section: 'Manage', icon: 'companies' },
 			{ href: '/analytics', label: 'Analytics', page: 'analytics', section: 'Manage', icon: 'analytics', badge: 'New' },
 		];
 
-		// Hide Companies nav item on add-company page
-		if (currentPage === 'add-company') {
-			navItems = navItems.filter(item => item.page !== 'companies');
-		}
 
 		const icons = {
 			dashboard: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
