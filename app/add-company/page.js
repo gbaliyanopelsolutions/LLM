@@ -51,8 +51,8 @@ export default function AddCompanyPage() {
 							</div>
 						</div>
 						<div className="dash-topbar__right">
-							<a className="dash-topbar-btn" href="/survey">
-								View Surveys
+							<a className="dash-topbar-btn" href="/companies">
+								View Companies
 							</a>
 						</div>
 					</div>
@@ -250,9 +250,6 @@ export default function AddCompanyPage() {
 									<button type="submit" className="dsi-btn dsi-btn--primary" id="save-btn">
 										Save company
 									</button>
-									<a className="dsi-btn dsi-btn--ghost" href="/companies">
-										View Companies
-									</a>
 									<a className="dsi-btn dsi-btn--ghost" href="/survey">
 										Cancel
 									</a>
