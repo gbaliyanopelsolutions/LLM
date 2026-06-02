@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="app-api-base" content="">
+  <title>Manage Companies — Survey Form Builder</title>
+  <link rel="stylesheet" href="/dash-shell.css">
+  <script type="module" src="/shared/dashboard-sidebar.js"></script>
+  <style>
+    .companies-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+
+    .companies-page-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      box-shadow: var(--shadow-sm);
+      animation: dsiFadeUp 0.45s ease both;
+    }
+
+    .page-title {
+      margin: 0; font-size: 1.3rem; font-weight: 700; letter-spacing: -0.01em;
+    }
+
+    .page-subtitle {
+      margin: 0.25rem 0 0; font-size: 0.9rem; color: var(--muted);
+    }
+
+    @media (max-width: 600px) {
+      .companies-header { flex-direction: column; align-items: stretch; }
+      .companies-header button { width: 100%; }
+      .companies-toolbar { flex-direction: column; }
+      .companies-table { font-size: 0.85rem; }
+      .companies-table th,
+      .companies-table td { padding: 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="dash-overlay" id="sidebarOverlay"></div>
+
+<div class="dash-shell">
+
+  <!-- Sidebar Component -->
+  <dashboard-sidebar current-page="companies"></dashboard-sidebar>
+
+  <!-- ════════ MAIN ════════ -->
+  <div class="dash-content">
+    <div class="dash-topbar">
+      <div class="dash-topbar__left">
+        <button class="dash-hamburger" id="hamburgerBtn" aria-label="Toggle sidebar" aria-expanded="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <div>
+          <p class="dash-topbar__title">Companies</p>
+          <p class="dash-topbar__sub">View and manage all companies</p>
+        </div>
+      </div>
+      <div class="dash-topbar__right">
+        <a class="dash-topbar-btn" href="/survey">View Surveys</a>
+      </div>
+    </div>
+
+    <div class="dash-page">
+      <div class="dash-page-header">
+        <div>
+          <h1>Manage Companies</h1>
+          <p>View, edit, and manage your companies.</p>
+        </div>
+        <div>
+          <a href="/add-company" class="dsi-btn dsi-btn--primary">+ Add Company</a>
+        </div>
+      </div>
+
+      <div class="companies-page-content">
+        <!-- Search & Sort Toolbar -->
+        <div class="companies-toolbar">
+          <input type="search" id="search-input" class="dsi-input" placeholder="Search companies..."/>
+          <select id="sort-select" class="dsi-select">
+            <option value="name-asc">Sort: Name (A-Z)</option>
+            <option value="name-desc">Sort: Name (Z-A)</option>
+            <option value="created-desc">Sort: Newest First</option>
+            <option value="created-asc">Sort: Oldest First</option>
+            <option value="tier">Sort: Tier</option>
+          </select>
+        </div>
+
+        <!-- Loading indicator -->
+        <div id="loading" style="display: flex; justify-content: center; padding: 2rem;">
+          <div class="dsi-spinner" style="width:32px;height:32px;border-width:3px;"></div>
+        </div>
+
+        <!-- Companies Table -->
+        <table class="companies-table" id="companies-table" style="display: none;">
+          <thead>
+            <tr>
+              <th>Logo</th>
+              <th>Company Name</th>
+              <th>Tier</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="companies-list"></tbody>
+        </table>
+
+        <!-- Empty state -->
+        <div id="empty-state" style="display: none; text-align: center; padding: 2rem;">
+          <p style="color: var(--muted); margin-bottom: 1rem;">No companies found</p>
+          <a href="/add-company" class="dsi-btn dsi-btn--primary">Create your first company</a>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination-container" style="display: none;">
+          <button id="prev-btn" class="dsi-btn dsi-btn--ghost">← Previous</button>
+          <span id="page-info">Page 1</span>
+          <button id="next-btn" class="dsi-btn dsi-btn--ghost">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="delete-modal">
+  <div class="delete-modal-content">
+    <h3>Delete Company</h3>
+    <p id="delete-confirm-text">Are you sure you want to delete this company? This action cannot be undone.</p>
+    <div class="delete-modal-actions">
+      <button id="cancel-delete" class="dsi-btn dsi-btn--ghost">Cancel</button>
+      <button id="confirm-delete" class="dsi-btn dsi-btn--danger">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="dsi-toast" hidden role="status"></div>
+<div id="loader" hidden style="position:fixed;inset:0;background:rgba(245,247,255,0.7);backdrop-filter:blur(3px);z-index:300;display:grid;place-items:center;" aria-busy="true">
+  <div class="dsi-spinner" style="width:32px;height:32px;border-width:3px;"></div>
+</div>
+
+<script type="module" src="/companies.js"></script>
+</body>
+</html>

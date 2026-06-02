@@ -179,22 +179,26 @@ function servePublic(file) {
 app.get('/', (req, res) => { res.redirect(302, '/dashboard'); });
 
 /* Legacy .html redirects → clean URL */
-app.get('/dashboard.html', (req, res) => { res.redirect(301, '/dashboard'); });
-app.get('/index.html',     (req, res) => { res.redirect(301, '/index'); });
-app.get('/survey.html',    (req, res) => { res.redirect(301, '/survey'); });
+app.get('/dashboard.html',  (req, res) => { res.redirect(301, '/dashboard'); });
+app.get('/index.html',      (req, res) => { res.redirect(301, '/index'); });
+app.get('/survey.html',     (req, res) => { res.redirect(301, '/survey'); });
+app.get('/companies.html',  (req, res) => { res.redirect(301, '/companies'); });
 app.get('/add-company.html',(req, res) => { res.redirect(301, '/add-company'); });
-app.get('/login.html',     (req, res) => { res.redirect(301, '/login'); });
-app.get('/register.html',  (req, res) => { res.redirect(301, '/register'); });
-app.get('/form.html',      (req, res) => { res.redirect(301, `/form?${new URLSearchParams(req.query).toString()}`); });
+app.get('/edit-company.html',(req, res) => { res.redirect(301, `/edit-company?${new URLSearchParams(req.query).toString()}`); });
+app.get('/login.html',      (req, res) => { res.redirect(301, '/login'); });
+app.get('/register.html',   (req, res) => { res.redirect(301, '/register'); });
+app.get('/form.html',       (req, res) => { res.redirect(301, `/form?${new URLSearchParams(req.query).toString()}`); });
 
 /* Clean URL routes */
-app.get('/dashboard',    loadAuthUser, requireAuthPage, servePublic('dashboard.html'));
-app.get('/index',        servePublic('index.html'));
-app.get('/survey',       servePublic('survey.html'));
-app.get('/add-company',  servePublic('add-company.html'));
-app.get('/login',        servePublic('login.html'));
-app.get('/register',     servePublic('register.html'));
-app.get('/form',         servePublic('form.html'));
+app.get('/dashboard',      loadAuthUser, requireAuthPage, servePublic('dashboard.html'));
+app.get('/index',          servePublic('index.html'));
+app.get('/survey',         servePublic('survey.html'));
+app.get('/companies',      servePublic('companies.html'));
+app.get('/add-company',    servePublic('add-company.html'));
+app.get('/edit-company',   servePublic('edit-company.html'));
+app.get('/login',          servePublic('login.html'));
+app.get('/register',       servePublic('register.html'));
+app.get('/form',           servePublic('form.html'));
 
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 

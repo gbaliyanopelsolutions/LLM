@@ -21,7 +21,7 @@ class DashboardSidebar extends HTMLElement {
 			{ href: '/index', label: 'Form Builder', page: 'index', section: 'Build', icon: 'builder', badge: 'AI' },
 			{ href: '/forms', label: 'Forms', page: 'forms', section: 'Manage', icon: 'forms' },
 			{ href: '/survey', label: 'My Surveys', page: 'survey', section: 'Manage', icon: 'surveys' },
-			{ href: '/add-company', label: 'Companies', page: 'add-company', section: 'Manage', icon: 'companies' },
+			{ href: '/companies', label: 'Companies', page: 'companies', section: 'Manage', icon: 'companies' },
 			{ href: '/analytics', label: 'Analytics', page: 'analytics', section: 'Manage', icon: 'analytics', badge: 'New' },
 		];
 
