@@ -120,12 +120,15 @@ Object.values(uploadDirs).forEach((dir) => {
 
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		const dir = file.fieldname === 'banner' ? uploadDirs.banners : uploadDirs.logos;
+		const uploadType = req.query.uploadType || req.body?.uploadType || req.file?.uploadType || 'logo';
+		const dir = uploadType === 'banner' ? uploadDirs.banners : uploadDirs.logos;
 		cb(null, dir);
 	},
 	filename: (req, file, cb) => {
 		const ext = path.extname(file.originalname);
-		const name = `${Date.now()}-${Math.random().toString(36).substring(7)}${ext}`;
+		const timestamp = Date.now();
+		const random = Math.random().toString(36).substring(2, 8);
+		const name = `${timestamp}-${random}${ext}`;
 		cb(null, name);
 	},
 });

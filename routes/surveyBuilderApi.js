@@ -51,18 +51,18 @@ function createSurveyBuilderRouter({ anthropic, model, upload }) {
 		res.status(out.status).json(out.json);
 	});
 
-	router.post('/companies/:companyId/upload', upload ? upload.single('file') : (req, res, next) => next(), async (req, res) => {
-		if (!upload) {
-			res.status(500).json({ ok: false, error: 'File upload not configured' });
-			return;
-		}
-		if (!req.file) {
-			res.status(400).json({ ok: false, error: 'No file uploaded' });
-			return;
-		}
-		const url = `/uploads/${req.file.fieldname === 'banner' ? 'company-banners' : 'company-logos'}/${req.file.filename}`;
-		res.json({ ok: true, url });
-	});
+	if (upload) {
+		router.post('/companies/temp/upload', upload.single('file'), (req, res) => {
+			if (!req.file) {
+				res.status(400).json({ ok: false, error: 'No file uploaded' });
+				return;
+			}
+			const fieldname = req.body?.fieldname || req.file.fieldname || 'logo';
+			const dir = fieldname === 'banner' ? 'company-banners' : 'company-logos';
+			const url = `/uploads/${dir}/${req.file.filename}`;
+			res.json({ ok: true, url });
+		});
+	}
 
 	router.post('/submissions', async (req, res) => {
 		const body = req.body && typeof req.body === 'object' ? req.body : {};
