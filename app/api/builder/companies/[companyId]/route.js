@@ -1,4 +1,4 @@
-import { getPool, parsePgError } from '../../../../db.js';
+const { getPool, parsePgError } = require('../../../../db.js');
 
 export async function GET(request, { params }) {
 	try {
