@@ -1,6 +1,6 @@
 export async function GET(request, { params }) {
 	try {
-		const { getPool, parsePgError } = require('../../../../db.js');
+		const { getPool, parsePgError } = require('../../../../../db.js');
 		const companyId = params.companyId;
 
 		if (!companyId || typeof companyId !== 'string') {
@@ -40,7 +40,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
 	try {
-		const { getPool, parsePgError } = require('../../../../db.js');
+		const { getPool, parsePgError } = require('../../../../../db.js');
 		const companyId = params.companyId;
 
 		if (!companyId || typeof companyId !== 'string') {
@@ -131,7 +131,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
 	try {
-		const { getPool, parsePgError } = require('../../../../db.js');
+		const { getPool, parsePgError } = require('../../../../../db.js');
 		const companyId = params.companyId;
 
 		if (!companyId || typeof companyId !== 'string') {
