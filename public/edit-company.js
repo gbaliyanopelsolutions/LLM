@@ -56,33 +56,6 @@ function setBusy(on) {
 	deleteBtn.disabled = on;
 }
 
-function updatePreview() {
-	const nameForPreview = nameInput.value.trim() || 'Your Company';
-	const descForPreview = descriptionInput.value.trim() || 'Company description will appear here';
-	const bg = bgColorInput.value;
-	const text = textColorInput.value;
-	const font = fontFamilySelect.value;
-
-	const previewCard = document.getElementById('branding-preview');
-	previewCard.style.backgroundColor = bg;
-	previewCard.style.color = text;
-	previewCard.style.fontFamily = font;
-
-	document.getElementById('preview-name').textContent = nameForPreview;
-	document.getElementById('preview-description').textContent = descForPreview;
-
-	const logoImg = document.getElementById('preview-logo');
-	const logoArea = document.getElementById('preview-logo-area');
-	if (uploadedFiles.logo_url || branding.logo_url) {
-		logoImg.src = uploadedFiles.logo_url || branding.logo_url;
-		logoImg.style.display = 'block';
-		logoArea.style.minHeight = '60px';
-	} else {
-		logoImg.style.display = 'none';
-		logoArea.style.minHeight = '0px';
-	}
-}
-
 async function uploadFile(file, fileType) {
 	if (!file) return null;
 
@@ -142,7 +115,6 @@ function setupFileUpload(inputElement, buttonElement, previewElement, fileType) 
 				};
 				reader.readAsDataURL(file);
 
-				updatePreview();
 				showToast(`${fileType.charAt(0).toUpperCase() + fileType.slice(1)} uploaded`, 'success');
 			}
 		} finally {
@@ -208,8 +180,6 @@ function populateForm() {
 	if (branding.banner_url) {
 		document.getElementById('banner-preview').innerHTML = `<img src="${branding.banner_url}" alt="banner" style="max-width:100%;max-height:80px;border-radius:4px;"/>`;
 	}
-
-	updatePreview();
 }
 
 setupFileUpload(logoInput, document.getElementById('logo-btn'), document.getElementById('logo-preview'), 'logo');
@@ -218,22 +188,16 @@ setupFileUpload(bannerInput, document.getElementById('banner-btn'), document.get
 bgColorInput.addEventListener('change', (e) => {
 	branding.background_color = e.target.value;
 	document.getElementById('bg-color-text').textContent = e.target.value;
-	updatePreview();
 });
 
 textColorInput.addEventListener('change', (e) => {
 	branding.text_color = e.target.value;
 	document.getElementById('text-color-text').textContent = e.target.value;
-	updatePreview();
 });
 
 fontFamilySelect.addEventListener('change', (e) => {
 	branding.font_family = e.target.value;
-	updatePreview();
 });
-
-nameInput.addEventListener('input', updatePreview);
-descriptionInput.addEventListener('input', updatePreview);
 
 form.addEventListener('submit', async (e) => {
 	e.preventDefault();
