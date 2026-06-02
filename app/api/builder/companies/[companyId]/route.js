@@ -1,7 +1,6 @@
-const { getPool, parsePgError } = require('../../../../db.js');
-
 export async function GET(request, { params }) {
 	try {
+		const { getPool, parsePgError } = require('../../../../db.js');
 		const companyId = params.companyId;
 
 		if (!companyId || typeof companyId !== 'string') {
@@ -32,9 +31,8 @@ export async function GET(request, { params }) {
 		});
 	} catch (error) {
 		console.error('Error fetching company:', error);
-		const { message } = parsePgError(error);
 		return Response.json(
-			{ ok: false, error: message || 'Failed to fetch company' },
+			{ ok: false, error: error.message || 'Failed to fetch company' },
 			{ status: 500 }
 		);
 	}
@@ -42,6 +40,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
 	try {
+		const { getPool, parsePgError } = require('../../../../db.js');
 		const companyId = params.companyId;
 
 		if (!companyId || typeof companyId !== 'string') {
@@ -56,7 +55,6 @@ export async function PATCH(request, { params }) {
 		const industry = typeof body.industry === 'string' ? body.industry.trim() : null;
 		const region = typeof body.region === 'string' ? body.region.trim() : null;
 		const tierRaw = typeof body.tier === 'string' ? body.tier.trim() : null;
-		const description = typeof body.description === 'string' ? body.description.trim() : null;
 		const allowedTiers = new Set(['Tier 1', 'Tier 2', 'Tier 3']);
 
 		if (name !== null && !name) {
@@ -124,9 +122,8 @@ export async function PATCH(request, { params }) {
 		});
 	} catch (error) {
 		console.error('Error updating company:', error);
-		const { message } = parsePgError(error);
 		return Response.json(
-			{ ok: false, error: message || 'Failed to update company' },
+			{ ok: false, error: error.message || 'Failed to update company' },
 			{ status: 500 }
 		);
 	}
@@ -134,6 +131,7 @@ export async function PATCH(request, { params }) {
 
 export async function DELETE(request, { params }) {
 	try {
+		const { getPool, parsePgError } = require('../../../../db.js');
 		const companyId = params.companyId;
 
 		if (!companyId || typeof companyId !== 'string') {
@@ -179,9 +177,8 @@ export async function DELETE(request, { params }) {
 		});
 	} catch (error) {
 		console.error('Error deleting company:', error);
-		const { message } = parsePgError(error);
 		return Response.json(
-			{ ok: false, error: message || 'Failed to delete company' },
+			{ ok: false, error: error.message || 'Failed to delete company' },
 			{ status: 500 }
 		);
 	}
