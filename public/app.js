@@ -1285,6 +1285,84 @@ async function loadCompanies() {
 }
 
 /**
+ * Load companies into the prompt section's company select and wire up branding
+ */
+async function setupPromptCompanySelect() {
+	const promptCompanySelect = document.getElementById('prompt-company-select');
+	if (!promptCompanySelect) return;
+
+	try {
+		const apiBase = getApiBase();
+		const url = `${apiBase}/api/builder/companies`.replace(/([^:])\/{2,}/g, '$1/');
+		const res = await fetch(url);
+		const data = await res.json();
+
+		if (!res.ok || !data.ok) {
+			throw new Error(data.error || 'Failed to load companies');
+		}
+
+		promptCompanySelect.innerHTML = '<option value="">No branding</option>';
+		for (const c of data.companies || []) {
+			const opt = document.createElement('option');
+			opt.value = c.company_id;
+			opt.textContent = c.name || 'Company';
+			promptCompanySelect.appendChild(opt);
+		}
+
+		// Add change event listener
+		promptCompanySelect.addEventListener('change', async (e) => {
+			const companyId = e.target.value;
+			if (!companyId) return; // No selection
+
+			try {
+				const companyRes = await fetch(`${apiBase}/api/builder/companies/${companyId}`.replace(/([^:])\/{2,}/g, '$1/'));
+				const companyData = await companyRes.json();
+
+				if (!companyRes.ok || !companyData.ok) {
+					throw new Error(companyData.error || 'Failed to load company');
+				}
+
+				const company = companyData.company;
+				const metadata = company.metadata || {};
+
+				// Apply branding to form spec
+				if (!lastSurveySpec) {
+					lastSurveySpec = {
+						title: 'Survey',
+						description: '',
+						questions: [],
+						style: {},
+					};
+				}
+
+				lastSurveySpec.style = {
+					...(lastSurveySpec.style || {}),
+					backgroundColor: metadata.background_color || '#ffffff',
+					textColor: metadata.text_color || '#000000',
+					buttonBackground: metadata.background_color || '#6366f1',
+					logoUrl: metadata.logo_url || '',
+					headingFont: metadata.font_family || 'Inter',
+					labelFont: metadata.font_family || 'Inter',
+				};
+
+				// Update design panel and preview
+				syncDesignPanelFromSpec();
+				applyDesignSettings();
+
+				showToast(`Applied branding from ${company.name}`, 'default');
+			} catch (err) {
+				showToast(
+					err instanceof Error ? err.message : 'Failed to apply company branding',
+					'error'
+				);
+			}
+		});
+	} catch (e) {
+		promptCompanySelect.innerHTML = '<option value="">Companies unavailable</option>';
+	}
+}
+
+/**
  * Save user prompt + LLM HTML to public.submissions via API (message, result columns).
  *
  * @param {string} prompt
@@ -1787,6 +1865,7 @@ clearBtn.addEventListener('click', () => {
 loadConversation();
 renderPromptHistory();
 loadCompanies();
+setupPromptCompanySelect();
 updateSurveyDetailsVisibility();
 updateSaveFormButtonState();
 syncEditorAndPreview();
