@@ -257,8 +257,7 @@ export function buildPublicSrcdoc(parts) {
         var rName = el.getAttribute('name') || ('__r' + slotIdx);
         if (seenRadio[rName]) continue;
         seenRadio[rName] = true;
-        var safeRName = rName.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        var checked = root.querySelector('input[type="radio"][name="' + safeRName + '"]:checked');
+        var checked = root.querySelector('input[type="radio"][name="' + CSS.escape(rName) + '"]:checked');
         if (checked) {
           if (qid) answers[qid] = checked.value;
           answers[posKey] = checked.value;
@@ -271,9 +270,8 @@ export function buildPublicSrcdoc(parts) {
         var cName = el.getAttribute('name') || null;
         if (cName && seenCheck[cName]) continue;
         if (cName) seenCheck[cName] = true;
-        var safeCName = cName ? cName.replace(/\\/g, '\\\\').replace(/"/g, '\\"') : null;
-        var cEls = safeCName
-          ? root.querySelectorAll('input[type="checkbox"][name="' + safeCName + '"]')
+        var cEls = cName
+          ? root.querySelectorAll('input[type="checkbox"][name="' + CSS.escape(cName) + '"]')
           : [el];
         var vals = [];
         for (var j = 0; j < cEls.length; j++) { if (cEls[j].checked) vals.push(cEls[j].value); }
