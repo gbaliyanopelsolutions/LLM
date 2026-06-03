@@ -160,7 +160,7 @@ export function buildSurveyCss(style) {
   --primary-strong: #4f7be0;
   --text: ${cssValue(s.textColor, '#0f172a')};
   --label: ${cssValue(s.labelColor, '#334155')};
-  --opt-text: #1e293b;
+  --opt-text: ${cssValue(s.textColor, '#0f172a')};
   --muted: #64748b;
   --border: ${cssValue(s.formBorderColor || s.inputBorder, '#e2e8f0')};
   --danger: #dc2626;
@@ -288,6 +288,11 @@ body {
 }
 .survey-control::placeholder { color: var(--placeholder-color); }
 textarea.survey-control { min-height: 110px; resize: vertical; }
+select.survey-control option {
+  background: var(--input-bg);
+  color: var(--input-text);
+  padding: 0.5rem;
+}
 /* ── Option cards (radio / checkbox) ── */
 .survey-opt-row {
   display: flex;
