@@ -145,10 +145,16 @@ function mountFallbackForm(survey) {
  * @returns {Promise<void>}
  */
 async function submitAnswers(rawAnswers) {
+	console.log('[form.js] submitAnswers: rawAnswers =', rawAnswers);
 	const answers = normalizeAnswersForSubmit(rawAnswers, questions);
+	console.log('[form.js] submitAnswers: normalized answers =', answers);
 	const validationError = validateRequiredAnswers(answers, questions);
 	if (validationError) {
 		showToast(validationError, 'error');
+		return;
+	}
+	if (Object.keys(answers).length === 0) {
+		showToast('Please answer at least one question', 'error');
 		return;
 	}
 
@@ -160,6 +166,7 @@ async function submitAnswers(rawAnswers) {
 			body: JSON.stringify({ answers }),
 		});
 		const data = await res.json();
+		console.log('[form.js] submitAnswers: response =', data);
 		if (!res.ok || !data.ok) {
 			const code = data.code || '';
 			if (code === 'SURVEY_DRAFT') {
@@ -169,6 +176,9 @@ async function submitAnswers(rawAnswers) {
 				throw new Error(data.error || 'This survey is no longer accepting responses.');
 			}
 			throw new Error(data.error || 'Submit failed');
+		}
+		if (data.saved === 0) {
+			throw new Error('No responses were saved. Please check your answers and try again.');
 		}
 		showToast('Thank you — your responses were saved.', 'success');
 		if (renderMode === 'fallback' && formEl) {
