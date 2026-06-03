@@ -40,13 +40,13 @@ export async function GET() {
 			safeQuery(
 				pool,
 				`SELECT
-          (SELECT COUNT(*)::int FROM companies)            AS total_companies,
-          (SELECT COUNT(*)::int FROM surveys)              AS total_surveys,
-          (SELECT COUNT(*)::int FROM questions)            AS total_questions,
-          (SELECT COUNT(*)::int FROM responses)            AS total_responses,
-          (SELECT COUNT(*)::int FROM respondents)          AS total_respondents,
-          (SELECT COUNT(*)::int FROM surveys
-            WHERE status = 'published')                    AS active_surveys`
+          (SELECT COUNT(*)::int FROM public.companies)            AS total_companies,
+          (SELECT COUNT(*)::int FROM public.surveys)              AS total_surveys,
+          (SELECT COUNT(*)::int FROM public.questions)            AS total_questions,
+          (SELECT COUNT(*)::int FROM public.responses)            AS total_responses,
+          (SELECT COUNT(*)::int FROM public.respondents)          AS total_respondents,
+          (SELECT COUNT(*)::int FROM public.surveys
+            WHERE status = 'active')                    AS active_surveys`
 			),
 			safeQuery(
 				pool,
