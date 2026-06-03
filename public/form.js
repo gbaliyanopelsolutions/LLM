@@ -227,6 +227,7 @@ async function loadSurvey() {
 		}
 
 		questions = data.questions || [];
+		console.log('[form.js] loaded survey, questions:', questions.length, questions);
 		const survey = data.survey || {};
 		const formHtml = data.form_html || survey.form_html;
 		const formCss = data.form_css || survey.form_css;
@@ -234,6 +235,7 @@ async function loadSurvey() {
 			data.has_custom_design ||
 			survey.has_custom_design ||
 			(Boolean(formHtml && String(formHtml).trim()));
+		console.log('[form.js] render mode:', hasDesign && formHtml ? 'iframe' : 'fallback');
 
 		if (hasDesign && formHtml) {
 			mountCustomDesign(formHtml, formCss);
@@ -274,6 +276,7 @@ if (formEl) {
 		e.preventDefault();
 		if (!surveyId || renderMode !== 'fallback') return;
 		const fd = new FormData(formEl);
+		console.log('[form.js] form submit: questions count =', questions.length);
 		/** @type {Record<string, unknown>} */
 		const raw = {};
 		for (const q of questions) {
@@ -290,6 +293,7 @@ if (formEl) {
 				if (v !== null && v !== '') raw[id] = String(v);
 			}
 		}
+		console.log('[form.js] form submit: collected answers count =', Object.keys(raw).length, 'raw =', raw);
 		await submitAnswers(raw);
 	});
 }
