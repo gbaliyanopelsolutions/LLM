@@ -96,11 +96,6 @@
   display: flex;
   flex-direction: column;
   transition: all 0.2s ease;
-  hover: {
-    border-color: #d1d5db;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
-    transform: translateY(-4px);
-  }
 }
 
 .card:hover {
