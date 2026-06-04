@@ -234,15 +234,73 @@ ANALYTICS YOU CAN PROVIDE:
 			queryResult = { rows: [] };
 		}
 
-		// Prepare response with data insights
+		// Format results as human-readable text instead of raw data
+		let formattedResponse = '';
+
+		if (queryError) {
+			formattedResponse = `I encountered an issue analyzing your question:\n\n${queryError}\n\nPlease try rephrasing your question.`;
+		} else if (!sqlData.sql) {
+			formattedResponse = sqlData.insight || sqlData.explanation || 'I cannot directly query data for this request, but I can help explain survey concepts or suggest analyses.';
+		} else if (queryResult.rows && queryResult.rows.length > 0) {
+			// Format data as human-readable text
+			const rows = queryResult.rows;
+
+			// Create a formatted response
+			formattedResponse = `${sqlData.explanation}\n\n`;
+
+			if (sqlData.insight) {
+				formattedResponse += `**Key Insights:**\n${sqlData.insight}\n\n`;
+			}
+
+			// Format the actual data as readable text (not JSON)
+			formattedResponse += `**Results Summary:**\n`;
+
+			// If it's a single summary row (like analytics overview)
+			if (rows.length === 1 && rows[0]) {
+				const row = rows[0];
+				formattedResponse += `\n${Object.entries(row)
+					.map(([key, value]) => {
+						// Format key names
+						const formattedKey = key
+							.replace(/_/g, ' ')
+							.split(' ')
+							.map(word => word.charAt(0).toUpperCase() + word.slice(1))
+							.join(' ');
+
+						// Format timestamp values
+						if (typeof value === 'string' && value.includes('T') && value.includes('Z')) {
+							const date = new Date(value);
+							return `• **${formattedKey}:** ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+						}
+
+						return `• **${formattedKey}:** ${value}`;
+					})
+					.join('\n')}`;
+			} else if (rows.length > 1) {
+				// Multiple rows - create a summary
+				if (rows[0] && Object.keys(rows[0])[0]) {
+					const keyColumn = Object.keys(rows[0])[0];
+					const valueColumn = Object.keys(rows[0])[1] || Object.keys(rows[0])[0];
+
+					formattedResponse += `\n${rows
+						.map((row) => {
+							const key = row[keyColumn];
+							const value = row[valueColumn];
+							return `• **${key}:** ${value}`;
+						})
+						.join('\n')}`;
+				}
+			} else {
+				formattedResponse += `\nNo data found for this query.`;
+			}
+		} else {
+			formattedResponse = `No results found for your query. ${sqlData.insight || sqlData.explanation || ''}`;
+		}
+
+		// Return formatted response instead of raw data
 		const analyticsResponse = {
-			sql: sqlData.sql,
-			explanation: sqlData.explanation || '',
-			insight: sqlData.insight || '',
-			columns: (queryResult.fields || []).map((f) => f.name),
-			rows: queryResult.rows || [],
-			rowCount: (queryResult.rows || []).length,
-			queryError,
+			message: formattedResponse,
+			success: !queryError && !!(queryResult.rows && queryResult.rows.length > 0),
 		};
 
 		return json(analyticsResponse);

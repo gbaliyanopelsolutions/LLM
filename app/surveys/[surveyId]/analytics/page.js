@@ -113,31 +113,8 @@ export default function SurveyAnalyticsPage() {
 
 			const data = await res.json();
 
-			let responseText = '';
-			if (data.sql && data.rowCount > 0) {
-				responseText = `📊 ${data.explanation}\n\n`;
-				responseText += `✓ Found ${data.rowCount} result(s)\n`;
-				if (data.insight) {
-					responseText += `\n💡 Insight: ${data.insight}\n`;
-				}
-				if (data.rows.length > 0 && data.rows.length <= 10) {
-					responseText += `\n📋 Data:\n${JSON.stringify(data.rows, null, 2)}`;
-				} else if (data.rows.length > 10) {
-					responseText += `\n📋 Showing first 10 of ${data.rows.length} results:\n${JSON.stringify(data.rows.slice(0, 10), null, 2)}`;
-				}
-			} else if (data.sql === null) {
-				responseText = data.explanation || 'Unable to generate query for this request.';
-				if (data.insight) {
-					responseText += `\n\n💡 ${data.insight}`;
-				}
-			} else if (data.queryError) {
-				responseText = `❌ Query Error: ${data.queryError}\n\nExplanation: ${data.explanation}`;
-			} else {
-				responseText = '📭 No data found for this query.';
-				if (data.insight) {
-					responseText += `\n\n${data.insight}`;
-				}
-			}
+			// Use the formatted message from the backend
+			const responseText = data.message || 'Unable to process your request.';
 
 			setChatMessages((prev) => [...prev, { role: 'assistant', content: responseText }]);
 		} catch (err) {
@@ -362,12 +339,14 @@ export default function SurveyAnalyticsPage() {
 				)}
 			</div>
 
-			{/* AI Chat Sidebar */}
-			<div className={s.sidebar}>
-				<div className={s.sidebarHeader}>
+			{/* AI Chat Section - Bottom of Page */}
+			<div className={s.chatSection}>
+			<div className={s.chatContainer}>
+				<div className={s.chatHeader}>
 					<h3>
-						<Sparkles size={18} /> AI Insights
+						<Sparkles size={18} /> AI Analytics Chat
 					</h3>
+					<p>Ask questions about your survey data</p>
 				</div>
 
 				<div className={s.chatMessages}>
@@ -401,7 +380,7 @@ export default function SurveyAnalyticsPage() {
 				<form onSubmit={handleAIChat} className={s.chatForm}>
 					<input
 						type="text"
-						placeholder="Ask a question..."
+						placeholder="Ask a question about this survey..."
 						value={chatInput}
 						onChange={(e) => setChatInput(e.target.value)}
 						disabled={chatLoading}
@@ -411,9 +390,11 @@ export default function SurveyAnalyticsPage() {
 					</button>
 				</form>
 			</div>
+		</div>
+		</div>
 
-			{/* Export buttons */}
-			<div className={s.exportButtons}>
+		{/* Export buttons */}
+		<div className={s.exportButtons}>
 				<button onClick={() => handleExport('csv')} className={s.btn}>
 					<Download size={18} /> CSV
 				</button>
@@ -423,7 +404,6 @@ export default function SurveyAnalyticsPage() {
 				<button onClick={() => window.location.reload()} className={s.btn}>
 					<RotateCcw size={18} /> Refresh
 				</button>
-			</div>
 		</div>
 		</div>
 	);
