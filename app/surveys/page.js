@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { BarChart2, Plus, Eye, Trash2, Loader } from 'lucide-react';
+import Sidebar from '@/app/components/Sidebar';
 import s from './page.module.css';
 
 export default function SurveysPage() {
@@ -53,32 +54,40 @@ export default function SurveysPage() {
 
 	if (loading) {
 		return (
-			<div className={s.page}>
-				<div className={s.container}>
-					<div className={s.emptyState}>
-						<Loader size={48} />
-						<h2>Loading Surveys...</h2>
+			<>
+				<Sidebar />
+				<div className={s.page}>
+					<div className={s.container}>
+						<div className={s.emptyState}>
+							<Loader size={48} />
+							<h2>Loading Surveys...</h2>
+						</div>
 					</div>
 				</div>
-			</div>
+			</>
 		);
 	}
 
 	if (error) {
 		return (
-			<div className={s.page}>
-				<div className={s.container}>
-					<div className={s.emptyState}>
-						<h2>Error</h2>
-						<p>{error}</p>
+			<>
+				<Sidebar />
+				<div className={s.page}>
+					<div className={s.container}>
+						<div className={s.emptyState}>
+							<h2>Error</h2>
+							<p>{error}</p>
+						</div>
 					</div>
 				</div>
-			</div>
+			</>
 		);
 	}
 
 	return (
-		<div className={s.page}>
+		<>
+			<Sidebar />
+			<div className={s.page}>
 			{/* Header */}
 			<div className={s.header}>
 				<div className={s.headerContent}>
@@ -181,5 +190,6 @@ export default function SurveysPage() {
 				)}
 			</div>
 		</div>
+		</>
 	);
 }
