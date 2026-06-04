@@ -413,5 +413,6 @@ export default function SurveyAnalyticsPage() {
 				</button>
 			</div>
 		</div>
+		</div>
 	);
 }
