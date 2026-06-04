@@ -93,9 +93,9 @@ async function generateAISummary(surveyId, surveyName, pool) {
 	// Get analytics data
 	const analyticsResult = await pool.query(
 		`SELECT
-			COUNT(DISTINCT response_id)::int AS total_responses,
-			COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::int AS completed,
-			(COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::numeric /
+			COUNT(DISTINCT respondent_id)::int AS total_responses,
+			COUNT(DISTINCT respondent_id)::int AS completed,
+			(COUNT(DISTINCT respondent_id)::numeric /
 			NULLIF(COUNT(DISTINCT respondent_id), 0))::numeric AS completion_rate
 		FROM public.responses
 		WHERE survey_id = $1`,
