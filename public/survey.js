@@ -222,6 +222,9 @@ function renderTable(surveys) {
 					<option value="closed"${uiStatus === 'closed' || uiStatus === 'archived' ? ' selected' : ''}>Closed</option>
 				</select>
 			</td>
+			<td data-label="Analytics">
+				<a href="/surveys/${escapeAttr(surveyId)}/analytics" class="dsi-btn dsi-btn--ghost dsi-btn--sm">Analytics</a>
+			</td>
 			<td data-label="Edit">
 				<button type="button" class="dsi-btn dsi-btn--ghost dsi-btn--sm" data-action="edit" data-id="${escapeAttr(surveyId)}">Edit</button>
 			</td>
