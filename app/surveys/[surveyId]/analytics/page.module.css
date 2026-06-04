@@ -2,8 +2,9 @@
    Survey Analytics Page — CSS Module
    ═══════════════════════════════════════════════════════════ */
 
-.shell {
+.page {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background:
     radial-gradient(circle at 12% 0%,  rgba(124,92,255,0.14) 0%, transparent 42%),
@@ -15,127 +16,12 @@
   color: #0f172a;
 }
 
-/* ─────────────────────────────────────────────────
-   Left Navigation Sidebar
-   ───────────────────────────────────────────────── */
-
-.sidebar__nav {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 240px;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.80);
-  border-right: 1px solid rgba(226, 232, 240, 0.90);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  z-index: 90;
-  overflow-y: auto;
-  overflow-x: hidden;
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebarBrand {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  padding: 1.1rem 1.1rem 0.95rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.90);
-  text-decoration: none;
-}
-
-.brandIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #5b8cff, #7c5cff);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(91, 140, 255, 0.25);
-}
-
-.sidebarBrand h2 {
-  margin: 0;
-  font-size: 0.97rem;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.sidebarNav {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  flex: 1;
-  padding: 0 0.6rem;
-}
-
-.navSection {
-  padding: 0.85rem 0.6rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.navSectionLabel {
-  display: block;
-  padding: 0 0.7rem 0.4rem;
-  margin: 0;
-  font-size: 0.63rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #94a3b8;
-}
-
-.navLink {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.58rem 0.75rem;
-  border-radius: 9px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #334155;
-  text-decoration: none;
-  transition: background 0.18s ease, color 0.18s ease;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  width: 100%;
-  text-align: left;
-}
-
-.navLink:hover {
-  background: rgba(91, 140, 255, 0.055);
-  color: #0f172a;
-}
-
 .mainContent {
   margin-left: 240px;
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-}
-
-.page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  background: transparent;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  color: #0f172a;
-  position: relative;
 }
 
 /* ─────────────────────────────────────────────────
@@ -641,54 +527,14 @@
 }
 
 @media (max-width: 768px) {
-  .shell {
-    flex-direction: column;
-  }
-
-  .sidebar__nav {
-    position: static;
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(226, 232, 240, 0.90);
-    padding: 0;
-    flex-direction: row;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-  }
-
-  .sidebarBrand {
-    padding: 0.8rem 0.8rem;
-  }
-
-  .sidebarNav {
-    display: flex;
-    flex-direction: row;
-    gap: 0;
-    flex: 1;
-    padding: 0;
-    overflow-x: auto;
-  }
-
-  .navSection {
-    display: flex;
-    flex-direction: row;
-    padding: 0;
-    gap: 0;
-  }
-
-  .navSectionLabel {
-    display: none;
-  }
-
-  .navLink {
-    padding: 0.5rem 0.6rem;
-    font-size: 0.8rem;
-  }
-
   .mainContent {
     margin-left: 0;
     overflow-y: auto;
+  }
+
+  .container {
+    padding-right: 1.5rem;
+    padding-bottom: 50vh;
   }
 
   .sidebar {
@@ -701,11 +547,6 @@
     border-left: none;
     border-top: 1px solid #e5e7eb;
     border-radius: 16px 16px 0 0;
-  }
-
-  .container {
-    padding-right: 1.5rem;
-    padding-bottom: 50vh;
   }
 
   .headerContent {

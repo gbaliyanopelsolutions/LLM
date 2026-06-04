@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import Sidebar from '@/app/components/Sidebar';
 import {
 	BarChart, Bar, LineChart, Line,
 	XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -225,46 +226,9 @@ export default function SurveyAnalyticsPage() {
 	}
 
 	return (
-		<div className={s.shell}>
-			{/* Left Sidebar Navigation */}
-			<aside className={s.sidebar__nav}>
-				<div className={s.sidebarBrand}>
-					<div className={s.brandIcon}>S</div>
-					<h2>Survey Form</h2>
-				</div>
-
-				<nav className={s.sidebarNav}>
-					<div className={s.navSection}>
-						<p className={s.navSectionLabel}>OVERVIEW</p>
-						<Link href="/dashboard" className={s.navLink}>
-							Dashboard
-						</Link>
-					</div>
-
-					<div className={s.navSection}>
-						<p className={s.navSectionLabel}>BUILD</p>
-						<Link href="/index" className={s.navLink}>
-							Form Builder
-						</Link>
-					</div>
-
-					<div className={s.navSection}>
-						<p className={s.navSectionLabel}>MANAGE</p>
-						<Link href="/forms" className={s.navLink}>
-							Forms
-						</Link>
-						<Link href="/survey" className={s.navLink}>
-							My Surveys
-						</Link>
-						<Link href="/add-company" className={s.navLink}>
-							Companies
-						</Link>
-						<Link href="/analytics" className={s.navLink}>
-							Analytics
-						</Link>
-					</div>
-				</nav>
-			</aside>
+		<div className={s.page}>
+			{/* Sidebar Navigation */}
+			<Sidebar />
 
 			{/* Main Content */}
 			<div className={s.mainContent}>
@@ -447,7 +411,6 @@ export default function SurveyAnalyticsPage() {
 				<button onClick={() => window.location.reload()} className={s.btn}>
 					<RotateCcw size={18} /> Refresh
 				</button>
-			</div>
 			</div>
 		</div>
 	);

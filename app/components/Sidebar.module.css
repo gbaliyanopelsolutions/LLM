@@ -1,0 +1,293 @@
+/* ═══════════════════════════════════════════════════════════
+   Sidebar Navigation Component
+   ═══════════════════════════════════════════════════════════ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.80);
+  border-right: 1px solid rgba(226, 232, 240, 0.90);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  z-index: 90;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─────────────────────────────────────────────────
+   Brand Section
+   ───────────────────────────────────────────────── */
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.1rem 1.1rem 0.95rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.90);
+  text-decoration: none;
+}
+
+.brandIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b8cff, #7c5cff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(91, 140, 255, 0.25);
+  color: #ffffff;
+  font-size: 0.97rem;
+  font-weight: 700;
+}
+
+.brandText {
+  flex: 1;
+}
+
+.brandName {
+  margin: 0;
+  font-size: 0.97rem;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.brandSub {
+  display: block;
+  font-size: 0.67rem;
+  font-weight: 500;
+  color: #94a3b8;
+  letter-spacing: 0.01em;
+  margin-top: 1px;
+}
+
+/* ─────────────────────────────────────────────────
+   Navigation
+   ───────────────────────────────────────────────── */
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  padding: 0 0.6rem;
+  overflow-y: auto;
+}
+
+.navSection {
+  padding: 0.85rem 0.6rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navLabel {
+  display: block;
+  padding: 0 0.7rem 0.4rem;
+  margin: 0;
+  font-size: 0.63rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.navItems {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.58rem 0.75rem;
+  border-radius: 9px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #334155;
+  text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  width: 100%;
+  text-align: left;
+}
+
+.navItem:hover {
+  background: rgba(91, 140, 255, 0.055);
+  color: #0f172a;
+}
+
+.navItem:hover .navIcon {
+  color: #5b8cff;
+}
+
+.navItem.isActive {
+  background: rgba(91, 140, 255, 0.10);
+  color: #3b72e8;
+  font-weight: 600;
+}
+
+.navItem.isActive .navIcon {
+  color: #3b72e8;
+}
+
+.navIcon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: #94a3b8;
+  transition: color 0.18s ease;
+}
+
+.badge {
+  margin-left: auto;
+  font-size: 0.63rem;
+  font-weight: 700;
+  padding: 0.13rem 0.42rem;
+  border-radius: 999px;
+  background: rgba(91, 140, 255, 0.10);
+  color: #3b72e8;
+}
+
+/* ─────────────────────────────────────────────────
+   Footer
+   ───────────────────────────────────────────────── */
+
+.footer {
+  padding: 0.7rem 0.6rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.90);
+  margin-top: auto;
+}
+
+.userPill {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.52rem 0.7rem;
+  border-radius: 9px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+
+.userAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b8cff, #7c5cff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.userName {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #0f172a;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────────
+   Responsive Design
+   ───────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.90);
+    padding: 0;
+    flex-direction: row;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .brand {
+    padding: 0.8rem 0.8rem;
+    border-bottom: none;
+  }
+
+  .brandText {
+    display: none;
+  }
+
+  .nav {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    flex: 1;
+    padding: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .navSection {
+    display: flex;
+    flex-direction: row;
+    padding: 0;
+    gap: 0;
+  }
+
+  .navLabel {
+    display: none;
+  }
+
+  .navItems {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+  }
+
+  .navItem {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+
+  .badge {
+    display: none;
+  }
+
+  .footer {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand {
+    padding: 0.6rem;
+  }
+
+  .brandIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.85rem;
+  }
+
+  .navItem {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+  }
+}
