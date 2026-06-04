@@ -2,11 +2,106 @@
    Survey Analytics Page — CSS Module
    ═══════════════════════════════════════════════════════════ */
 
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7ff 0%, #f0f4f8 100%);
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #111827;
+}
+
+/* ─────────────────────────────────────────────────
+   Left Navigation Sidebar
+   ───────────────────────────────────────────────── */
+
+.sidebar__nav {
+  width: 260px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
+  box-shadow: 1px 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.sidebarBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.brandIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebarBrand h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.navSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navSectionLabel {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #9ca3af;
+}
+
+.navLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.navLink:hover {
+  background: #f3f4f6;
+  color: #6366f1;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
 .page {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7ff 0%, #f0f4f8 100%);
+  min-height: 100%;
+  background: transparent;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   color: #111827;
   position: relative;
@@ -515,6 +610,18 @@
 }
 
 @media (max-width: 768px) {
+  .shell {
+    flex-direction: column;
+  }
+
+  .sidebar__nav {
+    display: none;
+  }
+
+  .mainContent {
+    overflow-y: auto;
+  }
+
   .sidebar {
     position: fixed;
     width: 100%;
