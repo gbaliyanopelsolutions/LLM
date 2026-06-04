@@ -58,55 +58,102 @@ export async function POST(request, ctx) {
 
 		const questions = questionsResult.rows || [];
 		const questionsList = questions
-			.map((q) => `- ${q.question_text} (ID: ${q.question_id}, Type: ${q.type})`)
+			.map((q) => `Q${questions.indexOf(q) + 1}. ${q.question_text} (Type: ${q.type})`)
 			.join('\n');
 
-		// Get sample data structure for responses
-		const sampleResult = await pool.query(
+		// Get analytics summary for context
+		const analyticsResult = await pool.query(
 			`SELECT
-				r.response_id,
-				r.question_id,
-				r.answer_text,
-				r.answer_score,
-				r.submitted_at
+				COUNT(DISTINCT date_trunc('second', submitted_at))::int AS total_responses,
+				COUNT(DISTINCT respondent_id)::int AS unique_respondents,
+				MIN(submitted_at) AS first_response,
+				MAX(submitted_at) AS last_response,
+				COUNT(DISTINCT question_id)::int AS total_questions
 			 FROM public.responses
-			 WHERE survey_id = $1
-			 LIMIT 5`,
+			 WHERE survey_id = $1`,
 			[surveyId]
 		);
 
-		const sampleResponses = sampleResult.rows || [];
+		const analytics = analyticsResult.rows[0] || {};
+
+		// Get question-wise response counts
+		const questionStatsResult = await pool.query(
+			`SELECT
+				q.question_id,
+				q.question_text,
+				q.type,
+				COUNT(DISTINCT r.response_id) as answer_count,
+				COUNT(DISTINCT CASE WHEN r.answer_text IS NOT NULL OR r.answer_score IS NOT NULL THEN r.response_id END) as valid_responses
+			 FROM public.questions q
+			 LEFT JOIN public.responses r ON q.question_id = r.question_id
+			 WHERE q.survey_id = $1
+			 GROUP BY q.question_id, q.question_text, q.type
+			 ORDER BY q.sort_order ASC`,
+			[surveyId]
+		);
+
+		const questionStats = questionStatsResult.rows || [];
+		const questionStatsText = questionStats
+			.map((q) => `- ${q.question_text}: ${q.valid_responses} responses (Type: ${q.type})`)
+			.join('\n');
 
 		// Create AI prompt scoped to this survey
-		const systemPrompt = `You are a SQL query generator for survey analytics. You have access to a survey database with the following structure:
+		const systemPrompt = `You are an expert survey data analyst and SQL query generator. You help users understand survey responses through natural conversation.
 
-Survey: "${survey.name}"
-Survey ID: ${surveyId}
+SURVEY CONTEXT:
+- Survey: "${survey.name}"
+- Total Responses: ${analytics.total_responses || 0}
+- Unique Respondents: ${analytics.unique_respondents || 0}
+- First Response: ${analytics.first_response ? new Date(analytics.first_response).toLocaleString() : 'N/A'}
+- Last Response: ${analytics.last_response ? new Date(analytics.last_response).toLocaleString() : 'N/A'}
 
-Questions in this survey:
+QUESTIONS IN THIS SURVEY:
 ${questionsList}
 
-Tables available (filtered to this survey):
-1. public.questions - Question details (question_id, question_text, type, options_json, sort_order)
-2. public.responses - Response data (response_id, question_id, respondent_id, answer_text, answer_score, submitted_at, survey_id)
-3. public.respondents - Respondent info (respondent_id, full_name, email, created_at)
+QUESTION RESPONSE SUMMARY:
+${questionStatsText}
 
-IMPORTANT: All queries MUST include "WHERE survey_id = '${surveyId}'" to filter to this survey only.
+DATABASE SCHEMA:
+- public.questions: question_id, question_text, type (text/textarea/radio/checkbox/select/etc), options_json, sort_order
+- public.responses: response_id, question_id, respondent_id, answer_text, answer_score, submitted_at, survey_id
+- public.respondents: respondent_id, full_name, email, department, job_title, created_at
 
-Constraints:
-- You MUST only generate SELECT queries
-- Maximum response size: 100 rows
-- Return response as JSON with this structure:
+YOUR ROLE:
+1. Generate SQL queries to analyze survey data
+2. Interpret results and provide insights
+3. Answer questions about response patterns, trends, and summaries
+4. Handle follow-up questions within context
+
+QUERY REQUIREMENTS:
+- ALL queries MUST filter: WHERE survey_id = '${surveyId}'
+- SELECT queries only - NO INSERT/UPDATE/DELETE
+- Add LIMIT 100 for large result sets
+- For aggregations, use COUNT/AVG/MIN/MAX/GROUP BY
+- For text analysis, use simple pattern matching where needed
+
+RESPONSE FORMAT (ALWAYS return valid JSON):
 {
-  "sql": "SELECT ... WHERE survey_id = '${surveyId}' LIMIT 100",
-  "explanation": "What this query does in plain English"
+  "sql": "SELECT ... WHERE survey_id = '${surveyId}' ...",
+  "explanation": "Plain English explanation of what this shows",
+  "insight": "Human-readable summary of findings"
 }
 
-If the user asks something you cannot query, respond with:
+For non-queryable requests:
 {
   "sql": null,
-  "explanation": "Explanation of why this cannot be queried"
-}`;
+  "explanation": "Why this cannot be queried",
+  "insight": "Relevant information or suggestion"
+}
+
+ANALYTICS YOU CAN PROVIDE:
+- Response counts and completion rates
+- Answer distributions for each question
+- Text response summaries and patterns
+- Response timing and trends
+- Comparison between questions
+- Top/bottom performing answers
+- Respondent demographics (if available)
+- Sentiment of text responses`;
 
 		const client = new Anthropic();
 
@@ -154,10 +201,11 @@ If the user asks something you cannot query, respond with:
 		}
 
 		if (!sqlData.sql) {
-			// User asked something not queryable
+			// User asked something not queryable or needs AI analysis
 			return json({
 				sql: null,
 				explanation: sqlData.explanation || 'Cannot generate query for this request',
+				insight: sqlData.insight || '',
 				columns: [],
 				rows: [],
 				rowCount: 0,
@@ -186,14 +234,18 @@ If the user asks something you cannot query, respond with:
 			queryResult = { rows: [] };
 		}
 
-		return json({
+		// Prepare response with data insights
+		const analyticsResponse = {
 			sql: sqlData.sql,
 			explanation: sqlData.explanation || '',
+			insight: sqlData.insight || '',
 			columns: (queryResult.fields || []).map((f) => f.name),
 			rows: queryResult.rows || [],
 			rowCount: (queryResult.rows || []).length,
 			queryError,
-		});
+		};
+
+		return json(analyticsResponse);
 	} catch (err) {
 		console.error('Error in survey analytics chat:', err);
 		return json({ error: err.message, code: 'SERVER_ERROR' }, 500);

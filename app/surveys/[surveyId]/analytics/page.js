@@ -115,16 +115,28 @@ export default function SurveyAnalyticsPage() {
 
 			let responseText = '';
 			if (data.sql && data.rowCount > 0) {
-				responseText = `${data.explanation}\n\nResults: ${data.rowCount} row(s)\n`;
-				if (data.rows.length > 0) {
-					responseText += `\nData:\n${JSON.stringify(data.rows, null, 2)}`;
+				responseText = `📊 ${data.explanation}\n\n`;
+				responseText += `✓ Found ${data.rowCount} result(s)\n`;
+				if (data.insight) {
+					responseText += `\n💡 Insight: ${data.insight}\n`;
+				}
+				if (data.rows.length > 0 && data.rows.length <= 10) {
+					responseText += `\n📋 Data:\n${JSON.stringify(data.rows, null, 2)}`;
+				} else if (data.rows.length > 10) {
+					responseText += `\n📋 Showing first 10 of ${data.rows.length} results:\n${JSON.stringify(data.rows.slice(0, 10), null, 2)}`;
 				}
 			} else if (data.sql === null) {
 				responseText = data.explanation || 'Unable to generate query for this request.';
+				if (data.insight) {
+					responseText += `\n\n💡 ${data.insight}`;
+				}
 			} else if (data.queryError) {
-				responseText = `Query generated but encountered an error: ${data.queryError}`;
+				responseText = `❌ Query Error: ${data.queryError}\n\nExplanation: ${data.explanation}`;
 			} else {
-				responseText = 'No data found for this query.';
+				responseText = '📭 No data found for this query.';
+				if (data.insight) {
+					responseText += `\n\n${data.insight}`;
+				}
 			}
 
 			setChatMessages((prev) => [...prev, { role: 'assistant', content: responseText }]);
