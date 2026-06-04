@@ -50,22 +50,22 @@ async function generateCSV(surveyId, pool) {
 
 	// Get all responses
 	const responsesResult = await pool.query(
-		`SELECT DISTINCT r.response_id, r.respondent_id, r.created_at, r.submitted_at
+		`SELECT DISTINCT r.response_id, r.respondent_id, r.submitted_at
 		 FROM public.responses r
 		 WHERE r.survey_id = $1
-		 ORDER BY r.created_at DESC`,
+		 ORDER BY r.submitted_at DESC`,
 		[surveyId]
 	);
 
 	const responses = responsesResult.rows || [];
 
 	// Build CSV header
-	const header = ['Response ID', 'Respondent ID', 'Created At', 'Submitted At', ...questions.map((q) => q.question_text)];
+	const header = ['Response ID', 'Respondent ID', 'Submitted At', ...questions.map((q) => q.question_text)];
 	const csvLines = [header.map(escapeCSV).join(',')];
 
 	// Build CSV rows
 	for (const response of responses) {
-		const row = [response.response_id, response.respondent_id, response.created_at, response.submitted_at || ''];
+		const row = [response.response_id, response.respondent_id, response.submitted_at || ''];
 
 		// Get answers for this response
 		for (const question of questions) {

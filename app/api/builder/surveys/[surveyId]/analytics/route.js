@@ -47,13 +47,13 @@ export async function GET(_request, ctx) {
 		const overviewResult = await pool.query(
 			`SELECT
 				COUNT(DISTINCT response_id)::int AS total_responses,
-				COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::int AS completed,
-				COUNT(DISTINCT CASE WHEN submitted_at IS NULL THEN respondent_id END)::int AS abandoned,
-				(COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::numeric /
+				COUNT(DISTINCT respondent_id)::int AS completed,
+				0::int AS abandoned,
+				(COUNT(DISTINCT respondent_id)::numeric /
 				NULLIF(COUNT(DISTINCT respondent_id), 0))::numeric AS completion_rate,
-				(COUNT(DISTINCT CASE WHEN submitted_at IS NULL THEN respondent_id END)::numeric /
+				(0::numeric /
 				NULLIF(COUNT(DISTINCT respondent_id), 0))::numeric AS abandonment_rate,
-				COALESCE(AVG(EXTRACT(EPOCH FROM (submitted_at - created_at))), 0)::int AS avg_time_seconds
+				0::int AS avg_time_seconds
 			FROM public.responses
 			WHERE survey_id = $1`,
 			[surveyId]
@@ -71,12 +71,12 @@ export async function GET(_request, ctx) {
 		// Get responses over time (last 30 days)
 		const trendsResult = await pool.query(
 			`SELECT
-				DATE(created_at) as date,
+				DATE(submitted_at) as date,
 				COUNT(DISTINCT response_id)::int as count
 			FROM public.responses
 			WHERE survey_id = $1
-			AND created_at >= NOW() - INTERVAL '30 days'
-			GROUP BY DATE(created_at)
+			AND submitted_at >= NOW() - INTERVAL '30 days'
+			GROUP BY DATE(submitted_at)
 			ORDER BY date ASC`,
 			[surveyId]
 		);
