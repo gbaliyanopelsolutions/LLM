@@ -95,11 +95,8 @@ async function generateAISummary(surveyId, surveyName, pool) {
 		`SELECT
 			COUNT(DISTINCT response_id)::int AS total_responses,
 			COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::int AS completed,
-			ROUND(
-				COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::float /
-				NULLIF(COUNT(DISTINCT respondent_id), 0),
-				2
-			) AS completion_rate
+			(COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::numeric /
+			NULLIF(COUNT(DISTINCT respondent_id), 0))::numeric AS completion_rate
 		FROM public.responses
 		WHERE survey_id = $1`,
 		[surveyId]

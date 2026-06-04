@@ -49,17 +49,11 @@ export async function GET(_request, ctx) {
 				COUNT(DISTINCT response_id)::int AS total_responses,
 				COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::int AS completed,
 				COUNT(DISTINCT CASE WHEN submitted_at IS NULL THEN respondent_id END)::int AS abandoned,
-				ROUND(
-					COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::float /
-					NULLIF(COUNT(DISTINCT respondent_id), 0),
-					2
-				) AS completion_rate,
-				ROUND(
-					COUNT(DISTINCT CASE WHEN submitted_at IS NULL THEN respondent_id END)::float /
-					NULLIF(COUNT(DISTINCT respondent_id), 0),
-					2
-				) AS abandonment_rate,
-				AVG(EXTRACT(EPOCH FROM (submitted_at - created_at)))::int AS avg_time_seconds
+				(COUNT(DISTINCT CASE WHEN submitted_at IS NOT NULL THEN respondent_id END)::numeric /
+				NULLIF(COUNT(DISTINCT respondent_id), 0))::numeric AS completion_rate,
+				(COUNT(DISTINCT CASE WHEN submitted_at IS NULL THEN respondent_id END)::numeric /
+				NULLIF(COUNT(DISTINCT respondent_id), 0))::numeric AS abandonment_rate,
+				COALESCE(AVG(EXTRACT(EPOCH FROM (submitted_at - created_at))), 0)::int AS avg_time_seconds
 			FROM public.responses
 			WHERE survey_id = $1`,
 			[surveyId]
