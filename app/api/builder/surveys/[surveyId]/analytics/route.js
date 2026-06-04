@@ -46,7 +46,7 @@ export async function GET(_request, ctx) {
 		// Get overview stats
 		const overviewResult = await pool.query(
 			`SELECT
-				COUNT(DISTINCT respondent_id)::int AS total_responses,
+				COUNT(DISTINCT date_trunc('second', submitted_at))::int AS total_responses,
 				COUNT(DISTINCT respondent_id)::int AS completed,
 				0::int AS abandoned,
 				(COUNT(DISTINCT respondent_id)::numeric /
@@ -72,7 +72,7 @@ export async function GET(_request, ctx) {
 		const trendsResult = await pool.query(
 			`SELECT
 				DATE(submitted_at) as date,
-				COUNT(DISTINCT respondent_id)::int as count
+				COUNT(DISTINCT date_trunc('second', submitted_at))::int as count
 			FROM public.responses
 			WHERE survey_id = $1
 			AND submitted_at >= NOW() - INTERVAL '30 days'
