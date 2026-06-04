@@ -108,7 +108,8 @@
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2rem 1.5rem 2rem 1.5rem;
+  padding-right: 380px;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -506,10 +507,6 @@
 @media (max-width: 1200px) {
   .sidebar {
     width: 320px;
-  }
-
-  .container {
-    padding-right: 380px;
   }
 
   .chartsGrid {
