@@ -59,9 +59,7 @@ export async function GET(_request, ctx) {
 					NULLIF(COUNT(DISTINCT respondent_id), 0),
 					2
 				) AS abandonment_rate,
-				ROUND(
-					AVG(EXTRACT(EPOCH FROM (submitted_at - created_at)))::int
-				) AS avg_time_seconds
+				AVG(EXTRACT(EPOCH FROM (submitted_at - created_at)))::int AS avg_time_seconds
 			FROM public.responses
 			WHERE survey_id = $1`,
 			[surveyId]
